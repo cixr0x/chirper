@@ -7,6 +7,7 @@ import {
 } from "@chirper/contracts-events";
 import { Prisma } from "../generated/prisma";
 import { GraphClientService } from "./clients/graph.client";
+import { IdentityClientService } from "./clients/identity.client";
 import { PostRecord, PostsClientService } from "./clients/posts.client";
 import { PrismaService } from "./prisma.service";
 
@@ -23,6 +24,7 @@ type TimelineEntry = {
 export class TimelineService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly identityClient: IdentityClientService,
     private readonly graphClient: GraphClientService,
     private readonly postsClient: PostsClientService,
   ) {}
@@ -38,7 +40,7 @@ export class TimelineService {
   }
 
   async rebuildHomeTimeline(ownerUserId: string, limit = 25): Promise<TimelineEntry[]> {
-    const followingUserIds = await this.graphClient.listFollowing(ownerUserId);
+    const followingUserIds = await this.listProjectedFollowing(ownerUserId);
     const authorUserIds = [...new Set([ownerUserId, ...followingUserIds])];
     const posts = await this.postsClient.listPostsByAuthors(authorUserIds, limit);
 
@@ -119,6 +121,47 @@ export class TimelineService {
     return this.rebuildFromGraphEvent(event, event.payload.followerUserId);
   }
 
+  async rebuildFollowProjection() {
+    const users = await this.identityClient.listUsers();
+    const followEdges: Prisma.FollowEdgeCreateManyInput[] = [];
+
+    for (const user of users) {
+      const followeeUserIds = await this.graphClient.listFollowing(user.userId);
+      for (const followeeUserId of followeeUserIds) {
+        followEdges.push({
+          id: this.followEdgeId(user.userId, followeeUserId),
+          ownerUserId: user.userId,
+          followeeUserId,
+        });
+      }
+    }
+
+    await this.runWithRetry(() =>
+      this.prisma.$transaction(async (tx) => {
+        await tx.followEdge.deleteMany({});
+
+        if (followEdges.length > 0) {
+          await tx.followEdge.createMany({
+            data: followEdges,
+            skipDuplicates: true,
+          });
+        }
+      }),
+    );
+
+    let rebuiltTimelineCount = 0;
+    for (const user of users) {
+      const entries = await this.rebuildHomeTimeline(user.userId, 50);
+      rebuiltTimelineCount += entries.length;
+    }
+
+    return {
+      userCount: users.length,
+      followEdgeCount: followEdges.length,
+      rebuiltTimelineCount,
+    };
+  }
+
   private async projectPublishedPost(
     input: {
       postId: string;
@@ -129,7 +172,7 @@ export class TimelineService {
   ) {
     const createdAt = this.parseDate(input.createdAt);
     const rankScore = this.rankScoreFor(createdAt);
-    const followerUserIds = await this.graphClient.listFollowers(input.authorUserId);
+    const followerUserIds = await this.listProjectedFollowers(input.authorUserId);
     const ownerUserIds = [...new Set([input.authorUserId, ...followerUserIds])];
 
     await this.runWithRetry(() =>
@@ -211,6 +254,32 @@ export class TimelineService {
       };
     }
 
+    if (event.name === DOMAIN_EVENTS.graphFollowCreated) {
+      await this.prisma.followEdge.upsert({
+        where: {
+          ownerUserId_followeeUserId: {
+            ownerUserId: event.payload.followerUserId,
+            followeeUserId: event.payload.followeeUserId,
+          },
+        },
+        update: {},
+        create: {
+          id: this.followEdgeId(event.payload.followerUserId, event.payload.followeeUserId),
+          ownerUserId: event.payload.followerUserId,
+          followeeUserId: event.payload.followeeUserId,
+        },
+      });
+    }
+
+    if (event.name === DOMAIN_EVENTS.graphFollowRemoved) {
+      await this.prisma.followEdge.deleteMany({
+        where: {
+          ownerUserId: event.payload.followerUserId,
+          followeeUserId: event.payload.followeeUserId,
+        },
+      });
+    }
+
     const entries = await this.rebuildHomeTimeline(ownerUserId, 50);
     await this.markInboxProcessed(event.id, event.name);
 
@@ -274,6 +343,28 @@ export class TimelineService {
 
   private userEntryId(ownerUserId: string, postId: string) {
     return `user_${ownerUserId}_${postId}`;
+  }
+
+  private followEdgeId(ownerUserId: string, followeeUserId: string) {
+    return `follow_${ownerUserId}_${followeeUserId}`;
+  }
+
+  private async listProjectedFollowing(ownerUserId: string) {
+    const edges = await this.prisma.followEdge.findMany({
+      where: { ownerUserId },
+      orderBy: [{ createdAt: "desc" }],
+    });
+
+    return edges.map((edge) => edge.followeeUserId);
+  }
+
+  private async listProjectedFollowers(followeeUserId: string) {
+    const edges = await this.prisma.followEdge.findMany({
+      where: { followeeUserId },
+      orderBy: [{ createdAt: "desc" }],
+    });
+
+    return edges.map((edge) => edge.ownerUserId);
   }
 
   private async reserveInboxEvent(

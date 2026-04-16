@@ -8,6 +8,7 @@ export class HealthController {
       service: "timeline",
       prefix: "timeline",
       tables: [
+        "timeline_follow_edges",
         "timeline_home_entries",
         "timeline_user_entries",
         "timeline_rank_state",

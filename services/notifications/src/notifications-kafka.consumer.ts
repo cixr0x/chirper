@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/commo
 import {
   KAFKA_TOPICS,
   isGraphFollowCreatedEvent,
+  isGraphFollowRemovedEvent,
   isPostPublishedEvent,
 } from "@chirper/contracts-events";
 import { Consumer, Kafka, logLevel } from "kafkajs";
@@ -81,6 +82,11 @@ export class NotificationsKafkaConsumerService implements OnModuleInit, OnModule
 
             if (isGraphFollowCreatedEvent(raw)) {
               await this.notifications.consumeGraphFollowCreatedEvent(raw);
+              return;
+            }
+
+            if (isGraphFollowRemovedEvent(raw)) {
+              await this.notifications.consumeGraphFollowRemovedEvent(raw);
             }
           },
         });

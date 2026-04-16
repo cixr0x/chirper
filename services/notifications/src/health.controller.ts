@@ -8,6 +8,7 @@ export class HealthController {
       service: "notifications",
       prefix: "notify",
       tables: [
+        "notify_follow_edges",
         "notify_notifications",
         "notify_preferences",
         "notify_delivery_attempts",

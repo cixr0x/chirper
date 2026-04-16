@@ -50,3 +50,16 @@ model InboxEvent {
 
   @@map("timeline_inbox")
 }
+
+model FollowEdge {
+  id             String   @id @db.VarChar(160)
+  ownerUserId    String   @map("owner_user_id") @db.VarChar(64)
+  followeeUserId String   @map("followee_user_id") @db.VarChar(64)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, followeeUserId], map: "timeline_follow_edges_owner_followee_key")
+  @@index([followeeUserId], map: "timeline_follow_edges_followee_idx")
+  @@index([ownerUserId], map: "timeline_follow_edges_owner_idx")
+  @@map("timeline_follow_edges")
+}

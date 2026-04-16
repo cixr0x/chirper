@@ -1,9 +1,13 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import {
   DOMAIN_EVENTS,
   KAFKA_TOPICS,
   type DomainEventEnvelope,
+  type PostLikeCreatedPayload,
+  type PostLikeRemovedPayload,
   type PostPublishedPayload,
+  type PostRepostCreatedPayload,
+  type PostRepostRemovedPayload,
 } from "@chirper/contracts-events";
 import { Kafka, logLevel } from "kafkajs";
 import { PrismaService } from "./prisma.service";
@@ -22,7 +26,7 @@ export class PostsOutboxPublisherService implements OnModuleInit, OnModuleDestro
   private connected = false;
   private loopPromise?: Promise<void>;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   onModuleInit() {
     this.running = true;
@@ -81,12 +85,12 @@ export class PostsOutboxPublisherService implements OnModuleInit, OnModuleDestro
     });
 
     for (const outboxEvent of unpublishedEvents) {
-      const envelope = toPostPublishedEnvelope(outboxEvent);
+      const envelope = toPostsEnvelope(outboxEvent);
       await this.producer.send({
         topic: this.postsTopic(),
         messages: [
           {
-            key: envelope.payload.authorUserId,
+            key: messageKeyFor(envelope),
             value: JSON.stringify(envelope),
             headers: {
               eventName: envelope.name,
@@ -118,24 +122,79 @@ export class PostsOutboxPublisherService implements OnModuleInit, OnModuleDestro
   }
 }
 
-function toPostPublishedEnvelope(outboxEvent: {
+function toPostsEnvelope(outboxEvent: {
   id: string;
   aggregateId: string;
   eventType: string;
   createdAt: Date;
   payload: unknown;
 }) {
-  if (outboxEvent.eventType !== DOMAIN_EVENTS.postPublished) {
-    throw new Error(`Unsupported outbox event type: ${outboxEvent.eventType}`);
+  if (outboxEvent.eventType === DOMAIN_EVENTS.postPublished) {
+    return {
+      id: outboxEvent.id,
+      name: DOMAIN_EVENTS.postPublished,
+      aggregateId: outboxEvent.aggregateId,
+      occurredAt: outboxEvent.createdAt.toISOString(),
+      payload: outboxEvent.payload as PostPublishedPayload,
+    } satisfies DomainEventEnvelope<PostPublishedPayload, typeof DOMAIN_EVENTS.postPublished>;
   }
 
-  return {
-    id: outboxEvent.id,
-    name: DOMAIN_EVENTS.postPublished,
-    aggregateId: outboxEvent.aggregateId,
-    occurredAt: outboxEvent.createdAt.toISOString(),
-    payload: outboxEvent.payload as PostPublishedPayload,
-  } satisfies DomainEventEnvelope<PostPublishedPayload, typeof DOMAIN_EVENTS.postPublished>;
+  if (outboxEvent.eventType === DOMAIN_EVENTS.postLikeCreated) {
+    return {
+      id: outboxEvent.id,
+      name: DOMAIN_EVENTS.postLikeCreated,
+      aggregateId: outboxEvent.aggregateId,
+      occurredAt: outboxEvent.createdAt.toISOString(),
+      payload: outboxEvent.payload as PostLikeCreatedPayload,
+    } satisfies DomainEventEnvelope<PostLikeCreatedPayload, typeof DOMAIN_EVENTS.postLikeCreated>;
+  }
+
+  if (outboxEvent.eventType === DOMAIN_EVENTS.postLikeRemoved) {
+    return {
+      id: outboxEvent.id,
+      name: DOMAIN_EVENTS.postLikeRemoved,
+      aggregateId: outboxEvent.aggregateId,
+      occurredAt: outboxEvent.createdAt.toISOString(),
+      payload: outboxEvent.payload as PostLikeRemovedPayload,
+    } satisfies DomainEventEnvelope<PostLikeRemovedPayload, typeof DOMAIN_EVENTS.postLikeRemoved>;
+  }
+
+  if (outboxEvent.eventType === DOMAIN_EVENTS.postRepostCreated) {
+    return {
+      id: outboxEvent.id,
+      name: DOMAIN_EVENTS.postRepostCreated,
+      aggregateId: outboxEvent.aggregateId,
+      occurredAt: outboxEvent.createdAt.toISOString(),
+      payload: outboxEvent.payload as PostRepostCreatedPayload,
+    } satisfies DomainEventEnvelope<PostRepostCreatedPayload, typeof DOMAIN_EVENTS.postRepostCreated>;
+  }
+
+  if (outboxEvent.eventType === DOMAIN_EVENTS.postRepostRemoved) {
+    return {
+      id: outboxEvent.id,
+      name: DOMAIN_EVENTS.postRepostRemoved,
+      aggregateId: outboxEvent.aggregateId,
+      occurredAt: outboxEvent.createdAt.toISOString(),
+      payload: outboxEvent.payload as PostRepostRemovedPayload,
+    } satisfies DomainEventEnvelope<PostRepostRemovedPayload, typeof DOMAIN_EVENTS.postRepostRemoved>;
+  }
+
+  throw new Error(`Unsupported outbox event type: ${outboxEvent.eventType}`);
+}
+
+function messageKeyFor(
+  envelope:
+    | DomainEventEnvelope<PostPublishedPayload, typeof DOMAIN_EVENTS.postPublished>
+    | DomainEventEnvelope<PostLikeCreatedPayload, typeof DOMAIN_EVENTS.postLikeCreated>
+    | DomainEventEnvelope<PostLikeRemovedPayload, typeof DOMAIN_EVENTS.postLikeRemoved>
+    | DomainEventEnvelope<PostRepostCreatedPayload, typeof DOMAIN_EVENTS.postRepostCreated>
+    | DomainEventEnvelope<PostRepostRemovedPayload, typeof DOMAIN_EVENTS.postRepostRemoved>,
+) {
+  if (envelope.name === DOMAIN_EVENTS.postPublished) {
+    return envelope.payload.authorUserId;
+  }
+
+  return envelope.payload.actorUserId;
 }
 
 function kafkaBrokers() {

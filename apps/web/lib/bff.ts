@@ -21,11 +21,35 @@ export type FeedItem = {
   visibility: string;
   createdAt: string;
   projectedAt?: string;
+  activityType: string;
   author?: {
     userId: string;
     handle: string;
     displayName: string;
     avatarUrl: string;
+  };
+  actor?: {
+    userId: string;
+    handle: string;
+    displayName: string;
+    avatarUrl: string;
+  };
+  inReplyTo?: {
+    postId: string;
+    author?: {
+      userId: string;
+      handle: string;
+      displayName: string;
+      avatarUrl: string;
+    };
+  };
+  metrics: {
+    postId: string;
+    replyCount: number;
+    likeCount: number;
+    repostCount: number;
+    likedByViewer: boolean;
+    repostedByViewer: boolean;
   };
 };
 

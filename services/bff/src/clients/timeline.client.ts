@@ -9,6 +9,7 @@ export type TimelineEntry = {
   actorUserId: string;
   insertedAt: string;
   rankScore: number;
+  activityType: string;
 };
 
 type ListHomeTimelineRequest = {

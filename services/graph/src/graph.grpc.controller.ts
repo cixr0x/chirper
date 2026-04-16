@@ -1,10 +1,10 @@
-import { Controller } from "@nestjs/common";
+import { Controller, Inject } from "@nestjs/common";
 import { GrpcMethod } from "@nestjs/microservices";
 import { GraphService } from "./graph.service";
 
 @Controller()
 export class GraphGrpcController {
-  constructor(private readonly graph: GraphService) {}
+  constructor(@Inject(GraphService) private readonly graph: GraphService) {}
 
   @GrpcMethod("GraphService", "ListFollowing")
   async listFollowing(data: { userId: string }) {

@@ -5,8 +5,15 @@ package posts.v1;
 service PostsService {
   rpc ListPublicPosts (ListPublicPostsRequest) returns (ListPublicPostsResponse);
   rpc ListPostsByAuthors (ListPostsByAuthorsRequest) returns (ListPostsByAuthorsResponse);
+  rpc ListTimelineActivitiesByUsers (ListTimelineActivitiesByUsersRequest) returns (ListTimelineActivitiesByUsersResponse);
   rpc GetPostsByIds (GetPostsByIdsRequest) returns (GetPostsByIdsResponse);
+  rpc GetPostMetrics (GetPostMetricsRequest) returns (GetPostMetricsResponse);
   rpc CreatePost (CreatePostRequest) returns (PostRecord);
+  rpc CreateReply (CreateReplyRequest) returns (PostRecord);
+  rpc CreateLike (PostInteractionRequest) returns (PostInteractionRecord);
+  rpc RemoveLike (PostInteractionRequest) returns (PostInteractionRemovalResult);
+  rpc CreateRepost (PostInteractionRequest) returns (PostInteractionRecord);
+  rpc RemoveRepost (PostInteractionRequest) returns (PostInteractionRemovalResult);
 }
 
 message ListPublicPostsRequest {
@@ -19,6 +26,13 @@ message CreatePostRequest {
   string visibility = 3;
 }
 
+message CreateReplyRequest {
+  string authorUserId = 1;
+  string inReplyToPostId = 2;
+  string body = 3;
+  string visibility = 4;
+}
+
 message ListPostsByAuthorsRequest {
   repeated string authorUserIds = 1;
   int32 limit = 2;
@@ -28,12 +42,65 @@ message GetPostsByIdsRequest {
   repeated string postIds = 1;
 }
 
+message GetPostMetricsRequest {
+  repeated string postIds = 1;
+  string viewerUserId = 2;
+}
+
+message PostMetrics {
+  string postId = 1;
+  int32 replyCount = 2;
+  int32 likeCount = 3;
+  int32 repostCount = 4;
+  bool likedByViewer = 5;
+  bool repostedByViewer = 6;
+}
+
+message GetPostMetricsResponse {
+  repeated PostMetrics metrics = 1;
+}
+
+message PostInteractionRequest {
+  string userId = 1;
+  string postId = 2;
+}
+
+message PostInteractionRecord {
+  string interactionId = 1;
+  string postId = 2;
+  string userId = 3;
+  string createdAt = 4;
+  bool changed = 5;
+}
+
+message PostInteractionRemovalResult {
+  bool removed = 1;
+}
+
+message ListTimelineActivitiesByUsersRequest {
+  repeated string actorUserIds = 1;
+  int32 limit = 2;
+}
+
+message TimelineActivity {
+  string activityId = 1;
+  string activityType = 2;
+  string actorUserId = 3;
+  string sourcePostId = 4;
+  string createdAt = 5;
+}
+
+message ListTimelineActivitiesByUsersResponse {
+  repeated TimelineActivity activities = 1;
+}
+
 message PostRecord {
   string postId = 1;
   string authorUserId = 2;
   string body = 3;
   string visibility = 4;
   string createdAt = 5;
+  string inReplyToPostId = 6;
 }
 
 message ListPublicPostsResponse {

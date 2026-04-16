@@ -20,6 +20,7 @@ message TimelineEntry {
   string actorUserId = 4;
   string insertedAt = 5;
   double rankScore = 6;
+  string activityType = 7;
 }
 
 message ListHomeTimelineResponse {

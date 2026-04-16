@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { randomBytes } from "node:crypto";
 import { PrismaService } from "./prisma.service";
 
@@ -18,7 +18,7 @@ type UserProfile = {
 
 @Injectable()
 export class ProfileDirectoryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async createProfile(input: {
     userId: string;

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { randomBytes } from "node:crypto";
 import { PrismaService } from "./prisma.service";
 
@@ -17,7 +17,7 @@ const supportedPurposes = new Set(["profile_avatar", "profile_banner"]);
 
 @Injectable()
 export class MediaLibraryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async createAssetFromSource(input: {
     ownerUserId: string;

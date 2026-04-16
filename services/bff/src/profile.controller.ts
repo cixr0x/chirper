@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Headers, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Headers, Inject, Post } from "@nestjs/common";
 import { MediaClientService } from "./clients/media.client";
 import { ProfileClientService } from "./clients/profile.client";
 import { getGrpcErrorMessage, isGrpcInvalidArgument } from "./grpc-status";
@@ -9,10 +9,10 @@ import { UserSummaryService } from "./user-summary.service";
 @Controller()
 export class ProfileController {
   constructor(
-    private readonly profileClient: ProfileClientService,
-    private readonly mediaClient: MediaClientService,
-    private readonly sessionAuth: SessionAuthService,
-    private readonly userSummaryService: UserSummaryService,
+    @Inject(ProfileClientService) private readonly profileClient: ProfileClientService,
+    @Inject(MediaClientService) private readonly mediaClient: MediaClientService,
+    @Inject(SessionAuthService) private readonly sessionAuth: SessionAuthService,
+    @Inject(UserSummaryService) private readonly userSummaryService: UserSummaryService,
   ) {}
 
   @Post("profile")

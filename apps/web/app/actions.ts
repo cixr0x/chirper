@@ -300,6 +300,115 @@ export async function createPostAction(formData: FormData) {
   }
 }
 
+export async function createReplyAction(formData: FormData) {
+  const postId = String(formData.get("postId") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  const targetPath = String(formData.get("targetPath") ?? "/").trim() || "/";
+  const sessionToken = await getSessionToken();
+
+  if (!sessionToken || !postId || !body) {
+    redirect(targetPath);
+  }
+
+  await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/replies`, {
+    method: "POST",
+    headers: sessionHeaders(sessionToken),
+    body: JSON.stringify({
+      body,
+    }),
+    cache: "no-store",
+  });
+
+  revalidatePath("/");
+  if (targetPath !== "/") {
+    revalidatePath(targetPath);
+  }
+}
+
+export async function likePostAction(formData: FormData) {
+  const postId = String(formData.get("postId") ?? "").trim();
+  const targetPath = String(formData.get("targetPath") ?? "/").trim() || "/";
+  const sessionToken = await getSessionToken();
+
+  if (!sessionToken || !postId) {
+    redirect(targetPath);
+  }
+
+  await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/likes`, {
+    method: "POST",
+    headers: sessionHeaders(sessionToken),
+    cache: "no-store",
+  });
+
+  revalidatePath("/");
+  if (targetPath !== "/") {
+    revalidatePath(targetPath);
+  }
+}
+
+export async function unlikePostAction(formData: FormData) {
+  const postId = String(formData.get("postId") ?? "").trim();
+  const targetPath = String(formData.get("targetPath") ?? "/").trim() || "/";
+  const sessionToken = await getSessionToken();
+
+  if (!sessionToken || !postId) {
+    redirect(targetPath);
+  }
+
+  await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/likes/remove`, {
+    method: "POST",
+    headers: sessionHeaders(sessionToken),
+    cache: "no-store",
+  });
+
+  revalidatePath("/");
+  if (targetPath !== "/") {
+    revalidatePath(targetPath);
+  }
+}
+
+export async function repostPostAction(formData: FormData) {
+  const postId = String(formData.get("postId") ?? "").trim();
+  const targetPath = String(formData.get("targetPath") ?? "/").trim() || "/";
+  const sessionToken = await getSessionToken();
+
+  if (!sessionToken || !postId) {
+    redirect(targetPath);
+  }
+
+  await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/reposts`, {
+    method: "POST",
+    headers: sessionHeaders(sessionToken),
+    cache: "no-store",
+  });
+
+  revalidatePath("/");
+  if (targetPath !== "/") {
+    revalidatePath(targetPath);
+  }
+}
+
+export async function undoRepostAction(formData: FormData) {
+  const postId = String(formData.get("postId") ?? "").trim();
+  const targetPath = String(formData.get("targetPath") ?? "/").trim() || "/";
+  const sessionToken = await getSessionToken();
+
+  if (!sessionToken || !postId) {
+    redirect(targetPath);
+  }
+
+  await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/reposts/remove`, {
+    method: "POST",
+    headers: sessionHeaders(sessionToken),
+    cache: "no-store",
+  });
+
+  revalidatePath("/");
+  if (targetPath !== "/") {
+    revalidatePath(targetPath);
+  }
+}
+
 export async function markNotificationsReadAction(formData: FormData) {
   const targetPath = String(formData.get("targetPath") ?? "/").trim() || "/";
   const sessionToken = await getSessionToken();

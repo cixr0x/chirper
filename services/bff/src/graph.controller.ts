@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Inject, Param, Post } from "@nestjs/common";
 import { GraphClientService } from "./clients/graph.client";
 import { sessionHeaderName } from "./session-header";
 import { SessionAuthService } from "./session-auth.service";
@@ -6,8 +6,8 @@ import { SessionAuthService } from "./session-auth.service";
 @Controller()
 export class GraphController {
   constructor(
-    private readonly graphClient: GraphClientService,
-    private readonly sessionAuth: SessionAuthService,
+    @Inject(GraphClientService) private readonly graphClient: GraphClientService,
+    @Inject(SessionAuthService) private readonly sessionAuth: SessionAuthService,
   ) {}
 
   @Get("graph/viewer/following")

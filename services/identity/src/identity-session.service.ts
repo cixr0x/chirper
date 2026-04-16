@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { randomBytes, createHash } from "node:crypto";
 import { PrismaService } from "./prisma.service";
 
@@ -14,7 +14,7 @@ const sessionTouchWindowMs = 1000 * 60 * 5;
 
 @Injectable()
 export class IdentitySessionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async createSession(userId: string, _userAgent?: string): Promise<IdentitySessionRecord & { sessionToken: string }> {
     const user = await this.prisma.user.findUnique({

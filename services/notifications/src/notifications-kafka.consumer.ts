@@ -1,9 +1,11 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import {
   KAFKA_TOPICS,
   isGraphFollowCreatedEvent,
   isGraphFollowRemovedEvent,
+  isPostLikeCreatedEvent,
   isPostPublishedEvent,
+  isPostRepostCreatedEvent,
 } from "@chirper/contracts-events";
 import { Consumer, Kafka, logLevel } from "kafkajs";
 import { NotificationsService } from "./notifications.service";
@@ -23,7 +25,7 @@ export class NotificationsKafkaConsumerService implements OnModuleInit, OnModule
   private running = false;
   private loopPromise?: Promise<void>;
 
-  constructor(private readonly notifications: NotificationsService) {}
+  constructor(@Inject(NotificationsService) private readonly notifications: NotificationsService) {}
 
   onModuleInit() {
     this.running = true;
@@ -77,6 +79,16 @@ export class NotificationsKafkaConsumerService implements OnModuleInit, OnModule
 
             if (isPostPublishedEvent(raw)) {
               await this.notifications.consumePostPublishedEvent(raw);
+              return;
+            }
+
+            if (isPostLikeCreatedEvent(raw)) {
+              await this.notifications.consumePostLikeCreatedEvent(raw);
+              return;
+            }
+
+            if (isPostRepostCreatedEvent(raw)) {
+              await this.notifications.consumePostRepostCreatedEvent(raw);
               return;
             }
 

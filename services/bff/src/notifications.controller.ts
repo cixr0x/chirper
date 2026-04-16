@@ -1,4 +1,4 @@
-import { Controller, Get, Headers, Post, Query } from "@nestjs/common";
+import { Controller, Get, Headers, Inject, Post, Query } from "@nestjs/common";
 import { IdentityClientService } from "./clients/identity.client";
 import { NotificationsClientService } from "./clients/notifications.client";
 import { ProfileClientService } from "./clients/profile.client";
@@ -10,11 +10,11 @@ import { SessionAuthService } from "./session-auth.service";
 @Controller()
 export class NotificationsController {
   constructor(
-    private readonly notificationsClient: NotificationsClientService,
-    private readonly realtimeClient: RealtimeClientService,
-    private readonly identityClient: IdentityClientService,
-    private readonly profileClient: ProfileClientService,
-    private readonly sessionAuth: SessionAuthService,
+    @Inject(NotificationsClientService) private readonly notificationsClient: NotificationsClientService,
+    @Inject(RealtimeClientService) private readonly realtimeClient: RealtimeClientService,
+    @Inject(IdentityClientService) private readonly identityClient: IdentityClientService,
+    @Inject(ProfileClientService) private readonly profileClient: ProfileClientService,
+    @Inject(SessionAuthService) private readonly sessionAuth: SessionAuthService,
   ) {}
 
   @Get("notifications")
@@ -128,6 +128,18 @@ export class NotificationsController {
 
     if (type === "new_post") {
       return `${displayName} published a new post.`;
+    }
+
+    if (type === "reply") {
+      return `${displayName} replied to your post.`;
+    }
+
+    if (type === "like") {
+      return `${displayName} liked your post.`;
+    }
+
+    if (type === "repost") {
+      return `${displayName} reposted your post.`;
     }
 
     return `${displayName} triggered a notification.`;

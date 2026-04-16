@@ -1,14 +1,16 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import {
   DOMAIN_EVENTS,
   type GraphFollowCreatedEvent,
   type GraphFollowRemovedEvent,
   type PostPublishedEvent,
+  type PostRepostCreatedEvent,
+  type PostRepostRemovedEvent,
 } from "@chirper/contracts-events";
 import { Prisma } from "../generated/prisma";
 import { GraphClientService } from "./clients/graph.client";
 import { IdentityClientService } from "./clients/identity.client";
-import { PostRecord, PostsClientService } from "./clients/posts.client";
+import { PostsClientService, TimelineActivityRecord } from "./clients/posts.client";
 import { PrismaService } from "./prisma.service";
 
 type TimelineEntry = {
@@ -18,15 +20,16 @@ type TimelineEntry = {
   actorUserId: string;
   insertedAt: string;
   rankScore: number;
+  activityType: string;
 };
 
 @Injectable()
 export class TimelineService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly identityClient: IdentityClientService,
-    private readonly graphClient: GraphClientService,
-    private readonly postsClient: PostsClientService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(IdentityClientService) private readonly identityClient: IdentityClientService,
+    @Inject(GraphClientService) private readonly graphClient: GraphClientService,
+    @Inject(PostsClientService) private readonly postsClient: PostsClientService,
   ) {}
 
   async listHomeTimeline(ownerUserId: string, limit = 25): Promise<TimelineEntry[]> {
@@ -42,12 +45,12 @@ export class TimelineService {
   async rebuildHomeTimeline(ownerUserId: string, limit = 25): Promise<TimelineEntry[]> {
     const followingUserIds = await this.listProjectedFollowing(ownerUserId);
     const authorUserIds = [...new Set([ownerUserId, ...followingUserIds])];
-    const posts = await this.postsClient.listPostsByAuthors(authorUserIds, limit);
+    const activities = await this.postsClient.listTimelineActivitiesByUsers(authorUserIds, limit);
 
-    const homeEntries = posts.map((post) => this.toHomeEntry(ownerUserId, post));
-    const userEntries = posts
-      .filter((post) => post.authorUserId === ownerUserId)
-      .map((post) => this.toUserEntry(ownerUserId, post));
+    const homeEntries = activities.map((activity) => this.toHomeEntry(ownerUserId, activity));
+    const userEntries = activities
+      .filter((activity) => activity.actorUserId === ownerUserId)
+      .map((activity) => this.toUserEntry(ownerUserId, activity));
 
     await this.runWithRetry(() =>
       this.prisma.$transaction(async (tx) => {
@@ -76,12 +79,12 @@ export class TimelineService {
         await tx.rankState.upsert({
           where: { ownerUserId },
           update: {
-            cursor: posts[0]?.postId ?? null,
+            cursor: activities[0]?.sourcePostId ?? null,
           },
           create: {
             id: `rank_${ownerUserId}`,
             ownerUserId,
-            cursor: posts[0]?.postId ?? null,
+            cursor: activities[0]?.sourcePostId ?? null,
           },
         });
       }),
@@ -96,6 +99,8 @@ export class TimelineService {
     createdAt: string;
   }) {
     return this.projectPublishedPost({
+      activityId: input.postId,
+      activityType: "post",
       postId: input.postId,
       authorUserId: input.authorUserId,
       createdAt: input.createdAt,
@@ -105,6 +110,8 @@ export class TimelineService {
   async consumePostPublishedEvent(event: PostPublishedEvent) {
     return this.projectPublishedPost(
       {
+        activityId: event.payload.postId,
+        activityType: event.payload.inReplyToPostId ? "reply" : "post",
         postId: event.payload.postId,
         authorUserId: event.payload.authorUserId,
         createdAt: event.payload.createdAt,
@@ -119,6 +126,49 @@ export class TimelineService {
 
   async consumeGraphFollowRemovedEvent(event: GraphFollowRemovedEvent) {
     return this.rebuildFromGraphEvent(event, event.payload.followerUserId);
+  }
+
+  async consumePostRepostCreatedEvent(event: PostRepostCreatedEvent) {
+    return this.projectRepostActivity(
+      {
+        activityId: event.payload.repostId,
+        activityType: "repost",
+        actorUserId: event.payload.actorUserId,
+        sourcePostId: event.payload.postId,
+        createdAt: event.payload.createdAt,
+      },
+      event,
+    );
+  }
+
+  async consumePostRepostRemovedEvent(event: PostRepostRemovedEvent) {
+    const eventReserved = await this.reserveInboxEvent(event);
+    if (!eventReserved) {
+      return { removed: false };
+    }
+
+    await this.runWithRetry(() =>
+      this.prisma.$transaction(async (tx) => {
+        await tx.homeEntry.deleteMany({
+          where: {
+            sourcePostId: event.payload.postId,
+            actorUserId: event.payload.actorUserId,
+            activityType: "repost",
+          },
+        });
+
+        await tx.userEntry.deleteMany({
+          where: {
+            ownerUserId: event.payload.actorUserId,
+            sourcePostId: event.payload.postId,
+            activityType: "repost",
+          },
+        });
+      }),
+    );
+
+    await this.markInboxProcessed(event.id, event.name);
+    return { removed: true };
   }
 
   async rebuildFollowProjection() {
@@ -164,11 +214,13 @@ export class TimelineService {
 
   private async projectPublishedPost(
     input: {
+      activityId: string;
+      activityType: string;
       postId: string;
       authorUserId: string;
       createdAt: string;
     },
-    event?: PostPublishedEvent,
+    event?: PostPublishedEvent | PostRepostCreatedEvent,
   ) {
     const createdAt = this.parseDate(input.createdAt);
     const rankScore = this.rankScoreFor(createdAt);
@@ -203,10 +255,11 @@ export class TimelineService {
         if (ownerUserIds.length > 0) {
           await tx.homeEntry.createMany({
             data: ownerUserIds.map((ownerUserId) => ({
-              id: this.homeEntryId(ownerUserId, input.postId),
+              id: this.homeEntryId(ownerUserId, input.activityType, input.activityId),
               ownerUserId,
               sourcePostId: input.postId,
               actorUserId: input.authorUserId,
+              activityType: input.activityType,
               insertedAt: createdAt,
               rankScore,
             })),
@@ -217,9 +270,10 @@ export class TimelineService {
         await tx.userEntry.createMany({
           data: [
             {
-              id: this.userEntryId(input.authorUserId, input.postId),
+              id: this.userEntryId(input.authorUserId, input.activityType, input.activityId),
               ownerUserId: input.authorUserId,
               sourcePostId: input.postId,
+              activityType: input.activityType,
               insertedAt: createdAt,
             },
           ],
@@ -230,7 +284,7 @@ export class TimelineService {
           await tx.inboxEvent.update({
             where: { id: event.id },
             data: {
-              eventType: DOMAIN_EVENTS.postPublished,
+              eventType: event.name,
               processedAt: new Date(),
             },
           });
@@ -241,6 +295,28 @@ export class TimelineService {
     return {
       insertedCount: ownerUserIds.length,
     };
+  }
+
+  private async projectRepostActivity(
+    input: {
+      activityId: string;
+      activityType: string;
+      actorUserId: string;
+      sourcePostId: string;
+      createdAt: string;
+    },
+    event?: PostRepostCreatedEvent,
+  ) {
+    return this.projectPublishedPost(
+      {
+        activityId: input.activityId,
+        activityType: input.activityType,
+        postId: input.sourcePostId,
+        authorUserId: input.actorUserId,
+        createdAt: input.createdAt,
+      },
+      event,
+    );
   }
 
   private async rebuildFromGraphEvent(
@@ -289,24 +365,26 @@ export class TimelineService {
     };
   }
 
-  private toHomeEntry(ownerUserId: string, post: PostRecord) {
-    const insertedAt = this.parseDate(post.createdAt);
+  private toHomeEntry(ownerUserId: string, activity: TimelineActivityRecord) {
+    const insertedAt = this.parseDate(activity.createdAt);
     return {
-      id: this.homeEntryId(ownerUserId, post.postId),
+      id: this.homeEntryId(ownerUserId, activity.activityType, activity.activityId),
       ownerUserId,
-      sourcePostId: post.postId,
-      actorUserId: post.authorUserId,
+      sourcePostId: activity.sourcePostId,
+      actorUserId: activity.actorUserId,
+      activityType: activity.activityType,
       insertedAt,
       rankScore: this.rankScoreFor(insertedAt),
     };
   }
 
-  private toUserEntry(ownerUserId: string, post: PostRecord) {
+  private toUserEntry(ownerUserId: string, activity: TimelineActivityRecord) {
     return {
-      id: this.userEntryId(ownerUserId, post.postId),
+      id: this.userEntryId(ownerUserId, activity.activityType, activity.activityId),
       ownerUserId,
-      sourcePostId: post.postId,
-      insertedAt: this.parseDate(post.createdAt),
+      sourcePostId: activity.sourcePostId,
+      activityType: activity.activityType,
+      insertedAt: this.parseDate(activity.createdAt),
     };
   }
 
@@ -315,6 +393,7 @@ export class TimelineService {
     ownerUserId: string;
     sourcePostId: string;
     actorUserId: string;
+    activityType: string;
     insertedAt: Date;
     rankScore: { toNumber(): number };
   }): TimelineEntry {
@@ -325,6 +404,7 @@ export class TimelineService {
       actorUserId: entry.actorUserId,
       insertedAt: entry.insertedAt.toISOString(),
       rankScore: entry.rankScore.toNumber(),
+      activityType: entry.activityType,
     };
   }
 
@@ -337,12 +417,12 @@ export class TimelineService {
     return Number((date.getTime() / 1000).toFixed(4));
   }
 
-  private homeEntryId(ownerUserId: string, postId: string) {
-    return `home_${ownerUserId}_${postId}`;
+  private homeEntryId(ownerUserId: string, activityType: string, activityId: string) {
+    return `home_${activityType}_${ownerUserId}_${activityId}`;
   }
 
-  private userEntryId(ownerUserId: string, postId: string) {
-    return `user_${ownerUserId}_${postId}`;
+  private userEntryId(ownerUserId: string, activityType: string, activityId: string) {
+    return `user_${activityType}_${ownerUserId}_${activityId}`;
   }
 
   private followEdgeId(ownerUserId: string, followeeUserId: string) {
@@ -368,7 +448,12 @@ export class TimelineService {
   }
 
   private async reserveInboxEvent(
-    event: PostPublishedEvent | GraphFollowCreatedEvent | GraphFollowRemovedEvent,
+    event:
+      | PostPublishedEvent
+      | PostRepostCreatedEvent
+      | PostRepostRemovedEvent
+      | GraphFollowCreatedEvent
+      | GraphFollowRemovedEvent,
   ) {
     const existingInboxEvent = await this.prisma.inboxEvent.findUnique({
       where: { id: event.id },

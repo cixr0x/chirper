@@ -8,6 +8,15 @@ export type PostRecord = {
   body: string;
   visibility: string;
   createdAt: string;
+  inReplyToPostId: string;
+};
+
+export type TimelineActivityRecord = {
+  activityId: string;
+  activityType: string;
+  actorUserId: string;
+  sourcePostId: string;
+  createdAt: string;
 };
 
 type ListPostsByAuthorsRequest = {
@@ -19,8 +28,20 @@ type ListPostsByAuthorsResponse = {
   posts: PostRecord[];
 };
 
+type ListTimelineActivitiesByUsersRequest = {
+  actorUserIds: string[];
+  limit: number;
+};
+
+type ListTimelineActivitiesByUsersResponse = {
+  activities: TimelineActivityRecord[];
+};
+
 type PostsGrpcService = {
   listPostsByAuthors(request: ListPostsByAuthorsRequest): Observable<ListPostsByAuthorsResponse>;
+  listTimelineActivitiesByUsers(
+    request: ListTimelineActivitiesByUsersRequest,
+  ): Observable<ListTimelineActivitiesByUsersResponse>;
 };
 
 @Injectable()
@@ -36,5 +57,12 @@ export class PostsClientService implements OnModuleInit {
   async listPostsByAuthors(authorUserIds: string[], limit = 25) {
     const response = await lastValueFrom(this.service.listPostsByAuthors({ authorUserIds, limit }));
     return response.posts ?? [];
+  }
+
+  async listTimelineActivitiesByUsers(actorUserIds: string[], limit = 25) {
+    const response = await lastValueFrom(
+      this.service.listTimelineActivitiesByUsers({ actorUserIds, limit }),
+    );
+    return response.activities ?? [];
   }
 }

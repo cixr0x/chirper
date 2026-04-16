@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { PrismaService } from "./prisma.service";
 import { normalizeHandle } from "./password-utils";
 
@@ -11,7 +11,7 @@ type IdentityUser = {
 
 @Injectable()
 export class IdentityDirectoryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async listUsers(): Promise<IdentityUser[]> {
     const users = await this.prisma.user.findMany({

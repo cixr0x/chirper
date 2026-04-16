@@ -1,10 +1,10 @@
-import { Controller } from "@nestjs/common";
+import { Controller, Inject } from "@nestjs/common";
 import { GrpcMethod } from "@nestjs/microservices";
 import { NotificationsService } from "./notifications.service";
 
 @Controller()
 export class NotificationsGrpcController {
-  constructor(private readonly notifications: NotificationsService) {}
+  constructor(@Inject(NotificationsService) private readonly notifications: NotificationsService) {}
 
   @GrpcMethod("NotificationsService", "ListNotifications")
   async listNotifications(data: { userId: string; limit?: number }) {

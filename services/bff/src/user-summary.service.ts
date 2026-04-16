@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { IdentityClientService } from "./clients/identity.client";
 import { ProfileClientService } from "./clients/profile.client";
 import { buildManagedAssetUrl } from "./media-url";
@@ -6,8 +6,8 @@ import { buildManagedAssetUrl } from "./media-url";
 @Injectable()
 export class UserSummaryService {
   constructor(
-    private readonly identityClient: IdentityClientService,
-    private readonly profileClient: ProfileClientService,
+    @Inject(IdentityClientService) private readonly identityClient: IdentityClientService,
+    @Inject(ProfileClientService) private readonly profileClient: ProfileClientService,
   ) {}
 
   async listUsers() {

@@ -1,10 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { createHash } from "node:crypto";
 import {
   DOMAIN_EVENTS,
   type GraphFollowCreatedEvent,
   type GraphFollowRemovedEvent,
+  type PostLikeCreatedEvent,
   type PostPublishedEvent,
+  type PostRepostCreatedEvent,
 } from "@chirper/contracts-events";
 import { Prisma } from "../generated/prisma";
 import { GraphClientService } from "./clients/graph.client";
@@ -25,10 +27,10 @@ type NotificationRecord = {
 @Injectable()
 export class NotificationsService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly identityClient: IdentityClientService,
-    private readonly graphClient: GraphClientService,
-    private readonly realtime: RealtimeClientService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(IdentityClientService) private readonly identityClient: IdentityClientService,
+    @Inject(GraphClientService) private readonly graphClient: GraphClientService,
+    @Inject(RealtimeClientService) private readonly realtime: RealtimeClientService,
   ) {}
 
   async listNotifications(userId: string, limit = 20): Promise<NotificationRecord[]> {
@@ -131,17 +133,29 @@ export class NotificationsService {
       return;
     }
 
-    const followerUserIds = await this.listProjectedFollowers(event.payload.authorUserId);
-    await Promise.allSettled(
-      followerUserIds.map((recipientUserId) =>
-        this.createNotification({
-          recipientUserId,
-          actorUserId: event.payload.authorUserId,
-          type: "new_post",
-          resourceId: event.payload.postId,
-        }),
-      ),
-    );
+    if (
+      event.payload.inReplyToAuthorUserId &&
+      event.payload.inReplyToAuthorUserId !== event.payload.authorUserId
+    ) {
+      await this.createNotification({
+        recipientUserId: event.payload.inReplyToAuthorUserId,
+        actorUserId: event.payload.authorUserId,
+        type: "reply",
+        resourceId: event.payload.postId,
+      });
+    } else {
+      const followerUserIds = await this.listProjectedFollowers(event.payload.authorUserId);
+      await Promise.allSettled(
+        followerUserIds.map((recipientUserId) =>
+          this.createNotification({
+            recipientUserId,
+            actorUserId: event.payload.authorUserId,
+            type: "new_post",
+            resourceId: event.payload.postId,
+          }),
+        ),
+      );
+    }
 
     await this.markInboxProcessed(event.id, DOMAIN_EVENTS.postPublished);
   }
@@ -191,6 +205,42 @@ export class NotificationsService {
     });
 
     await this.markInboxProcessed(event.id, DOMAIN_EVENTS.graphFollowRemoved);
+  }
+
+  async consumePostLikeCreatedEvent(event: PostLikeCreatedEvent) {
+    const eventReserved = await this.reserveInboxEvent(event);
+    if (!eventReserved) {
+      return;
+    }
+
+    if (event.payload.postAuthorUserId !== event.payload.actorUserId) {
+      await this.createNotification({
+        recipientUserId: event.payload.postAuthorUserId,
+        actorUserId: event.payload.actorUserId,
+        type: "like",
+        resourceId: event.payload.likeId,
+      });
+    }
+
+    await this.markInboxProcessed(event.id, DOMAIN_EVENTS.postLikeCreated);
+  }
+
+  async consumePostRepostCreatedEvent(event: PostRepostCreatedEvent) {
+    const eventReserved = await this.reserveInboxEvent(event);
+    if (!eventReserved) {
+      return;
+    }
+
+    if (event.payload.postAuthorUserId !== event.payload.actorUserId) {
+      await this.createNotification({
+        recipientUserId: event.payload.postAuthorUserId,
+        actorUserId: event.payload.actorUserId,
+        type: "repost",
+        resourceId: event.payload.repostId,
+      });
+    }
+
+    await this.markInboxProcessed(event.id, DOMAIN_EVENTS.postRepostCreated);
   }
 
   async rebuildFollowProjection() {
@@ -273,7 +323,12 @@ export class NotificationsService {
   }
 
   private async reserveInboxEvent(
-    event: PostPublishedEvent | GraphFollowCreatedEvent | GraphFollowRemovedEvent,
+    event:
+      | PostPublishedEvent
+      | PostLikeCreatedEvent
+      | PostRepostCreatedEvent
+      | GraphFollowCreatedEvent
+      | GraphFollowRemovedEvent,
   ) {
     const existingInbox = await this.prisma.inboxEvent.findUnique({
       where: { id: event.id },

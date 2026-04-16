@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException, Param, Res } from "@nestjs/common";
+import { Controller, Get, Inject, NotFoundException, Param, Res } from "@nestjs/common";
 import { status } from "@grpc/grpc-js";
 import type { FastifyReply } from "fastify";
 import { MediaClientService } from "./clients/media.client";
@@ -6,7 +6,7 @@ import { hasGrpcStatus } from "./grpc-status";
 
 @Controller("media")
 export class MediaController {
-  constructor(private readonly mediaClient: MediaClientService) {}
+  constructor(@Inject(MediaClientService) private readonly mediaClient: MediaClientService) {}
 
   @Get("assets/:assetId/redirect")
   async redirectToAsset(

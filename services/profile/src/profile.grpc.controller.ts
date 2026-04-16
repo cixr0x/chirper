@@ -1,11 +1,11 @@
-import { Controller } from "@nestjs/common";
+import { Controller, Inject } from "@nestjs/common";
 import { status } from "@grpc/grpc-js";
 import { GrpcMethod, RpcException } from "@nestjs/microservices";
 import { ProfileDirectoryService } from "./profile-directory.service";
 
 @Controller()
 export class ProfileGrpcController {
-  constructor(private readonly directory: ProfileDirectoryService) {}
+  constructor(@Inject(ProfileDirectoryService) private readonly directory: ProfileDirectoryService) {}
 
   @GrpcMethod("ProfileService", "GetProfileByUserId")
   async getProfileByUserId(data: { userId: string }) {

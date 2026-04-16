@@ -1,9 +1,9 @@
-import { Controller, Post } from "@nestjs/common";
+import { Controller, Inject, Post } from "@nestjs/common";
 import { NotificationsService } from "./notifications.service";
 
 @Controller("projections/follows")
 export class ProjectionController {
-  constructor(private readonly notifications: NotificationsService) {}
+  constructor(@Inject(NotificationsService) private readonly notifications: NotificationsService) {}
 
   @Post("rebuild")
   async rebuildFollowProjection() {

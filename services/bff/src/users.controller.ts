@@ -1,9 +1,9 @@
-import { Controller, Get, Param } from "@nestjs/common";
+import { Controller, Get, Inject, Param } from "@nestjs/common";
 import { UserSummaryService } from "./user-summary.service";
 
 @Controller("users")
 export class UsersController {
-  constructor(private readonly userSummaryService: UserSummaryService) {}
+  constructor(@Inject(UserSummaryService) private readonly userSummaryService: UserSummaryService) {}
 
   @Get()
   async listUsers() {

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { createHash, randomBytes } from "node:crypto";
 import { PrismaService } from "./prisma.service";
 import { IdentityPasswordError } from "./identity-password.error";
@@ -19,8 +19,8 @@ const passwordResetLifetimeMinutes = 30;
 @Injectable()
 export class IdentityPasswordService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly sessions: IdentitySessionService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(IdentitySessionService) private readonly sessions: IdentitySessionService,
   ) {}
 
   async createPasswordSession(handle: string, password: string, userAgent?: string) {

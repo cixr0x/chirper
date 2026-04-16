@@ -1,10 +1,10 @@
-import { Controller } from "@nestjs/common";
+import { Controller, Inject } from "@nestjs/common";
 import { GrpcMethod } from "@nestjs/microservices";
 import { RealtimeService } from "./realtime.service";
 
 @Controller()
 export class RealtimeGrpcController {
-  constructor(private readonly realtime: RealtimeService) {}
+  constructor(@Inject(RealtimeService) private readonly realtime: RealtimeService) {}
 
   @GrpcMethod("RealtimeService", "PublishNotification")
   publishNotification(data: {

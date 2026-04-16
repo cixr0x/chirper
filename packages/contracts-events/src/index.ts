@@ -4,6 +4,10 @@ export const DOMAIN_EVENTS = {
   graphFollowCreated: "graph.follow.created.v1",
   graphFollowRemoved: "graph.follow.removed.v1",
   postPublished: "posts.post.published.v1",
+  postLikeCreated: "posts.like.created.v1",
+  postLikeRemoved: "posts.like.removed.v1",
+  postRepostCreated: "posts.repost.created.v1",
+  postRepostRemoved: "posts.repost.removed.v1",
   timelineEntryProjected: "timeline.entry.projected.v1",
   notificationCreated: "notifications.notification.created.v1",
   mediaAssetProcessed: "media.asset.processed.v1",
@@ -31,11 +35,65 @@ export type PostPublishedPayload = {
   authorUserId: string;
   visibility: string;
   createdAt: string;
+  inReplyToPostId?: string;
+  inReplyToAuthorUserId?: string;
 };
 
 export type PostPublishedEvent = DomainEventEnvelope<
   PostPublishedPayload,
   (typeof DOMAIN_EVENTS)["postPublished"]
+>;
+
+export type PostLikeCreatedPayload = {
+  likeId: string;
+  postId: string;
+  actorUserId: string;
+  postAuthorUserId: string;
+  createdAt: string;
+};
+
+export type PostLikeCreatedEvent = DomainEventEnvelope<
+  PostLikeCreatedPayload,
+  (typeof DOMAIN_EVENTS)["postLikeCreated"]
+>;
+
+export type PostLikeRemovedPayload = {
+  likeId: string;
+  postId: string;
+  actorUserId: string;
+  postAuthorUserId: string;
+  removedAt: string;
+};
+
+export type PostLikeRemovedEvent = DomainEventEnvelope<
+  PostLikeRemovedPayload,
+  (typeof DOMAIN_EVENTS)["postLikeRemoved"]
+>;
+
+export type PostRepostCreatedPayload = {
+  repostId: string;
+  postId: string;
+  actorUserId: string;
+  postAuthorUserId: string;
+  createdAt: string;
+};
+
+export type PostRepostCreatedEvent = DomainEventEnvelope<
+  PostRepostCreatedPayload,
+  (typeof DOMAIN_EVENTS)["postRepostCreated"]
+>;
+
+export type PostRepostRemovedPayload = {
+  repostId: string;
+  postId: string;
+  actorUserId: string;
+  postAuthorUserId: string;
+  removedAt: string;
+};
+
+export type PostRepostRemovedEvent = DomainEventEnvelope<
+  PostRepostRemovedPayload,
+  (typeof DOMAIN_EVENTS)["postRepostRemoved"]
 >;
 
 export type GraphFollowCreatedPayload = {
@@ -75,7 +133,86 @@ export function isPostPublishedEvent(value: unknown): value is PostPublishedEven
     typeof event.payload?.postId === "string" &&
     typeof event.payload?.authorUserId === "string" &&
     typeof event.payload?.visibility === "string" &&
+    typeof event.payload?.createdAt === "string" &&
+    (event.payload?.inReplyToPostId === undefined || typeof event.payload?.inReplyToPostId === "string") &&
+    (event.payload?.inReplyToAuthorUserId === undefined ||
+      typeof event.payload?.inReplyToAuthorUserId === "string")
+  );
+}
+
+export function isPostLikeCreatedEvent(value: unknown): value is PostLikeCreatedEvent {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const event = value as Partial<PostLikeCreatedEvent>;
+  return (
+    event.name === DOMAIN_EVENTS.postLikeCreated &&
+    typeof event.id === "string" &&
+    typeof event.aggregateId === "string" &&
+    typeof event.occurredAt === "string" &&
+    typeof event.payload?.likeId === "string" &&
+    typeof event.payload?.postId === "string" &&
+    typeof event.payload?.actorUserId === "string" &&
+    typeof event.payload?.postAuthorUserId === "string" &&
     typeof event.payload?.createdAt === "string"
+  );
+}
+
+export function isPostLikeRemovedEvent(value: unknown): value is PostLikeRemovedEvent {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const event = value as Partial<PostLikeRemovedEvent>;
+  return (
+    event.name === DOMAIN_EVENTS.postLikeRemoved &&
+    typeof event.id === "string" &&
+    typeof event.aggregateId === "string" &&
+    typeof event.occurredAt === "string" &&
+    typeof event.payload?.likeId === "string" &&
+    typeof event.payload?.postId === "string" &&
+    typeof event.payload?.actorUserId === "string" &&
+    typeof event.payload?.postAuthorUserId === "string" &&
+    typeof event.payload?.removedAt === "string"
+  );
+}
+
+export function isPostRepostCreatedEvent(value: unknown): value is PostRepostCreatedEvent {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const event = value as Partial<PostRepostCreatedEvent>;
+  return (
+    event.name === DOMAIN_EVENTS.postRepostCreated &&
+    typeof event.id === "string" &&
+    typeof event.aggregateId === "string" &&
+    typeof event.occurredAt === "string" &&
+    typeof event.payload?.repostId === "string" &&
+    typeof event.payload?.postId === "string" &&
+    typeof event.payload?.actorUserId === "string" &&
+    typeof event.payload?.postAuthorUserId === "string" &&
+    typeof event.payload?.createdAt === "string"
+  );
+}
+
+export function isPostRepostRemovedEvent(value: unknown): value is PostRepostRemovedEvent {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const event = value as Partial<PostRepostRemovedEvent>;
+  return (
+    event.name === DOMAIN_EVENTS.postRepostRemoved &&
+    typeof event.id === "string" &&
+    typeof event.aggregateId === "string" &&
+    typeof event.occurredAt === "string" &&
+    typeof event.payload?.repostId === "string" &&
+    typeof event.payload?.postId === "string" &&
+    typeof event.payload?.actorUserId === "string" &&
+    typeof event.payload?.postAuthorUserId === "string" &&
+    typeof event.payload?.removedAt === "string"
   );
 }
 

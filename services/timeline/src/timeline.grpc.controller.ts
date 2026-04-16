@@ -1,10 +1,10 @@
-import { Controller } from "@nestjs/common";
+import { Controller, Inject } from "@nestjs/common";
 import { GrpcMethod } from "@nestjs/microservices";
 import { TimelineService } from "./timeline.service";
 
 @Controller()
 export class TimelineGrpcController {
-  constructor(private readonly timeline: TimelineService) {}
+  constructor(@Inject(TimelineService) private readonly timeline: TimelineService) {}
 
   @GrpcMethod("TimelineService", "ListHomeTimeline")
   async listHomeTimeline(data: { ownerUserId: string; limit?: number }) {
@@ -22,6 +22,10 @@ export class TimelineGrpcController {
 
   @GrpcMethod("TimelineService", "FanOutPost")
   async fanOutPost(data: { postId: string; authorUserId: string; createdAt: string }) {
-    return this.timeline.fanOutPost(data);
+    return this.timeline.fanOutPost({
+      postId: data.postId,
+      authorUserId: data.authorUserId,
+      createdAt: data.createdAt,
+    });
   }
 }

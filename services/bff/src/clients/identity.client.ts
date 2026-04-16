@@ -19,7 +19,7 @@ type CreatePasswordResetResponse = { accepted: boolean; previewToken?: string; e
 type ResetPasswordRequest = { resetToken: string; newPassword: string; userAgent?: string };
 type GetSessionRequest = { sessionToken: string };
 type RevokeSessionRequest = { sessionToken: string };
-type IdentityUser = {
+export type IdentityUser = {
   userId: string;
   handle: string;
   displayName: string;

@@ -1,4 +1,4 @@
-import { Controller } from "@nestjs/common";
+import { Controller, Inject } from "@nestjs/common";
 import { status } from "@grpc/grpc-js";
 import { GrpcMethod, RpcException } from "@nestjs/microservices";
 import { IdentityDirectoryService } from "./identity-directory.service";
@@ -9,9 +9,9 @@ import { IdentitySessionService } from "./identity-session.service";
 @Controller()
 export class IdentityGrpcController {
   constructor(
-    private readonly directory: IdentityDirectoryService,
-    private readonly passwords: IdentityPasswordService,
-    private readonly sessions: IdentitySessionService,
+    @Inject(IdentityDirectoryService) private readonly directory: IdentityDirectoryService,
+    @Inject(IdentityPasswordService) private readonly passwords: IdentityPasswordService,
+    @Inject(IdentitySessionService) private readonly sessions: IdentitySessionService,
   ) {}
 
   @GrpcMethod("IdentityService", "GetUserById")

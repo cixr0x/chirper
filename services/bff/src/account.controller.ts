@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Headers,
+  Inject,
   Post,
   UnauthorizedException,
 } from "@nestjs/common";
@@ -20,9 +21,9 @@ import { UserSummaryService } from "./user-summary.service";
 @Controller("account")
 export class AccountController {
   constructor(
-    private readonly identityClient: IdentityClientService,
-    private readonly sessionAuth: SessionAuthService,
-    private readonly userSummaryService: UserSummaryService,
+    @Inject(IdentityClientService) private readonly identityClient: IdentityClientService,
+    @Inject(SessionAuthService) private readonly sessionAuth: SessionAuthService,
+    @Inject(UserSummaryService) private readonly userSummaryService: UserSummaryService,
   ) {}
 
   @Post("password/change")

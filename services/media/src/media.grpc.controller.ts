@@ -1,11 +1,11 @@
-import { Controller } from "@nestjs/common";
+import { Controller, Inject } from "@nestjs/common";
 import { status } from "@grpc/grpc-js";
 import { GrpcMethod, RpcException } from "@nestjs/microservices";
 import { MediaLibraryService } from "./media.service";
 
 @Controller()
 export class MediaGrpcController {
-  constructor(private readonly mediaLibrary: MediaLibraryService) {}
+  constructor(@Inject(MediaLibraryService) private readonly mediaLibrary: MediaLibraryService) {}
 
   @GrpcMethod("MediaService", "CreateAssetFromSource")
   async createAssetFromSource(data: {

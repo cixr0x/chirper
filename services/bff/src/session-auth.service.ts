@@ -1,9 +1,9 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { IdentityClientService } from "./clients/identity.client";
 
 @Injectable()
 export class SessionAuthService {
-  constructor(private readonly identityClient: IdentityClientService) {}
+  constructor(@Inject(IdentityClientService) private readonly identityClient: IdentityClientService) {}
 
   async requireSession(sessionToken?: string) {
     const normalizedToken = sessionToken?.trim();

@@ -3,17 +3,21 @@ import { AvatarBadge } from "../components/avatar-badge";
 import Link from "next/link";
 import {
   changePasswordAction,
+  createReplyAction,
   createPostAction,
+  likePostAction,
   markNotificationsReadAction,
   registerAction,
+  repostPostAction,
   requestPasswordResetAction,
   signInAction,
   signOutAction,
+  undoRepostAction,
+  unlikePostAction,
 } from "./actions";
 import {
   formatPostTimestamp,
   getHomeFeed,
-  getInitials,
   getNotifications,
   getPublicFeed,
   getUserDirectory,
@@ -27,6 +31,7 @@ const currentScope = [
   "DB-backed identity and profile services",
   "Graph service plus projected home timeline",
   "Notifications service and buffered realtime fan-out",
+  "Likes, replies, and reposts owned by `posts`",
 ];
 
 const demoCredentials = [
@@ -78,11 +83,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <section className="app-hero">
         <div>
           <p className="eyebrow">Chirper Alpha</p>
-          <h1>The app now has an inbox and live notification fan-out.</h1>
+          <h1>The feed now supports replies, likes, and repost activity.</h1>
           <p className="lede">
-            `notifications` owns durable inbox state, `realtime` owns ephemeral live delivery, and
-            the web app reads both through the BFF while the follow graph and home timeline remain
-            isolated behind gRPC boundaries.
+            `posts` owns interaction writes and emits Kafka events for replies, likes, and reposts.
+            `timeline` projects repost activity, `notifications` creates author-facing alerts, and
+            the web app reads the resulting activity feed through the BFF.
           </p>
         </div>
         <div className="hero-panel">
@@ -313,8 +318,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <h2>{viewer ? `Projected feed for @${viewer.handle}` : "Public feed"}</h2>
               </div>
               <p className="section-copy">
-                New posts fan out into `timeline_*` rows for signed-in viewers, while signed-out
-                visitors fall back to the public post list.
+                Signed-in viewers now read a feed of projected activities: original posts, replies,
+                and reposts. Signed-out visitors still fall back to the public post list.
               </p>
             </div>
 
@@ -330,6 +335,18 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <div className="feed-stack">
                 {feed.map((item) => (
                     <article className="feed-card" key={item.postId}>
+                      {item.activityType === "repost" && item.actor ? (
+                        <p className="activity-kicker">
+                          {item.actor.displayName} reposted this on{" "}
+                          {formatPostTimestamp(item.projectedAt ?? item.createdAt)}
+                        </p>
+                      ) : null}
+                      {item.activityType === "reply" && item.inReplyTo ? (
+                        <p className="activity-kicker">
+                          Replying to{" "}
+                          {item.inReplyTo.author ? `@${item.inReplyTo.author.handle}` : item.inReplyTo.postId}
+                        </p>
+                      ) : null}
                       <div className="feed-head">
                         <AvatarBadge
                           avatarUrl={item.author?.avatarUrl}
@@ -344,6 +361,47 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       </div>
                     </div>
                     <p className="feed-body">{item.body}</p>
+                    <div className="feed-metrics">
+                      <span>{item.metrics.replyCount} replies</span>
+                      <span>{item.metrics.likeCount} likes</span>
+                      <span>{item.metrics.repostCount} reposts</span>
+                    </div>
+                    {viewer ? (
+                      <>
+                        <div className="feed-actions-row">
+                          <form action={item.metrics.likedByViewer ? unlikePostAction : likePostAction}>
+                            <input name="postId" type="hidden" value={item.postId} />
+                            <input name="targetPath" type="hidden" value="/" />
+                            <button className="secondary-button compact" type="submit">
+                              {item.metrics.likedByViewer ? "Unlike" : "Like"}
+                            </button>
+                          </form>
+                          <form action={item.metrics.repostedByViewer ? undoRepostAction : repostPostAction}>
+                            <input name="postId" type="hidden" value={item.postId} />
+                            <input name="targetPath" type="hidden" value="/" />
+                            <button className="secondary-button compact" type="submit">
+                              {item.metrics.repostedByViewer ? "Undo repost" : "Repost"}
+                            </button>
+                          </form>
+                        </div>
+                        <form action={createReplyAction} className="reply-form">
+                          <input name="postId" type="hidden" value={item.postId} />
+                          <input name="targetPath" type="hidden" value="/" />
+                          <label className="field">
+                            <span>Reply</span>
+                            <textarea
+                              maxLength={280}
+                              name="body"
+                              placeholder={`Reply to @${item.author?.handle ?? "unknown"}`}
+                              rows={2}
+                            />
+                          </label>
+                          <button className="primary-button compact" type="submit">
+                            Reply
+                          </button>
+                        </form>
+                      </>
+                    ) : null}
                   </article>
                 ))}
               </div>
@@ -414,9 +472,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <p className="eyebrow">Directory</p>
               <h2>Use profiles to inspect and change the follow graph</h2>
             </div>
-            <p className="section-copy">
+          <p className="section-copy">
               Demo follows are stored in `graph_*`; timeline rows rebuild into `timeline_*`; follow
-              and post events also populate the notification pipeline.
+              and post interaction events also populate the notification pipeline.
             </p>
           </div>
 
@@ -474,11 +532,20 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <section className="notes-strip">
         <article>
           <h3>Service boundary</h3>
-          <p>`web` stores the opaque session token cookie, `bff` validates it through `identity`, and the rest of the system still coordinates `graph`, `timeline`, `notifications`, and `realtime` over gRPC.</p>
+          <p>
+            <code>web</code> stores the opaque session token cookie, <code>bff</code> validates it through
+            <code> identity</code>, and the interaction flow now goes <code>web -&gt; bff -&gt; posts</code>,
+            with timeline and notifications reacting from Kafka rather than direct orchestration.
+          </p>
         </article>
         <article>
           <h3>Database rule</h3>
-          <p>`identity` owns `ident_sessions` and `ident_credentials`; `profile` owns profile links and asset references; `media` owns upload metadata; `notifications` owns `notify_*`; no service reads another service&apos;s tables.</p>
+          <p>
+            <code>identity</code> owns <code>ident_sessions</code> and <code>ident_credentials</code>;
+            <code> profile</code> owns profile links and asset references; <code>media</code> owns upload
+            metadata; <code>posts</code> owns replies, likes, and reposts; <code>timeline</code> and
+            <code> notifications</code> consume events into their own projections without reading foreign tables.
+          </p>
         </article>
       </section>
     </main>

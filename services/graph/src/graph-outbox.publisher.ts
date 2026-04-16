@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import {
   DOMAIN_EVENTS,
   KAFKA_TOPICS,
@@ -23,7 +23,7 @@ export class GraphOutboxPublisherService implements OnModuleInit, OnModuleDestro
   private connected = false;
   private loopPromise?: Promise<void>;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   onModuleInit() {
     this.running = true;

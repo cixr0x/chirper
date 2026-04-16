@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import {
   DOMAIN_EVENTS,
@@ -17,7 +17,7 @@ type FollowRecord = {
 
 @Injectable()
 export class GraphService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async listFollowing(userId: string): Promise<string[]> {
     const follows = await this.prisma.follow.findMany({

@@ -1,8 +1,10 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import {
   KAFKA_TOPICS,
   isGraphFollowCreatedEvent,
   isGraphFollowRemovedEvent,
+  isPostRepostCreatedEvent,
+  isPostRepostRemovedEvent,
   isPostPublishedEvent,
 } from "@chirper/contracts-events";
 import { Consumer, Kafka, logLevel } from "kafkajs";
@@ -23,7 +25,7 @@ export class TimelineKafkaConsumerService implements OnModuleInit, OnModuleDestr
   private running = false;
   private loopPromise?: Promise<void>;
 
-  constructor(private readonly timelineService: TimelineService) {}
+  constructor(@Inject(TimelineService) private readonly timelineService: TimelineService) {}
 
   onModuleInit() {
     this.running = true;
@@ -76,6 +78,16 @@ export class TimelineKafkaConsumerService implements OnModuleInit, OnModuleDestr
 
             if (isPostPublishedEvent(raw)) {
               await this.timelineService.consumePostPublishedEvent(raw);
+              return;
+            }
+
+            if (isPostRepostCreatedEvent(raw)) {
+              await this.timelineService.consumePostRepostCreatedEvent(raw);
+              return;
+            }
+
+            if (isPostRepostRemovedEvent(raw)) {
+              await this.timelineService.consumePostRepostRemovedEvent(raw);
               return;
             }
 

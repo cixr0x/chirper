@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { IdentityClientService } from "./clients/identity.client";
 import { ProfileClientService } from "./clients/profile.client";
+import { buildManagedAssetUrl } from "./media-url";
 
 @Injectable()
 export class UserSummaryService {
@@ -39,8 +40,10 @@ export class UserSummaryService {
       status: identity.status,
       bio: profile.bio,
       location: profile.location,
-      avatarUrl: profile.avatarUrl,
-      bannerUrl: profile.bannerUrl,
+      avatarAssetId: profile.avatarAssetId,
+      bannerAssetId: profile.bannerAssetId,
+      avatarUrl: profile.avatarAssetId ? buildManagedAssetUrl(profile.avatarAssetId) : profile.avatarUrl,
+      bannerUrl: profile.bannerAssetId ? buildManagedAssetUrl(profile.bannerAssetId) : profile.bannerUrl,
       links: profile.links,
     };
   }

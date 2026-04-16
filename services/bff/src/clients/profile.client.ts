@@ -7,14 +7,22 @@ type CreateProfileRequest = {
   userId: string;
   bio?: string;
   location?: string;
+  avatarAssetId?: string;
+  bannerAssetId?: string;
   avatarUrl?: string;
   bannerUrl?: string;
+  links?: {
+    label?: string;
+    url?: string;
+  }[];
 };
 type UpdateProfileRequest = CreateProfileRequest;
 type GetProfileByUserIdResponse = {
   userId: string;
   bio: string;
   location: string;
+  avatarAssetId: string;
+  bannerAssetId: string;
   avatarUrl: string;
   bannerUrl: string;
   links: {
@@ -55,6 +63,10 @@ export class ProfileClientService implements OnModuleInit {
 function normalizeProfileResponse(response: GetProfileByUserIdResponse) {
   return {
     ...response,
+    avatarAssetId: response.avatarAssetId ?? "",
+    bannerAssetId: response.bannerAssetId ?? "",
+    avatarUrl: response.avatarUrl ?? "",
+    bannerUrl: response.bannerUrl ?? "",
     links: response.links ?? [],
   };
 }

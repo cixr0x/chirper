@@ -50,7 +50,9 @@
     },
     "media": {
       "kind": "service",
-      "dbPrefix": "media"
+      "dbPrefix": "media",
+      "httpPort": 4008,
+      "grpcPort": 50058
     },
     "realtime": {
       "kind": "service",

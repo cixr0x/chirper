@@ -5,6 +5,7 @@ import { NotificationsClientService } from "./clients/notifications.client";
 import { TimelineClientService } from "./clients/timeline.client";
 import { PostsClientService } from "./clients/posts.client";
 import { ProfileClientService } from "./clients/profile.client";
+import { buildManagedAssetUrl } from "./media-url";
 import { sessionHeaderName } from "./session-header";
 import { SessionAuthService } from "./session-auth.service";
 
@@ -123,7 +124,7 @@ export class FeedController {
         userId: identity.userId,
         handle: identity.handle,
         displayName: identity.displayName,
-        avatarUrl: profile.avatarUrl,
+        avatarUrl: profile.avatarAssetId ? buildManagedAssetUrl(profile.avatarAssetId) : profile.avatarUrl,
       },
     };
   }
@@ -143,7 +144,7 @@ export class FeedController {
             userId: identity.userId,
             handle: identity.handle,
             displayName: identity.displayName,
-            avatarUrl: profile.avatarUrl,
+            avatarUrl: profile.avatarAssetId ? buildManagedAssetUrl(profile.avatarAssetId) : profile.avatarUrl,
           },
         ] as const;
       }),

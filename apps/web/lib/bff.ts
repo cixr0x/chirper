@@ -5,6 +5,8 @@ export type UserSummary = {
   status: string;
   bio: string;
   location: string;
+  avatarAssetId: string;
+  bannerAssetId: string;
   avatarUrl: string;
   bannerUrl: string;
   links: {

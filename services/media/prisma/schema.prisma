@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -8,30 +9,44 @@ datasource db {
 }
 
 model Upload {
-  id          String   @id @db.VarChar(64)
-  ownerUserId String   @map("owner_user_id") @db.VarChar(64)
-  status      String   @db.VarChar(16)
-  createdAt   DateTime @default(now()) @map("created_at")
+  id          String    @id @db.VarChar(64)
+  ownerUserId String    @map("owner_user_id") @db.VarChar(64)
+  purpose     String    @db.VarChar(32)
+  sourceUrl   String    @map("source_url") @db.VarChar(255)
+  status      String    @db.VarChar(16)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+  assets      Asset[]
 
+  @@index([ownerUserId, createdAt], map: "media_uploads_owner_user_id_created_at_idx")
   @@map("media_uploads")
 }
 
 model Asset {
-  id         String   @id @db.VarChar(64)
-  uploadId   String   @map("upload_id") @db.VarChar(64)
-  storageKey String   @map("storage_key") @db.VarChar(255)
-  mimeType   String   @map("mime_type") @db.VarChar(64)
-  createdAt  DateTime @default(now()) @map("created_at")
+  id          String    @id @db.VarChar(64)
+  uploadId    String    @map("upload_id") @db.VarChar(64)
+  ownerUserId String    @map("owner_user_id") @db.VarChar(64)
+  purpose     String    @db.VarChar(32)
+  sourceUrl   String    @map("source_url") @db.VarChar(255)
+  storageKey  String    @map("storage_key") @db.VarChar(255)
+  mimeType    String    @map("mime_type") @db.VarChar(64)
+  status      String    @db.VarChar(16)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  upload      Upload    @relation(fields: [uploadId], references: [id])
+  variants    Variant[]
 
   @@index([uploadId], map: "media_assets_upload_id_idx")
+  @@index([ownerUserId, purpose, createdAt], map: "media_assets_owner_user_id_purpose_created_at_idx")
   @@map("media_assets")
 }
 
 model Variant {
-  id         String @id @db.VarChar(64)
-  assetId    String @map("asset_id") @db.VarChar(64)
-  kind       String @db.VarChar(32)
-  storageKey String @map("storage_key") @db.VarChar(255)
+  id         String   @id @db.VarChar(64)
+  assetId    String   @map("asset_id") @db.VarChar(64)
+  kind       String   @db.VarChar(32)
+  storageKey String   @map("storage_key") @db.VarChar(255)
+  createdAt  DateTime @default(now()) @map("created_at")
+  asset      Asset    @relation(fields: [assetId], references: [id])
 
   @@unique([assetId, kind], map: "media_variants_asset_kind_key")
   @@map("media_variants")
@@ -46,6 +61,6 @@ model OutboxEvent {
   publishedAt   DateTime? @map("published_at")
   createdAt     DateTime  @default(now()) @map("created_at")
 
+  @@index([publishedAt], map: "media_outbox_published_at_idx")
   @@map("media_outbox")
 }
-

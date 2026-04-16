@@ -240,6 +240,10 @@ body {
   border: 6px solid rgba(255, 255, 255, 0.92);
 }
 
+.avatar-image {
+  object-fit: cover;
+}
+
 .user-meta,
 .profile-copy {
   flex: 1;
@@ -337,6 +341,12 @@ body {
   background:
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.22), transparent 24%),
     linear-gradient(135deg, #ff6b35, #f0b429 46%, #1f8f5f);
+  background-size: cover;
+  background-position: center;
+}
+
+.banner-panel.banner-panel-image {
+  background-blend-mode: multiply;
 }
 
 .profile-card {
@@ -472,6 +482,21 @@ body {
   resize: vertical;
 }
 
+.inline-toggle {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  margin-top: 0.4rem;
+}
+
+.inline-toggle input {
+  width: auto;
+}
+
+.inline-toggle span {
+  margin: 0;
+}
+
 .demo-credential-list {
   display: grid;
   gap: 0.8rem;
@@ -532,6 +557,10 @@ body {
 .onboarding-callout,
 .preview-card {
   margin-top: 1rem;
+}
+
+.preview-card .profile-avatar {
+  margin-bottom: 1rem;
 }
 
 .preview-card .handle,
@@ -683,6 +712,29 @@ body {
   margin-top: 1rem;
 }
 
+.asset-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.link-editor {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.link-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.2fr);
+  gap: 0.8rem;
+}
+
+.link-row + .link-row {
+  margin-top: 0.8rem;
+}
+
 .inline-link {
   color: var(--ink);
   font-weight: 600;
@@ -733,7 +785,9 @@ body {
   }
 
   .auth-grid,
-  .reset-grid {
+  .reset-grid,
+  .asset-grid,
+  .link-row {
     grid-template-columns: 1fr;
   }
 }

@@ -1,24 +1,39 @@
-INSERT INTO profile_profiles (id, user_id, bio, location, avatar_url, banner_url)
+INSERT INTO profile_profiles (
+  id,
+  user_id,
+  bio,
+  location,
+  avatar_asset_id,
+  banner_asset_id,
+  avatar_url,
+  banner_url
+)
 VALUES
   (
     'profile_demo_alana',
     'usr_demo_alana',
     'Building Chirper as a distributed systems exercise.',
     'Monterrey',
-    'https://example.com/avatars/alana.png',
-    'https://example.com/banners/alana.png'
+    'asset_demo_alana_avatar',
+    'asset_demo_alana_banner',
+    NULL,
+    NULL
   ),
   (
     'profile_demo_omar',
     'usr_demo_omar',
     'Prefers event-driven timelines over cross-service joins.',
     'Guadalajara',
-    'https://example.com/avatars/omar.png',
-    'https://example.com/banners/omar.png'
+    'asset_demo_omar_avatar',
+    'asset_demo_omar_banner',
+    NULL,
+    NULL
   )
 ON DUPLICATE KEY UPDATE
   bio = VALUES(bio),
   location = VALUES(location),
+  avatar_asset_id = VALUES(avatar_asset_id),
+  banner_asset_id = VALUES(banner_asset_id),
   avatar_url = VALUES(avatar_url),
   banner_url = VALUES(banner_url);
 

@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prisma:generate": "npm run prisma:generate -w @chirper/identity && npm run prisma:generate -w @chirper/profile && npm run prisma:generate -w @chirper/posts && npm run prisma:generate -w @chirper/graph && npm run prisma:generate -w @chirper/timeline && npm run prisma:generate -w @chirper/notifications",
+    "prisma:generate": "npm run prisma:generate -w @chirper/identity && npm run prisma:generate -w @chirper/profile && npm run prisma:generate -w @chirper/posts && npm run prisma:generate -w @chirper/graph && npm run prisma:generate -w @chirper/timeline && npm run prisma:generate -w @chirper/notifications && npm run prisma:generate -w @chirper/media",
     "build": "npm run prisma:generate && npm run build --workspaces --if-present",
     "typecheck": "npm run prisma:generate && npm run typecheck --workspaces --if-present",
     "check:boundaries": "node ./scripts/check-table-ownership.mjs",
@@ -38,7 +38,11 @@
     "db:notifications:migrate": "node ./scripts/flyway-run.mjs --service notifications --command migrate",
     "db:notifications:validate": "node ./scripts/flyway-run.mjs --service notifications --command validate",
     "db:notifications:seed:demo": "node ./scripts/sql-file-run.mjs --service notifications --file db/seeds/demo.sql",
-    "db:seed:demo": "npm run db:identity:seed:demo && npm run db:profile:seed:demo && npm run db:posts:seed:demo && npm run db:graph:seed:demo && npm run db:timeline:seed:demo && npm run db:notifications:seed:demo",
+    "db:media:info": "node ./scripts/flyway-run.mjs --service media --command info",
+    "db:media:migrate": "node ./scripts/flyway-run.mjs --service media --command migrate",
+    "db:media:validate": "node ./scripts/flyway-run.mjs --service media --command validate",
+    "db:media:seed:demo": "node ./scripts/sql-file-run.mjs --service media --file db/seeds/demo.sql",
+    "db:seed:demo": "npm run db:identity:seed:demo && npm run db:media:seed:demo && npm run db:profile:seed:demo && npm run db:posts:seed:demo && npm run db:graph:seed:demo && npm run db:timeline:seed:demo && npm run db:notifications:seed:demo",
     "dev:web": "npm run dev -w @chirper/web",
     "dev:bff": "npm run dev -w @chirper/bff",
     "dev:identity": "npm run dev -w @chirper/identity",
@@ -47,6 +51,7 @@
     "dev:graph": "npm run dev -w @chirper/graph",
     "dev:timeline": "npm run dev -w @chirper/timeline",
     "dev:notifications": "npm run dev -w @chirper/notifications",
+    "dev:media": "npm run dev -w @chirper/media",
     "dev:realtime": "npm run dev -w @chirper/realtime"
   },
   "devDependencies": {

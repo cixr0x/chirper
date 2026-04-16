@@ -24,6 +24,8 @@ message ProfileSummary {
   string avatarUrl = 4;
   string bannerUrl = 5;
   repeated ProfileLink links = 6;
+  string avatarAssetId = 7;
+  string bannerAssetId = 8;
 }
 
 message CreateProfileRequest {
@@ -32,6 +34,9 @@ message CreateProfileRequest {
   string location = 3;
   string avatarUrl = 4;
   string bannerUrl = 5;
+  string avatarAssetId = 6;
+  string bannerAssetId = 7;
+  repeated ProfileLink links = 8;
 }
 
 message UpdateProfileRequest {
@@ -40,4 +45,7 @@ message UpdateProfileRequest {
   string location = 3;
   string avatarUrl = 4;
   string bannerUrl = 5;
+  string avatarAssetId = 6;
+  string bannerAssetId = 7;
+  repeated ProfileLink links = 8;
 }

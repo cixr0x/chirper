@@ -3,6 +3,7 @@ import { IdentityClientService } from "./clients/identity.client";
 import { NotificationsClientService } from "./clients/notifications.client";
 import { ProfileClientService } from "./clients/profile.client";
 import { RealtimeClientService } from "./clients/realtime.client";
+import { buildManagedAssetUrl } from "./media-url";
 import { sessionHeaderName } from "./session-header";
 import { SessionAuthService } from "./session-auth.service";
 
@@ -101,7 +102,7 @@ export class NotificationsController {
             userId: identity.userId,
             handle: identity.handle,
             displayName: identity.displayName,
-            avatarUrl: profile.avatarUrl,
+            avatarUrl: profile.avatarAssetId ? buildManagedAssetUrl(profile.avatarAssetId) : profile.avatarUrl,
           },
         ] as const;
       }),

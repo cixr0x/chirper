@@ -10,3 +10,4 @@ generated/
 !.env.example
 !services/*/.env
 *.log
+*.tsbuildinfo

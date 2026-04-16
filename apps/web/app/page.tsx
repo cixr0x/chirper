@@ -1,4 +1,5 @@
 import { LiveNotificationEvents } from "../components/live-notification-events";
+import { AvatarBadge } from "../components/avatar-badge";
 import Link from "next/link";
 import {
   changePasswordAction,
@@ -64,7 +65,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       ]);
   const followingSet = new Set(followingUserIds);
   const needsOnboarding = viewer
-    ? !viewer.bio && !viewer.location && !viewer.avatarUrl && !viewer.bannerUrl
+    ? !viewer.bio &&
+      !viewer.location &&
+      !viewer.avatarAssetId &&
+      !viewer.bannerAssetId &&
+      !viewer.avatarUrl &&
+      !viewer.bannerUrl
     : false;
 
   return (
@@ -161,7 +167,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       <h3>Finish the public profile</h3>
                       <p className="subcard-copy">
                         This account is live but still blank. Add a bio, location, and optional asset
-                        URLs before other users start discovering it in the directory.
+                        links before other users start discovering it in the directory.
                       </p>
                       <Link className="inline-link" href="/onboarding">
                         Open onboarding
@@ -323,13 +329,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             ) : (
               <div className="feed-stack">
                 {feed.map((item) => (
-                  <article className="feed-card" key={item.postId}>
-                    <div className="feed-head">
-                      <div className="avatar-badge small">
-                        {getInitials(item.author?.displayName ?? "U")}
-                      </div>
-                      <div>
-                        <h3>{item.author?.displayName ?? "Unknown author"}</h3>
+                    <article className="feed-card" key={item.postId}>
+                      <div className="feed-head">
+                        <AvatarBadge
+                          avatarUrl={item.author?.avatarUrl}
+                          displayName={item.author?.displayName ?? "Unknown author"}
+                          size="small"
+                        />
+                        <div>
+                          <h3>{item.author?.displayName ?? "Unknown author"}</h3>
                         <p className="handle">
                           @{item.author?.handle ?? "unknown"} | {formatPostTimestamp(item.createdAt)}
                         </p>
@@ -370,9 +378,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   {notifications.notifications.map((notification) => (
                     <article className="notification-card" key={notification.notificationId}>
                       <div className="feed-head">
-                        <div className="avatar-badge small">
-                          {getInitials(notification.actor?.displayName ?? "U")}
-                        </div>
+                        <AvatarBadge
+                          avatarUrl={notification.actor?.avatarUrl}
+                          displayName={notification.actor?.displayName ?? "Unknown actor"}
+                          size="small"
+                        />
                         <div>
                           <h3>{notification.actor?.displayName ?? "Unknown actor"}</h3>
                           <p className="handle">
@@ -424,7 +434,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
                 return (
                   <article className="user-card" key={user.userId}>
-                    <div className="avatar-badge">{getInitials(user.displayName)}</div>
+                    <AvatarBadge avatarUrl={user.avatarUrl} displayName={user.displayName} />
                     <div className="user-meta">
                       <div className="identity-row">
                         <h3>{user.displayName}</h3>
@@ -468,7 +478,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </article>
         <article>
           <h3>Database rule</h3>
-          <p>`identity` now owns `ident_sessions` and `ident_credentials`; `notifications` owns `notify_*`; `realtime` keeps ephemeral state only; no service reads another service&apos;s tables.</p>
+          <p>`identity` owns `ident_sessions` and `ident_credentials`; `profile` owns profile links and asset references; `media` owns upload metadata; `notifications` owns `notify_*`; no service reads another service&apos;s tables.</p>
         </article>
       </section>
     </main>

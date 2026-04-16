@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { followUserAction, saveProfileAction, signInAction, unfollowUserAction } from "../../actions";
-import { getInitials, getUserByHandle, getViewerFollowingUserIds } from "../../../lib/bff";
+import { getUserByHandle, getViewerFollowingUserIds } from "../../../lib/bff";
+import { AvatarBadge } from "../../../components/avatar-badge";
 import { getSessionState, getSessionToken } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
   const isViewer = viewer?.userId === user.userId;
   const isFollowing = viewer ? followingUserIds.includes(user.userId) : false;
   const homeHref = "/";
+  const linkRows = buildEditableLinkRows(user.links);
 
   return (
     <main className="profile-shell">
@@ -45,9 +47,12 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
       </Link>
 
       <section className="profile-hero">
-        <div className="banner-panel" />
+        <div
+          className={`banner-panel ${user.bannerUrl ? "banner-panel-image" : ""}`}
+          style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : undefined}
+        />
         <div className="profile-card">
-          <div className="profile-avatar">{getInitials(user.displayName)}</div>
+          <AvatarBadge avatarUrl={user.avatarUrl} displayName={user.displayName} size="profile" />
           <div className="profile-copy">
             <div className="identity-row">
               <h1>{user.displayName}</h1>
@@ -135,25 +140,61 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
                   />
                 </label>
 
-                <label className="field">
-                  <span>Avatar URL</span>
-                  <input
-                    defaultValue={user.avatarUrl}
-                    name="avatarUrl"
-                    placeholder="https://example.com/avatar.png"
-                    type="url"
-                  />
-                </label>
+                <div className="asset-grid">
+                  <label className="field">
+                    <span>New avatar source URL</span>
+                    <input
+                      name="avatarSourceUrl"
+                      placeholder="https://images.example.com/avatar.png"
+                      type="url"
+                    />
+                  </label>
 
-                <label className="field">
-                  <span>Banner URL</span>
-                  <input
-                    defaultValue={user.bannerUrl}
-                    name="bannerUrl"
-                    placeholder="https://example.com/banner.jpg"
-                    type="url"
-                  />
-                </label>
+                  <label className="field inline-toggle">
+                    <input name="clearAvatar" type="checkbox" value="1" />
+                    <span>Clear current avatar</span>
+                  </label>
+                </div>
+
+                <div className="asset-grid">
+                  <label className="field">
+                    <span>New banner source URL</span>
+                    <input
+                      name="bannerSourceUrl"
+                      placeholder="https://images.example.com/banner.jpg"
+                      type="url"
+                    />
+                  </label>
+
+                  <label className="field inline-toggle">
+                    <input name="clearBanner" type="checkbox" value="1" />
+                    <span>Clear current banner</span>
+                  </label>
+                </div>
+
+                <div className="link-editor">
+                  <div className="section-heading compact">
+                    <div>
+                      <p className="eyebrow">Public links</p>
+                      <h3>Outbound references</h3>
+                    </div>
+                    <p className="section-copy">
+                      Save replaces the owned `profile_profile_links` rows for this account.
+                    </p>
+                  </div>
+                  {linkRows.map((link, index) => (
+                    <div className="link-row" key={`profile-link-${index}`}>
+                      <label className="field">
+                        <span>Label {index + 1}</span>
+                        <input defaultValue={link.label} maxLength={32} name="linkLabel" placeholder="GitHub" type="text" />
+                      </label>
+                      <label className="field">
+                        <span>URL {index + 1}</span>
+                        <input defaultValue={link.url} name="linkUrl" placeholder="https://github.com/you" type="url" />
+                      </label>
+                    </div>
+                  ))}
+                </div>
 
                 <div className="profile-action-row">
                   <button className="primary-button compact" type="submit">
@@ -224,4 +265,13 @@ function isViewerAccountMessage(status?: string) {
     default:
       return null;
   }
+}
+
+function buildEditableLinkRows(links: { label: string; url: string }[]) {
+  const rows = [...links];
+  while (rows.length < 3) {
+    rows.push({ label: "", url: "" });
+  }
+
+  return rows.slice(0, 4);
 }

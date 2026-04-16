@@ -30,6 +30,11 @@ export const notificationsProtoPath = path.resolve(
   "../../packages/contracts-proto/proto/notifications/v1/notifications.proto",
 );
 
+export const mediaProtoPath = path.resolve(
+  process.cwd(),
+  "../../packages/contracts-proto/proto/media/v1/media.proto",
+);
+
 export const realtimeProtoPath = path.resolve(
   process.cwd(),
   "../../packages/contracts-proto/proto/realtime/v1/realtime.proto",

@@ -9,14 +9,16 @@ datasource db {
 }
 
 model Profile {
-  id          String   @id @db.VarChar(64)
-  userId      String   @unique(map: "profile_profiles_user_id_key") @map("user_id") @db.VarChar(64)
-  bio         String?  @db.VarChar(280)
-  location    String?  @db.VarChar(128)
-  avatarUrl   String?  @map("avatar_url") @db.VarChar(255)
-  bannerUrl   String?  @map("banner_url") @db.VarChar(255)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            String   @id @db.VarChar(64)
+  userId        String   @unique(map: "profile_profiles_user_id_key") @map("user_id") @db.VarChar(64)
+  bio           String?  @db.VarChar(280)
+  location      String?  @db.VarChar(128)
+  avatarAssetId String?  @map("avatar_asset_id") @db.VarChar(64)
+  bannerAssetId String?  @map("banner_asset_id") @db.VarChar(64)
+  avatarUrl     String?  @map("avatar_url") @db.VarChar(255)
+  bannerUrl     String?  @map("banner_url") @db.VarChar(255)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("profile_profiles")
 }

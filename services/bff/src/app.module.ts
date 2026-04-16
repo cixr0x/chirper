@@ -5,11 +5,13 @@ import { GraphController } from "./graph.controller";
 import { GraphClientService } from "./clients/graph.client";
 import { FeedController } from "./feed.controller";
 import { HealthController } from "./health.controller";
+import { MediaController } from "./media.controller";
 import { NotificationsController } from "./notifications.controller";
 import { SessionController } from "./session.controller";
 import { SessionAuthService } from "./session-auth.service";
 import { UsersController } from "./users.controller";
 import { IdentityClientService } from "./clients/identity.client";
+import { MediaClientService } from "./clients/media.client";
 import { NotificationsClientService } from "./clients/notifications.client";
 import { PostsClientService } from "./clients/posts.client";
 import { ProfileClientService } from "./clients/profile.client";
@@ -20,6 +22,7 @@ import { UserSummaryService } from "./user-summary.service";
 import {
   graphProtoPath,
   identityProtoPath,
+  mediaProtoPath,
   notificationsProtoPath,
   postsProtoPath,
   profileProtoPath,
@@ -85,6 +88,15 @@ import {
         },
       },
       {
+        name: "MEDIA_PACKAGE",
+        transport: Transport.GRPC,
+        options: {
+          package: "media.v1",
+          protoPath: mediaProtoPath,
+          url: process.env.MEDIA_GRPC_URL ?? "127.0.0.1:50058",
+        },
+      },
+      {
         name: "REALTIME_PACKAGE",
         transport: Transport.GRPC,
         options: {
@@ -104,6 +116,7 @@ import {
     FeedController,
     GraphController,
     NotificationsController,
+    MediaController,
   ],
   providers: [
     IdentityClientService,
@@ -112,6 +125,7 @@ import {
     GraphClientService,
     TimelineClientService,
     NotificationsClientService,
+    MediaClientService,
     RealtimeClientService,
     SessionAuthService,
     UserSummaryService,

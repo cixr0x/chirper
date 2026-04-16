@@ -214,8 +214,11 @@ export async function saveProfileAction(formData: FormData) {
   const successState = String(formData.get("successState") ?? "profile-saved").trim() || "profile-saved";
   const bio = String(formData.get("bio") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim();
-  const avatarUrl = String(formData.get("avatarUrl") ?? "").trim();
-  const bannerUrl = String(formData.get("bannerUrl") ?? "").trim();
+  const avatarSourceUrl = String(formData.get("avatarSourceUrl") ?? "").trim();
+  const bannerSourceUrl = String(formData.get("bannerSourceUrl") ?? "").trim();
+  const clearAvatar = formData.get("clearAvatar") === "1";
+  const clearBanner = formData.get("clearBanner") === "1";
+  const links = collectLinks(formData);
   const sessionToken = await getSessionToken();
 
   if (!sessionToken) {
@@ -228,8 +231,11 @@ export async function saveProfileAction(formData: FormData) {
     body: JSON.stringify({
       bio,
       location,
-      avatarUrl,
-      bannerUrl,
+      avatarSourceUrl,
+      bannerSourceUrl,
+      clearAvatar,
+      clearBanner,
+      links,
     }),
     cache: "no-store",
   });
@@ -245,6 +251,29 @@ export async function saveProfileAction(formData: FormData) {
   revalidatePath(redirectPath);
 
   redirect(withSearchParams(redirectTo, { account: successState, auth: undefined }));
+}
+
+function collectLinks(formData: FormData) {
+  const labels = formData
+    .getAll("linkLabel")
+    .map((value) => String(value ?? "").trim());
+  const urls = formData
+    .getAll("linkUrl")
+    .map((value) => String(value ?? "").trim());
+  const count = Math.max(labels.length, urls.length);
+  const links: { label: string; url: string }[] = [];
+
+  for (let index = 0; index < count; index += 1) {
+    const label = labels[index] ?? "";
+    const url = urls[index] ?? "";
+    if (!label && !url) {
+      continue;
+    }
+
+    links.push({ label, url });
+  }
+
+  return links;
 }
 
 export async function createPostAction(formData: FormData) {

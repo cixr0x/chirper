@@ -17,8 +17,14 @@ export class ProfileGrpcController {
     userId: string;
     bio?: string;
     location?: string;
+    avatarAssetId?: string;
+    bannerAssetId?: string;
     avatarUrl?: string;
     bannerUrl?: string;
+    links?: {
+      label?: string;
+      url?: string;
+    }[];
   }) {
     return this.directory.createProfile(data);
   }
@@ -28,8 +34,14 @@ export class ProfileGrpcController {
     userId: string;
     bio?: string;
     location?: string;
+    avatarAssetId?: string;
+    bannerAssetId?: string;
     avatarUrl?: string;
     bannerUrl?: string;
+    links?: {
+      label?: string;
+      url?: string;
+    }[];
   }) {
     try {
       return await this.directory.updateProfile(data);

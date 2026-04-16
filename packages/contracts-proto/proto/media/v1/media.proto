@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package media.v1;
+
+service MediaService {
+  rpc CreateAssetFromSource (CreateAssetFromSourceRequest) returns (MediaAsset);
+  rpc GetAssetById (GetAssetByIdRequest) returns (MediaAsset);
+  rpc GetAssetsByIds (GetAssetsByIdsRequest) returns (GetAssetsByIdsResponse);
+}
+
+message CreateAssetFromSourceRequest {
+  string ownerUserId = 1;
+  string sourceUrl = 2;
+  string purpose = 3;
+}
+
+message GetAssetByIdRequest {
+  string assetId = 1;
+}
+
+message GetAssetsByIdsRequest {
+  repeated string assetIds = 1;
+}
+
+message GetAssetsByIdsResponse {
+  repeated MediaAsset assets = 1;
+}
+
+message MediaAsset {
+  string assetId = 1;
+  string uploadId = 2;
+  string ownerUserId = 3;
+  string purpose = 4;
+  string sourceUrl = 5;
+  string mimeType = 6;
+  string status = 7;
+  string createdAt = 8;
+}

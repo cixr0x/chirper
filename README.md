@@ -1,0 +1,41 @@
+# Chirper
+
+Chirper is a service-oriented Twitter-clone exercise built as a monorepo. Services are independently deployable, but all MySQL tables live in a single database and must follow strict ownership rules.
+
+## Current Scaffold
+
+- `apps/web`: Next.js frontend
+- `services/bff`: public edge API that will aggregate internal services
+- `services/identity`: auth and account ownership service
+- `services/profile`: user profile service
+- `services/graph`: planned follow/block/mute service
+- `services/posts`: planned posts, likes, reposts service
+- `services/timeline`: planned feed read-model service
+- `services/notifications`: planned notifications service
+- `services/media`: planned upload and asset service
+- `services/realtime`: planned live delivery service
+- `packages/contracts-proto`: gRPC contracts
+- `packages/contracts-events`: event topic definitions
+- `packages/common`: shared non-domain utility types
+
+## Architecture Rule
+
+Each database-owning service has a readable 5-8 character table prefix. No service may read or write a table it does not own.
+
+Examples:
+
+- `ident_users`
+- `profile_profiles`
+- `posts_posts`
+- `timeline_home_entries`
+- `notify_notifications`
+
+Run the ownership validation with:
+
+```bash
+npm run check:boundaries
+```
+
+Database migrations are tracked per service with Flyway. See [docs/database-migrations.md](/C:/PROJECTS/chirper/docs/database-migrations.md).
+
+See [docs/architecture.md](/C:/PROJECTS/chirper/docs/architecture.md) for the service map and boundary conventions.

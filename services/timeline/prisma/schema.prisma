@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model HomeEntry {
+  id           String   @id @db.VarChar(160)
+  ownerUserId  String   @map("owner_user_id") @db.VarChar(64)
+  sourcePostId String   @map("source_post_id") @db.VarChar(64)
+  actorUserId  String   @map("actor_user_id") @db.VarChar(64)
+  rankScore    Decimal  @map("rank_score") @db.Decimal(14, 4)
+  insertedAt   DateTime @default(now()) @map("inserted_at")
+
+  @@unique([ownerUserId, sourcePostId], map: "timeline_home_entries_owner_post_key")
+  @@index([ownerUserId, insertedAt], map: "timeline_home_entries_owner_inserted_idx")
+  @@map("timeline_home_entries")
+}
+
+model UserEntry {
+  id           String   @id @db.VarChar(160)
+  ownerUserId  String   @map("owner_user_id") @db.VarChar(64)
+  sourcePostId String   @map("source_post_id") @db.VarChar(64)
+  insertedAt   DateTime @default(now()) @map("inserted_at")
+
+  @@unique([ownerUserId, sourcePostId], map: "timeline_user_entries_owner_post_key")
+  @@index([ownerUserId, insertedAt], map: "timeline_user_entries_owner_inserted_idx")
+  @@map("timeline_user_entries")
+}
+
+model RankState {
+  id          String   @id @db.VarChar(64)
+  ownerUserId String   @unique(map: "timeline_rank_state_owner_user_id_key") @map("owner_user_id") @db.VarChar(64)
+  cursor      String?  @map("timeline_cursor") @db.VarChar(128)
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("timeline_rank_state")
+}
+
+model InboxEvent {
+  id          String    @id @db.VarChar(64)
+  eventType   String    @map("event_type") @db.VarChar(96)
+  payload     Json
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  processedAt DateTime? @map("processed_at")
+
+  @@map("timeline_inbox")
+}

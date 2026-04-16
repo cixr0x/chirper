@@ -1,0 +1,62 @@
+{
+  "services": {
+    "web": {
+      "kind": "app",
+      "dbPrefix": null,
+      "public": true,
+      "port": 3000
+    },
+    "bff": {
+      "kind": "edge",
+      "dbPrefix": null,
+      "public": true,
+      "port": 4000
+    },
+    "identity": {
+      "kind": "service",
+      "dbPrefix": "ident",
+      "httpPort": 4001,
+      "grpcPort": 50051
+    },
+    "profile": {
+      "kind": "service",
+      "dbPrefix": "profile",
+      "httpPort": 4002,
+      "grpcPort": 50052
+    },
+    "graph": {
+      "kind": "service",
+      "dbPrefix": "graph",
+      "httpPort": 4004,
+      "grpcPort": 50054
+    },
+    "posts": {
+      "kind": "service",
+      "dbPrefix": "posts",
+      "httpPort": 4003,
+      "grpcPort": 50053
+    },
+    "timeline": {
+      "kind": "service",
+      "dbPrefix": "timeline",
+      "httpPort": 4005,
+      "grpcPort": 50055
+    },
+    "notifications": {
+      "kind": "service",
+      "dbPrefix": "notify",
+      "httpPort": 4006,
+      "grpcPort": 50056
+    },
+    "media": {
+      "kind": "service",
+      "dbPrefix": "media"
+    },
+    "realtime": {
+      "kind": "service",
+      "dbPrefix": null,
+      "httpPort": 4007,
+      "grpcPort": 50057
+    }
+  }
+}

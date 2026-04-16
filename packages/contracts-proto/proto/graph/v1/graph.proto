@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package graph.v1;
+
+service GraphService {
+  rpc ListFollowing (ListFollowingRequest) returns (ListFollowingResponse);
+  rpc ListFollowers (ListFollowersRequest) returns (ListFollowersResponse);
+  rpc Follow (FollowRequest) returns (FollowRecord);
+  rpc Unfollow (UnfollowRequest) returns (UnfollowResponse);
+}
+
+message ListFollowingRequest {
+  string userId = 1;
+}
+
+message ListFollowingResponse {
+  repeated string userIds = 1;
+}
+
+message ListFollowersRequest {
+  string userId = 1;
+}
+
+message ListFollowersResponse {
+  repeated string userIds = 1;
+}
+
+message FollowRequest {
+  string followerUserId = 1;
+  string followeeUserId = 2;
+}
+
+message FollowRecord {
+  string followId = 1;
+  string followerUserId = 2;
+  string followeeUserId = 3;
+  string createdAt = 4;
+}
+
+message UnfollowRequest {
+  string followerUserId = 1;
+  string followeeUserId = 2;
+}
+
+message UnfollowResponse {
+  bool removed = 1;
+}

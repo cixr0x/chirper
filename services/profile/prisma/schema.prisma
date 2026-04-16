@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id          String   @id @db.VarChar(64)
+  userId      String   @unique(map: "profile_profiles_user_id_key") @map("user_id") @db.VarChar(64)
+  bio         String?  @db.VarChar(280)
+  location    String?  @db.VarChar(128)
+  avatarUrl   String?  @map("avatar_url") @db.VarChar(255)
+  bannerUrl   String?  @map("banner_url") @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("profile_profiles")
+}
+
+model ProfileSetting {
+  id               String   @id @db.VarChar(64)
+  userId           String   @unique(map: "profile_settings_user_id_key") @map("user_id") @db.VarChar(64)
+  isPrivate        Boolean  @default(false) @map("is_private")
+  allowTagging     Boolean  @default(true) @map("allow_tagging")
+  allowDirectInbox Boolean  @default(true) @map("allow_direct_inbox")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("profile_settings")
+}
+
+model ProfileLink {
+  id        String   @id @db.VarChar(64)
+  userId    String   @map("user_id") @db.VarChar(64)
+  label     String   @db.VarChar(32)
+  url       String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId], map: "profile_profile_links_user_id_idx")
+  @@map("profile_profile_links")
+}
+
+model OutboxEvent {
+  id            String    @id @db.VarChar(64)
+  aggregateType String    @map("aggregate_type") @db.VarChar(32)
+  aggregateId   String    @map("aggregate_id") @db.VarChar(64)
+  eventType     String    @map("event_type") @db.VarChar(96)
+  payload       Json
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([publishedAt], map: "profile_outbox_published_at_idx")
+  @@map("profile_outbox")
+}

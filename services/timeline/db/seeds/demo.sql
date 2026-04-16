@@ -1,0 +1,2 @@
+-- Timeline projections are rebuilt by the timeline service on first read
+-- and after follow/post mutations. No static demo rows are required here.

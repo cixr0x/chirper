@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package posts.v1;
+
+service PostsService {
+  rpc ListPublicPosts (ListPublicPostsRequest) returns (ListPublicPostsResponse);
+  rpc ListPostsByAuthors (ListPostsByAuthorsRequest) returns (ListPostsByAuthorsResponse);
+  rpc GetPostsByIds (GetPostsByIdsRequest) returns (GetPostsByIdsResponse);
+  rpc CreatePost (CreatePostRequest) returns (PostRecord);
+}
+
+message ListPublicPostsRequest {
+  int32 limit = 1;
+}
+
+message CreatePostRequest {
+  string authorUserId = 1;
+  string body = 2;
+  string visibility = 3;
+}
+
+message ListPostsByAuthorsRequest {
+  repeated string authorUserIds = 1;
+  int32 limit = 2;
+}
+
+message GetPostsByIdsRequest {
+  repeated string postIds = 1;
+}
+
+message PostRecord {
+  string postId = 1;
+  string authorUserId = 2;
+  string body = 3;
+  string visibility = 4;
+  string createdAt = 5;
+}
+
+message ListPublicPostsResponse {
+  repeated PostRecord posts = 1;
+}
+
+message ListPostsByAuthorsResponse {
+  repeated PostRecord posts = 1;
+}
+
+message GetPostsByIdsResponse {
+  repeated PostRecord posts = 1;
+}

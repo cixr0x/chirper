@@ -1,0 +1,26 @@
+{
+  "name": "@chirper/identity",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "prisma:generate": "node ../../scripts/prisma-generate.mjs --service identity",
+    "dev": "npm run prisma:generate && tsx watch src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
+    "@nestjs/common": "^11.1.19",
+    "@nestjs/core": "^11.1.19",
+    "@nestjs/microservices": "^11.1.19",
+    "@nestjs/platform-fastify": "^11.1.19",
+    "@prisma/client": "^6.19.3",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.8.5",
+    "dotenv": "^17.2.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  }
+}

@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package timeline.v1;
+
+service TimelineService {
+  rpc ListHomeTimeline (ListHomeTimelineRequest) returns (ListHomeTimelineResponse);
+  rpc RebuildHomeTimeline (RebuildHomeTimelineRequest) returns (RebuildHomeTimelineResponse);
+  rpc FanOutPost (FanOutPostRequest) returns (FanOutPostResponse);
+}
+
+message ListHomeTimelineRequest {
+  string ownerUserId = 1;
+  int32 limit = 2;
+}
+
+message TimelineEntry {
+  string entryId = 1;
+  string ownerUserId = 2;
+  string sourcePostId = 3;
+  string actorUserId = 4;
+  string insertedAt = 5;
+  double rankScore = 6;
+}
+
+message ListHomeTimelineResponse {
+  repeated TimelineEntry entries = 1;
+}
+
+message RebuildHomeTimelineRequest {
+  string ownerUserId = 1;
+  int32 limit = 2;
+}
+
+message RebuildHomeTimelineResponse {
+  repeated TimelineEntry entries = 1;
+}
+
+message FanOutPostRequest {
+  string postId = 1;
+  string authorUserId = 2;
+  string createdAt = 3;
+}
+
+message FanOutPostResponse {
+  int32 insertedCount = 1;
+}

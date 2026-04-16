@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Upload {
+  id          String   @id @db.VarChar(64)
+  ownerUserId String   @map("owner_user_id") @db.VarChar(64)
+  status      String   @db.VarChar(16)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("media_uploads")
+}
+
+model Asset {
+  id         String   @id @db.VarChar(64)
+  uploadId   String   @map("upload_id") @db.VarChar(64)
+  storageKey String   @map("storage_key") @db.VarChar(255)
+  mimeType   String   @map("mime_type") @db.VarChar(64)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([uploadId], map: "media_assets_upload_id_idx")
+  @@map("media_assets")
+}
+
+model Variant {
+  id         String @id @db.VarChar(64)
+  assetId    String @map("asset_id") @db.VarChar(64)
+  kind       String @db.VarChar(32)
+  storageKey String @map("storage_key") @db.VarChar(255)
+
+  @@unique([assetId, kind], map: "media_variants_asset_kind_key")
+  @@map("media_variants")
+}
+
+model OutboxEvent {
+  id            String    @id @db.VarChar(64)
+  aggregateType String    @map("aggregate_type") @db.VarChar(32)
+  aggregateId   String    @map("aggregate_id") @db.VarChar(64)
+  eventType     String    @map("event_type") @db.VarChar(96)
+  payload       Json
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("media_outbox")
+}
+

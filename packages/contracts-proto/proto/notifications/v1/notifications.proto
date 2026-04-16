@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package notifications.v1;
+
+service NotificationsService {
+  rpc ListNotifications (ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc GetUnreadCount (GetUnreadCountRequest) returns (GetUnreadCountResponse);
+  rpc CreateNotification (CreateNotificationRequest) returns (NotificationRecord);
+  rpc MarkAllRead (MarkAllReadRequest) returns (MarkAllReadResponse);
+}
+
+message ListNotificationsRequest {
+  string userId = 1;
+  int32 limit = 2;
+}
+
+message GetUnreadCountRequest {
+  string userId = 1;
+}
+
+message CreateNotificationRequest {
+  string recipientUserId = 1;
+  string actorUserId = 2;
+  string type = 3;
+  string resourceId = 4;
+}
+
+message MarkAllReadRequest {
+  string userId = 1;
+}
+
+message NotificationRecord {
+  string notificationId = 1;
+  string recipientUserId = 2;
+  string actorUserId = 3;
+  string type = 4;
+  string resourceId = 5;
+  bool isRead = 6;
+  string createdAt = 7;
+}
+
+message ListNotificationsResponse {
+  repeated NotificationRecord notifications = 1;
+}
+
+message GetUnreadCountResponse {
+  int32 unreadCount = 1;
+}
+
+message MarkAllReadResponse {
+  int32 updatedCount = 1;
+}

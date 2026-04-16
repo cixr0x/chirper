@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Notification {
+  id          String   @id @db.VarChar(64)
+  recipientId String   @map("recipient_id") @db.VarChar(64)
+  actorUserId String   @map("actor_user_id") @db.VarChar(64)
+  type        String   @db.VarChar(32)
+  resourceId  String?  @map("resource_id") @db.VarChar(64)
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([recipientId, type, resourceId], map: "notify_notifications_recipient_type_resource_key")
+  @@index([recipientId, createdAt], map: "notify_notifications_recipient_created_idx")
+  @@map("notify_notifications")
+}
+
+model Preference {
+  id           String   @id @db.VarChar(64)
+  userId       String   @unique(map: "notify_preferences_user_id_key") @map("user_id") @db.VarChar(64)
+  pushEnabled  Boolean  @default(true) @map("push_enabled")
+  emailEnabled Boolean  @default(false) @map("email_enabled")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("notify_preferences")
+}
+
+model DeliveryAttempt {
+  id             String   @id @db.VarChar(64)
+  notificationId String   @map("notification_id") @db.VarChar(64)
+  channel        String   @db.VarChar(16)
+  status         String   @db.VarChar(16)
+  attemptedAt    DateTime @default(now()) @map("attempted_at")
+
+  @@index([notificationId], map: "notify_delivery_attempts_notification_id_idx")
+  @@map("notify_delivery_attempts")
+}
+
+model InboxEvent {
+  id          String    @id @db.VarChar(64)
+  eventType   String    @map("event_type") @db.VarChar(96)
+  payload     Json
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  processedAt DateTime? @map("processed_at")
+
+  @@map("notify_inbox")
+}

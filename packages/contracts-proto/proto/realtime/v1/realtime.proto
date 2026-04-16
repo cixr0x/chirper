@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package realtime.v1;
+
+service RealtimeService {
+  rpc PublishNotification (PublishNotificationRequest) returns (PublishNotificationResponse);
+  rpc ListBufferedEvents (ListBufferedEventsRequest) returns (ListBufferedEventsResponse);
+}
+
+message PublishNotificationRequest {
+  string userId = 1;
+  string notificationId = 2;
+  string actorUserId = 3;
+  string type = 4;
+  string resourceId = 5;
+  string createdAt = 6;
+}
+
+message PublishNotificationResponse {
+  int32 sequence = 1;
+}
+
+message ListBufferedEventsRequest {
+  string userId = 1;
+  int32 afterSequence = 2;
+  int32 limit = 3;
+}
+
+message RealtimeEvent {
+  int32 sequence = 1;
+  string userId = 2;
+  string notificationId = 3;
+  string actorUserId = 4;
+  string type = 5;
+  string resourceId = 6;
+  string createdAt = 7;
+}
+
+message ListBufferedEventsResponse {
+  repeated RealtimeEvent events = 1;
+  int32 nextSequence = 2;
+}

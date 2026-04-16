@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package identity.v1;
+
+service IdentityService {
+  rpc GetUserById (GetUserByIdRequest) returns (IdentityUser);
+  rpc GetUserByHandle (GetUserByHandleRequest) returns (IdentityUser);
+  rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
+  rpc CreateSession (CreateSessionRequest) returns (CreateSessionResponse);
+  rpc CreatePasswordSession (CreatePasswordSessionRequest) returns (CreateSessionResponse);
+  rpc RegisterPasswordUser (RegisterPasswordUserRequest) returns (CreateSessionResponse);
+  rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordResponse);
+  rpc CreatePasswordReset (CreatePasswordResetRequest) returns (CreatePasswordResetResponse);
+  rpc ResetPassword (ResetPasswordRequest) returns (CreateSessionResponse);
+  rpc GetSession (GetSessionRequest) returns (IdentitySession);
+  rpc RevokeSession (RevokeSessionRequest) returns (RevokeSessionResponse);
+}
+
+message GetUserByIdRequest {
+  string userId = 1;
+}
+
+message GetUserByHandleRequest {
+  string handle = 1;
+}
+
+message ListUsersRequest {}
+
+message IdentityUser {
+  string userId = 1;
+  string handle = 2;
+  string displayName = 3;
+  string status = 4;
+}
+
+message ListUsersResponse {
+  repeated IdentityUser users = 1;
+}
+
+message CreateSessionRequest {
+  string userId = 1;
+  string userAgent = 2;
+}
+
+message CreatePasswordSessionRequest {
+  string handle = 1;
+  string password = 2;
+  string userAgent = 3;
+}
+
+message RegisterPasswordUserRequest {
+  string handle = 1;
+  string displayName = 2;
+  string password = 3;
+  string userAgent = 4;
+}
+
+message ChangePasswordRequest {
+  string userId = 1;
+  string currentPassword = 2;
+  string nextPassword = 3;
+}
+
+message ChangePasswordResponse {
+  bool updated = 1;
+}
+
+message CreatePasswordResetRequest {
+  string handle = 1;
+}
+
+message CreatePasswordResetResponse {
+  bool accepted = 1;
+  string previewToken = 2;
+  string expiresAt = 3;
+}
+
+message ResetPasswordRequest {
+  string resetToken = 1;
+  string newPassword = 2;
+  string userAgent = 3;
+}
+
+message GetSessionRequest {
+  string sessionToken = 1;
+}
+
+message RevokeSessionRequest {
+  string sessionToken = 1;
+}
+
+message IdentitySession {
+  string sessionId = 1;
+  string userId = 2;
+  string expiresAt = 3;
+  string createdAt = 4;
+}
+
+message CreateSessionResponse {
+  string sessionToken = 1;
+  IdentitySession session = 2;
+}
+
+message RevokeSessionResponse {
+  bool revoked = 1;
+}

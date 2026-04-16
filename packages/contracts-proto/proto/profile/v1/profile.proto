@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package profile.v1;
+
+service ProfileService {
+  rpc GetProfileByUserId (GetProfileByUserIdRequest) returns (ProfileSummary);
+  rpc CreateProfile (CreateProfileRequest) returns (ProfileSummary);
+  rpc UpdateProfile (UpdateProfileRequest) returns (ProfileSummary);
+}
+
+message GetProfileByUserIdRequest {
+  string userId = 1;
+}
+
+message ProfileLink {
+  string label = 1;
+  string url = 2;
+}
+
+message ProfileSummary {
+  string userId = 1;
+  string bio = 2;
+  string location = 3;
+  string avatarUrl = 4;
+  string bannerUrl = 5;
+  repeated ProfileLink links = 6;
+}
+
+message CreateProfileRequest {
+  string userId = 1;
+  string bio = 2;
+  string location = 3;
+  string avatarUrl = 4;
+  string bannerUrl = 5;
+}
+
+message UpdateProfileRequest {
+  string userId = 1;
+  string bio = 2;
+  string location = 3;
+  string avatarUrl = 4;
+  string bannerUrl = 5;
+}

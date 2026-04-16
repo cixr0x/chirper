@@ -1,0 +1,23 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/example/chirper-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 4000
+
+deployment:
+  replicaCount: 1
+
+env: []
+resources: {}
+

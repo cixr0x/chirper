@@ -1,5 +1,11 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
+import {
+  DOMAIN_EVENTS,
+  type GraphFollowCreatedPayload,
+  type GraphFollowRemovedPayload,
+} from "@chirper/contracts-events";
+import { Prisma } from "../generated/prisma";
 import { PrismaService } from "./prisma.service";
 
 type FollowRecord = {
@@ -46,19 +52,46 @@ export class GraphService {
       throw new BadRequestException("A user cannot follow themselves.");
     }
 
-    const follow = await this.prisma.follow.upsert({
-      where: {
-        followerId_followeeId: {
+    const follow = await this.prisma.$transaction(async (tx) => {
+      const existingFollow = await tx.follow.findUnique({
+        where: {
+          followerId_followeeId: {
+            followerId: followerUserId,
+            followeeId: followeeUserId,
+          },
+        },
+      });
+
+      if (existingFollow) {
+        return existingFollow;
+      }
+
+      const createdFollow = await tx.follow.create({
+        data: {
+          id: `follow_${randomUUID().replace(/-/g, "")}`,
           followerId: followerUserId,
           followeeId: followeeUserId,
         },
-      },
-      update: {},
-      create: {
-        id: `follow_${randomUUID().replace(/-/g, "")}`,
-        followerId: followerUserId,
-        followeeId: followeeUserId,
-      },
+      });
+
+      const payload: GraphFollowCreatedPayload = {
+        followId: createdFollow.id,
+        followerUserId: createdFollow.followerId,
+        followeeUserId: createdFollow.followeeId,
+        createdAt: createdFollow.createdAt.toISOString(),
+      };
+
+      await tx.outboxEvent.create({
+        data: {
+          id: `outbox_${randomUUID().replace(/-/g, "")}`,
+          aggregateType: "follow",
+          aggregateId: createdFollow.id,
+          eventType: DOMAIN_EVENTS.graphFollowCreated,
+          payload: payload as Prisma.InputJsonValue,
+        },
+      });
+
+      return createdFollow;
     });
 
     return {
@@ -70,11 +103,35 @@ export class GraphService {
   }
 
   async unfollow(input: { followerUserId: string; followeeUserId: string }) {
-    const result = await this.prisma.follow.deleteMany({
-      where: {
-        followerId: input.followerUserId.trim(),
-        followeeId: input.followeeUserId.trim(),
-      },
+    const followerUserId = input.followerUserId.trim();
+    const followeeUserId = input.followeeUserId.trim();
+    const result = await this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.follow.deleteMany({
+        where: {
+          followerId: followerUserId,
+          followeeId: followeeUserId,
+        },
+      });
+
+      if (deleted.count > 0) {
+        const payload: GraphFollowRemovedPayload = {
+          followerUserId,
+          followeeUserId,
+          removedAt: new Date().toISOString(),
+        };
+
+        await tx.outboxEvent.create({
+          data: {
+            id: `outbox_${randomUUID().replace(/-/g, "")}`,
+            aggregateType: "follow",
+            aggregateId: `${followerUserId}:${followeeUserId}`,
+            eventType: DOMAIN_EVENTS.graphFollowRemoved,
+            payload: payload as Prisma.InputJsonValue,
+          },
+        });
+      }
+
+      return deleted;
     });
 
     return {

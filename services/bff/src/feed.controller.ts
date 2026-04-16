@@ -1,7 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Headers, Post } from "@nestjs/common";
-import { GraphClientService } from "./clients/graph.client";
 import { IdentityClientService } from "./clients/identity.client";
-import { NotificationsClientService } from "./clients/notifications.client";
 import { TimelineClientService } from "./clients/timeline.client";
 import { PostsClientService } from "./clients/posts.client";
 import { ProfileClientService } from "./clients/profile.client";
@@ -13,11 +11,9 @@ import { SessionAuthService } from "./session-auth.service";
 export class FeedController {
   constructor(
     private readonly postsClient: PostsClientService,
-    private readonly graphClient: GraphClientService,
     private readonly identityClient: IdentityClientService,
     private readonly profileClient: ProfileClientService,
     private readonly timelineClient: TimelineClientService,
-    private readonly notificationsClient: NotificationsClientService,
     private readonly sessionAuth: SessionAuthService,
   ) {}
 
@@ -52,18 +48,6 @@ export class FeedController {
       body: content,
       visibility: "public",
     });
-
-    const followerUserIds = await this.graphClient.listFollowers(created.authorUserId);
-    await Promise.allSettled(
-      followerUserIds.map((recipientUserId) =>
-        this.notificationsClient.createNotification({
-          recipientUserId,
-          actorUserId: created.authorUserId,
-          type: "new_post",
-          resourceId: created.postId,
-        }),
-      ),
-    );
 
     return this.buildFeedItem(created);
   }

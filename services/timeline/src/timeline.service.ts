@@ -1,5 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { DOMAIN_EVENTS, type PostPublishedEvent } from "@chirper/contracts-events";
+import {
+  DOMAIN_EVENTS,
+  type GraphFollowCreatedEvent,
+  type GraphFollowRemovedEvent,
+  type PostPublishedEvent,
+} from "@chirper/contracts-events";
 import { Prisma } from "../generated/prisma";
 import { GraphClientService } from "./clients/graph.client";
 import { PostRecord, PostsClientService } from "./clients/posts.client";
@@ -106,6 +111,14 @@ export class TimelineService {
     );
   }
 
+  async consumeGraphFollowCreatedEvent(event: GraphFollowCreatedEvent) {
+    return this.rebuildFromGraphEvent(event, event.payload.followerUserId);
+  }
+
+  async consumeGraphFollowRemovedEvent(event: GraphFollowRemovedEvent) {
+    return this.rebuildFromGraphEvent(event, event.payload.followerUserId);
+  }
+
   private async projectPublishedPost(
     input: {
       postId: string;
@@ -187,6 +200,26 @@ export class TimelineService {
     };
   }
 
+  private async rebuildFromGraphEvent(
+    event: GraphFollowCreatedEvent | GraphFollowRemovedEvent,
+    ownerUserId: string,
+  ) {
+    const eventReserved = await this.reserveInboxEvent(event);
+    if (!eventReserved) {
+      return {
+        rebuilt: false,
+      };
+    }
+
+    const entries = await this.rebuildHomeTimeline(ownerUserId, 50);
+    await this.markInboxProcessed(event.id, event.name);
+
+    return {
+      rebuilt: true,
+      entryCount: entries.length,
+    };
+  }
+
   private toHomeEntry(ownerUserId: string, post: PostRecord) {
     const insertedAt = this.parseDate(post.createdAt);
     return {
@@ -241,6 +274,43 @@ export class TimelineService {
 
   private userEntryId(ownerUserId: string, postId: string) {
     return `user_${ownerUserId}_${postId}`;
+  }
+
+  private async reserveInboxEvent(
+    event: PostPublishedEvent | GraphFollowCreatedEvent | GraphFollowRemovedEvent,
+  ) {
+    const existingInboxEvent = await this.prisma.inboxEvent.findUnique({
+      where: { id: event.id },
+    });
+
+    if (existingInboxEvent?.processedAt) {
+      return false;
+    }
+
+    await this.prisma.inboxEvent.upsert({
+      where: { id: event.id },
+      update: {
+        eventType: event.name,
+        payload: event as Prisma.InputJsonValue,
+      },
+      create: {
+        id: event.id,
+        eventType: event.name,
+        payload: event as Prisma.InputJsonValue,
+      },
+    });
+
+    return true;
+  }
+
+  private async markInboxProcessed(id: string, eventType: string) {
+    await this.prisma.inboxEvent.update({
+      where: { id },
+      data: {
+        eventType,
+        processedAt: new Date(),
+      },
+    });
   }
 
   private async runWithRetry<T>(operation: () => Promise<T>, retries = 3): Promise<T> {

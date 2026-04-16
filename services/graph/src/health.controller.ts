@@ -8,7 +8,7 @@ export class HealthController {
       service: "graph",
       prefix: "graph",
       tables: ["graph_follows", "graph_blocks", "graph_mutes", "graph_outbox"],
-      transports: ["http", "grpc", "nats"],
+      transports: ["http", "grpc", "kafka"],
       status: "ok",
     };
   }

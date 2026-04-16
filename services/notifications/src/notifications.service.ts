@@ -1,5 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { createHash } from "node:crypto";
+import {
+  DOMAIN_EVENTS,
+  type GraphFollowCreatedEvent,
+  type PostPublishedEvent,
+} from "@chirper/contracts-events";
+import { Prisma } from "../generated/prisma";
+import { GraphClientService } from "./clients/graph.client";
 import { PrismaService } from "./prisma.service";
 import { RealtimeClientService } from "./clients/realtime.client";
 
@@ -17,6 +24,7 @@ type NotificationRecord = {
 export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly graphClient: GraphClientService,
     private readonly realtime: RealtimeClientService,
   ) {}
 
@@ -112,6 +120,87 @@ export class NotificationsService {
     });
 
     return this.mapNotification(notification);
+  }
+
+  async consumePostPublishedEvent(event: PostPublishedEvent) {
+    const existingInbox = await this.prisma.inboxEvent.findUnique({
+      where: { id: event.id },
+    });
+
+    if (existingInbox?.processedAt) {
+      return;
+    }
+
+    await this.prisma.inboxEvent.upsert({
+      where: { id: event.id },
+      update: {
+        eventType: event.name,
+        payload: event as Prisma.InputJsonValue,
+      },
+      create: {
+        id: event.id,
+        eventType: event.name,
+        payload: event as Prisma.InputJsonValue,
+      },
+    });
+
+    const followerUserIds = await this.graphClient.listFollowers(event.payload.authorUserId);
+    await Promise.allSettled(
+      followerUserIds.map((recipientUserId) =>
+        this.createNotification({
+          recipientUserId,
+          actorUserId: event.payload.authorUserId,
+          type: "new_post",
+          resourceId: event.payload.postId,
+        }),
+      ),
+    );
+
+    await this.prisma.inboxEvent.update({
+      where: { id: event.id },
+      data: {
+        eventType: DOMAIN_EVENTS.postPublished,
+        processedAt: new Date(),
+      },
+    });
+  }
+
+  async consumeGraphFollowCreatedEvent(event: GraphFollowCreatedEvent) {
+    const existingInbox = await this.prisma.inboxEvent.findUnique({
+      where: { id: event.id },
+    });
+
+    if (existingInbox?.processedAt) {
+      return;
+    }
+
+    await this.prisma.inboxEvent.upsert({
+      where: { id: event.id },
+      update: {
+        eventType: event.name,
+        payload: event as Prisma.InputJsonValue,
+      },
+      create: {
+        id: event.id,
+        eventType: event.name,
+        payload: event as Prisma.InputJsonValue,
+      },
+    });
+
+    await this.createNotification({
+      recipientUserId: event.payload.followeeUserId,
+      actorUserId: event.payload.followerUserId,
+      type: "follow",
+      resourceId: event.payload.followId,
+    });
+
+    await this.prisma.inboxEvent.update({
+      where: { id: event.id },
+      data: {
+        eventType: DOMAIN_EVENTS.graphFollowCreated,
+        processedAt: new Date(),
+      },
+    });
   }
 
   private notificationIdFor(

@@ -2,28 +2,27 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/commo
 import {
   KAFKA_TOPICS,
   isGraphFollowCreatedEvent,
-  isGraphFollowRemovedEvent,
   isPostPublishedEvent,
 } from "@chirper/contracts-events";
 import { Consumer, Kafka, logLevel } from "kafkajs";
-import { TimelineService } from "./timeline.service";
+import { NotificationsService } from "./notifications.service";
 
 @Injectable()
-export class TimelineKafkaConsumerService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(TimelineKafkaConsumerService.name);
+export class NotificationsKafkaConsumerService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(NotificationsKafkaConsumerService.name);
   private readonly kafka = new Kafka({
-    clientId: process.env.KAFKA_CLIENT_ID ?? "chirper-timeline",
+    clientId: process.env.KAFKA_CLIENT_ID ?? "chirper-notifications",
     brokers: kafkaBrokers(),
     logLevel: logLevel.NOTHING,
   });
   private readonly admin = this.kafka.admin();
   private readonly consumer: Consumer = this.kafka.consumer({
-    groupId: process.env.KAFKA_CONSUMER_GROUP ?? "chirper-timeline-service",
+    groupId: process.env.KAFKA_CONSUMER_GROUP ?? "chirper-notifications-service",
   });
   private running = false;
   private loopPromise?: Promise<void>;
 
-  constructor(private readonly timelineService: TimelineService) {}
+  constructor(private readonly notifications: NotificationsService) {}
 
   onModuleInit() {
     this.running = true;
@@ -44,28 +43,29 @@ export class TimelineKafkaConsumerService implements OnModuleInit, OnModuleDestr
           waitForLeaders: true,
           topics: [
             {
-              topic: this.postsTopic(),
+              topic: process.env.KAFKA_POSTS_TOPIC ?? KAFKA_TOPICS.postsEvents,
               numPartitions: 3,
               replicationFactor: 1,
             },
             {
-              topic: this.graphTopic(),
+              topic: process.env.KAFKA_GRAPH_TOPIC ?? KAFKA_TOPICS.graphEvents,
               numPartitions: 3,
               replicationFactor: 1,
             },
           ],
         });
+
         await this.consumer.connect();
         await this.consumer.subscribe({
-          topic: this.postsTopic(),
+          topic: process.env.KAFKA_POSTS_TOPIC ?? KAFKA_TOPICS.postsEvents,
           fromBeginning: true,
         });
         await this.consumer.subscribe({
-          topic: this.graphTopic(),
+          topic: process.env.KAFKA_GRAPH_TOPIC ?? KAFKA_TOPICS.graphEvents,
           fromBeginning: true,
         });
 
-        this.logger.log(`Kafka consumer subscribed to ${this.postsTopic()} and ${this.graphTopic()}.`);
+        this.logger.log("Kafka consumer subscribed to posts and graph topics.");
 
         await this.consumer.run({
           eachMessage: async ({ message }) => {
@@ -75,17 +75,12 @@ export class TimelineKafkaConsumerService implements OnModuleInit, OnModuleDestr
             }
 
             if (isPostPublishedEvent(raw)) {
-              await this.timelineService.consumePostPublishedEvent(raw);
+              await this.notifications.consumePostPublishedEvent(raw);
               return;
             }
 
             if (isGraphFollowCreatedEvent(raw)) {
-              await this.timelineService.consumeGraphFollowCreatedEvent(raw);
-              return;
-            }
-
-            if (isGraphFollowRemovedEvent(raw)) {
-              await this.timelineService.consumeGraphFollowRemovedEvent(raw);
+              await this.notifications.consumeGraphFollowCreatedEvent(raw);
             }
           },
         });
@@ -98,14 +93,6 @@ export class TimelineKafkaConsumerService implements OnModuleInit, OnModuleDestr
         await sleep(2000);
       }
     }
-  }
-
-  private postsTopic() {
-    return process.env.KAFKA_POSTS_TOPIC ?? KAFKA_TOPICS.postsEvents;
-  }
-
-  private graphTopic() {
-    return process.env.KAFKA_GRAPH_TOPIC ?? KAFKA_TOPICS.graphEvents;
   }
 }
 

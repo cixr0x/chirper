@@ -1,7 +1,5 @@
 import { Body, Controller, Get, Headers, Param, Post } from "@nestjs/common";
 import { GraphClientService } from "./clients/graph.client";
-import { NotificationsClientService } from "./clients/notifications.client";
-import { TimelineClientService } from "./clients/timeline.client";
 import { sessionHeaderName } from "./session-header";
 import { SessionAuthService } from "./session-auth.service";
 
@@ -9,8 +7,6 @@ import { SessionAuthService } from "./session-auth.service";
 export class GraphController {
   constructor(
     private readonly graphClient: GraphClientService,
-    private readonly timelineClient: TimelineClientService,
-    private readonly notificationsClient: NotificationsClientService,
     private readonly sessionAuth: SessionAuthService,
   ) {}
 
@@ -43,15 +39,6 @@ export class GraphController {
       followerUserId,
       followeeUserId: body.followeeUserId,
     });
-    await this.timelineClient.rebuildHomeTimeline(followerUserId, 50);
-    await Promise.allSettled([
-      this.notificationsClient.createNotification({
-        recipientUserId: body.followeeUserId,
-        actorUserId: followerUserId,
-        type: "follow",
-        resourceId: follow.followId,
-      }),
-    ]);
     return follow;
   }
 
@@ -69,7 +56,6 @@ export class GraphController {
       followerUserId,
       followeeUserId: body.followeeUserId,
     });
-    await this.timelineClient.rebuildHomeTimeline(followerUserId, 50);
     return result;
   }
 }

@@ -13,7 +13,7 @@ export class HealthController {
         "notify_delivery_attempts",
         "notify_inbox",
       ],
-      transports: ["http", "grpc", "nats"],
+      transports: ["http", "grpc", "kafka"],
       status: "ok",
     };
   }

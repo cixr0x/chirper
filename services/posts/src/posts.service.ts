@@ -28,6 +28,13 @@ type PostInteractionRecord = {
   changed: boolean;
 };
 
+type PostEngagementRecord = {
+  interactionId: string;
+  postId: string;
+  userId: string;
+  createdAt: string;
+};
+
 type PostInteractionRemovalResult = {
   removed: boolean;
 };
@@ -97,6 +104,40 @@ export class PostsService {
     });
 
     return posts.map((post) => this.mapPost(post));
+  }
+
+  async listLikes(postId: string, limit = 25): Promise<PostEngagementRecord[]> {
+    const normalizedPostId = postId.trim();
+    if (!normalizedPostId) {
+      return [];
+    }
+
+    const likes = await this.prisma.like.findMany({
+      where: {
+        postId: normalizedPostId,
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: Math.min(Math.max(limit, 1), 100),
+    });
+
+    return likes.map((like) => this.mapEngagement(like));
+  }
+
+  async listReposts(postId: string, limit = 25): Promise<PostEngagementRecord[]> {
+    const normalizedPostId = postId.trim();
+    if (!normalizedPostId) {
+      return [];
+    }
+
+    const reposts = await this.prisma.repost.findMany({
+      where: {
+        postId: normalizedPostId,
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: Math.min(Math.max(limit, 1), 100),
+    });
+
+    return reposts.map((repost) => this.mapEngagement(repost));
   }
 
   async listTimelineActivitiesByUsers(actorUserIds: string[], limit = 25): Promise<TimelineActivityRecord[]> {
@@ -593,6 +634,20 @@ export class PostsService {
       visibility: post.visibility,
       createdAt: post.createdAt.toISOString(),
       inReplyToPostId: post.inReplyToPostId ?? "",
+    };
+  }
+
+  private mapEngagement(record: {
+    id: string;
+    postId: string;
+    userId: string;
+    createdAt: Date;
+  }): PostEngagementRecord {
+    return {
+      interactionId: record.id,
+      postId: record.postId,
+      userId: record.userId,
+      createdAt: record.createdAt.toISOString(),
     };
   }
 }

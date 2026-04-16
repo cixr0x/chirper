@@ -12,6 +12,7 @@ import {
 } from "@nestjs/common";
 import { IdentityClientService, type IdentityUser } from "./clients/identity.client";
 import {
+  type PostEngagementRecord,
   type PostMetrics,
   type PostRecord,
   PostsClientService,
@@ -28,6 +29,17 @@ type FeedActivity = {
   actorUserId: string;
   activityType: string;
   insertedAt?: string;
+};
+
+type EngagementActor = {
+  interactionId: string;
+  createdAt: string;
+  actor: {
+    userId: string;
+    handle: string;
+    displayName: string;
+    avatarUrl: string;
+  };
 };
 
 type ThreadEnvelope = {
@@ -75,6 +87,16 @@ export class FeedController {
   ): Promise<ThreadEnvelope> {
     const session = await this.sessionAuth.optionalSession(sessionToken);
     return this.buildThread(postId, this.normalizeLimit(replyLimit, 40), session?.userId);
+  }
+
+  @Get("posts/:postId/likes")
+  async getLikes(@Param("postId") postId: string, @Query("limit") limit?: string) {
+    return this.buildEngagement(this.postsClient.listLikes(postId, this.normalizeLimit(limit, 40)));
+  }
+
+  @Get("posts/:postId/reposts")
+  async getReposts(@Param("postId") postId: string, @Query("limit") limit?: string) {
+    return this.buildEngagement(this.postsClient.listReposts(postId, this.normalizeLimit(limit, 40)));
   }
 
   @Post("posts")
@@ -249,6 +271,29 @@ export class FeedController {
     );
 
     return items[0] ?? null;
+  }
+
+  private async buildEngagement(recordsPromise: Promise<PostEngagementRecord[]>) {
+    const records = await recordsPromise;
+    if (records.length === 0) {
+      return [] as EngagementActor[];
+    }
+
+    const authorMap = await this.buildAuthorMap(records.map((record) => record.userId));
+    return records
+      .map((record) => {
+        const actor = authorMap.get(record.userId);
+        if (!actor) {
+          return null;
+        }
+
+        return {
+          interactionId: record.interactionId,
+          createdAt: record.createdAt,
+          actor,
+        } satisfies EngagementActor;
+      })
+      .filter((record): record is EngagementActor => Boolean(record));
   }
 
   private async buildAuthorMap(authorUserIds: string[]) {

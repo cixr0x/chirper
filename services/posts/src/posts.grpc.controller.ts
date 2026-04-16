@@ -25,6 +25,20 @@ export class PostsGrpcController {
     };
   }
 
+  @GrpcMethod("PostsService", "ListLikes")
+  async listLikes(data: { postId: string; limit?: number }) {
+    return {
+      records: await this.posts.listLikes(data.postId, data.limit ?? 25),
+    };
+  }
+
+  @GrpcMethod("PostsService", "ListReposts")
+  async listReposts(data: { postId: string; limit?: number }) {
+    return {
+      records: await this.posts.listReposts(data.postId, data.limit ?? 25),
+    };
+  }
+
   @GrpcMethod("PostsService", "ListTimelineActivitiesByUsers")
   async listTimelineActivitiesByUsers(data: { actorUserIds?: string[]; limit?: number }) {
     return {

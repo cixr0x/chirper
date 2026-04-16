@@ -6,6 +6,8 @@ service PostsService {
   rpc ListPublicPosts (ListPublicPostsRequest) returns (ListPublicPostsResponse);
   rpc ListPostsByAuthors (ListPostsByAuthorsRequest) returns (ListPostsByAuthorsResponse);
   rpc ListReplies (ListRepliesRequest) returns (ListRepliesResponse);
+  rpc ListLikes (ListPostEngagementRequest) returns (ListPostEngagementResponse);
+  rpc ListReposts (ListPostEngagementRequest) returns (ListPostEngagementResponse);
   rpc ListTimelineActivitiesByUsers (ListTimelineActivitiesByUsersRequest) returns (ListTimelineActivitiesByUsersResponse);
   rpc GetPostsByIds (GetPostsByIdsRequest) returns (GetPostsByIdsResponse);
   rpc GetPostMetrics (GetPostMetricsRequest) returns (GetPostMetricsResponse);
@@ -40,6 +42,11 @@ message ListPostsByAuthorsRequest {
 }
 
 message ListRepliesRequest {
+  string postId = 1;
+  int32 limit = 2;
+}
+
+message ListPostEngagementRequest {
   string postId = 1;
   int32 limit = 2;
 }
@@ -96,6 +103,13 @@ message TimelineActivity {
   string createdAt = 5;
 }
 
+message PostEngagementRecord {
+  string interactionId = 1;
+  string postId = 2;
+  string userId = 3;
+  string createdAt = 4;
+}
+
 message ListTimelineActivitiesByUsersResponse {
   repeated TimelineActivity activities = 1;
 }
@@ -119,6 +133,10 @@ message ListPostsByAuthorsResponse {
 
 message ListRepliesResponse {
   repeated PostRecord posts = 1;
+}
+
+message ListPostEngagementResponse {
+  repeated PostEngagementRecord records = 1;
 }
 
 message GetPostsByIdsResponse {

@@ -28,6 +28,13 @@ export type PostInteractionRecord = {
   changed: boolean;
 };
 
+export type PostEngagementRecord = {
+  interactionId: string;
+  postId: string;
+  userId: string;
+  createdAt: string;
+};
+
 export type PostInteractionRemovalResult = {
   removed: boolean;
 };
@@ -57,6 +64,13 @@ type ListRepliesRequest = {
 };
 type ListRepliesResponse = {
   posts: PostRecord[];
+};
+type ListPostEngagementRequest = {
+  postId: string;
+  limit: number;
+};
+type ListPostEngagementResponse = {
+  records: PostEngagementRecord[];
 };
 type ListTimelineActivitiesByUsersRequest = {
   actorUserIds: string[];
@@ -98,6 +112,8 @@ type PostsGrpcService = {
   listPublicPosts(request: ListPublicPostsRequest): Observable<ListPublicPostsResponse>;
   listPostsByAuthors(request: ListPostsByAuthorsRequest): Observable<ListPostsByAuthorsResponse>;
   listReplies(request: ListRepliesRequest): Observable<ListRepliesResponse>;
+  listLikes(request: ListPostEngagementRequest): Observable<ListPostEngagementResponse>;
+  listReposts(request: ListPostEngagementRequest): Observable<ListPostEngagementResponse>;
   listTimelineActivitiesByUsers(
     request: ListTimelineActivitiesByUsersRequest,
   ): Observable<ListTimelineActivitiesByUsersResponse>;
@@ -134,6 +150,16 @@ export class PostsClientService implements OnModuleInit {
   async listReplies(postId: string, limit = 25) {
     const response = await lastValueFrom(this.service.listReplies({ postId, limit }));
     return response.posts ?? [];
+  }
+
+  async listLikes(postId: string, limit = 25) {
+    const response = await lastValueFrom(this.service.listLikes({ postId, limit }));
+    return response.records ?? [];
+  }
+
+  async listReposts(postId: string, limit = 25) {
+    const response = await lastValueFrom(this.service.listReposts({ postId, limit }));
+    return response.records ?? [];
   }
 
   async listTimelineActivitiesByUsers(actorUserIds: string[], limit = 25) {

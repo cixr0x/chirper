@@ -79,6 +79,17 @@ export type ThreadEnvelope = {
   replies: FeedItem[];
 };
 
+export type EngagementActor = {
+  interactionId: string;
+  createdAt: string;
+  actor: {
+    userId: string;
+    handle: string;
+    displayName: string;
+    avatarUrl: string;
+  };
+};
+
 export type RealtimeEventEnvelope = {
   nextSequence: number;
   events: NotificationItem[];
@@ -221,6 +232,40 @@ export async function getPostThread(postId: string, sessionToken?: string): Prom
     return (await response.json()) as ThreadEnvelope;
   } catch {
     return null;
+  }
+}
+
+export async function getPostLikes(postId: string, sessionToken?: string): Promise<EngagementActor[]> {
+  try {
+    const response = await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/likes`, {
+      cache: "no-store",
+      headers: sessionHeaders(sessionToken),
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return (await response.json()) as EngagementActor[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getPostReposts(postId: string, sessionToken?: string): Promise<EngagementActor[]> {
+  try {
+    const response = await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/reposts`, {
+      cache: "no-store",
+      headers: sessionHeaders(sessionToken),
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return (await response.json()) as EngagementActor[];
+  } catch {
+    return [];
   }
 }
 

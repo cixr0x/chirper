@@ -159,6 +159,31 @@ body {
   margin-top: 1.2rem;
 }
 
+.engagement-layout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.engagement-stack {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.engagement-card {
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.engagement-copy {
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .section-heading {
   display: flex;
   align-items: end;
@@ -804,7 +829,8 @@ body {
   .app-hero,
   .timeline-layout,
   .notes-strip,
-  .profile-columns {
+  .profile-columns,
+  .engagement-layout {
     grid-template-columns: 1fr;
   }
 

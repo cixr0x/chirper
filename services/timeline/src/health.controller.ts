@@ -13,7 +13,7 @@ export class HealthController {
         "timeline_rank_state",
         "timeline_inbox",
       ],
-      transports: ["http", "grpc", "nats"],
+      transports: ["http", "grpc", "kafka"],
       status: "ok",
     };
   }

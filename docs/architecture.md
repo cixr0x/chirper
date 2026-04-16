@@ -7,7 +7,7 @@
 - No cross-service table access
 - Public traffic reaches only `web` and `bff`
 - Internal request/response uses gRPC
-- Internal asynchronous communication uses NATS JetStream
+- Internal asynchronous communication uses Kafka
 - Redis is reserved for cache, fan-out buffers, and ephemeral state
 
 ## Prefix Ownership Convention
@@ -123,4 +123,3 @@ Rules:
 3. Add event-driven `timeline`.
 4. Add `notifications`, `media`, and `realtime`.
 5. Add search, observability hardening, rollout policies, and canaries.
-

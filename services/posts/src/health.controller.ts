@@ -8,9 +8,8 @@ export class HealthController {
       service: "posts",
       prefix: "posts",
       tables: ["posts_posts", "posts_likes", "posts_reposts", "posts_post_media", "posts_outbox"],
-      transports: ["http", "grpc", "nats"],
+      transports: ["http", "grpc", "kafka"],
       status: "ok",
     };
   }
 }
-

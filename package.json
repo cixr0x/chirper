@@ -4,14 +4,15 @@
   "version": "0.1.0",
   "packageManager": "npm@10.8.2",
   "workspaces": [
-    "apps/*",
+    "packages/*",
     "services/*",
-    "packages/*"
+    "apps/*"
   ],
   "scripts": {
     "prisma:generate": "npm run prisma:generate -w @chirper/identity && npm run prisma:generate -w @chirper/profile && npm run prisma:generate -w @chirper/posts && npm run prisma:generate -w @chirper/graph && npm run prisma:generate -w @chirper/timeline && npm run prisma:generate -w @chirper/notifications && npm run prisma:generate -w @chirper/media",
-    "build": "npm run prisma:generate && npm run build --workspaces --if-present",
-    "typecheck": "npm run prisma:generate && npm run typecheck --workspaces --if-present",
+    "build:packages": "npm run build -w @chirper/common && npm run build -w @chirper/contracts-events",
+    "build": "npm run build:packages && npm run prisma:generate && npm run build --workspaces --if-present",
+    "typecheck": "npm run build:packages && npm run prisma:generate && npm run typecheck --workspaces --if-present",
     "check:boundaries": "node ./scripts/check-table-ownership.mjs",
     "check": "npm run check:boundaries && npm run typecheck",
     "db:identity:info": "node ./scripts/flyway-run.mjs --service identity --command info",
@@ -43,6 +44,8 @@
     "db:media:validate": "node ./scripts/flyway-run.mjs --service media --command validate",
     "db:media:seed:demo": "node ./scripts/sql-file-run.mjs --service media --file db/seeds/demo.sql",
     "db:seed:demo": "npm run db:identity:seed:demo && npm run db:media:seed:demo && npm run db:profile:seed:demo && npm run db:posts:seed:demo && npm run db:graph:seed:demo && npm run db:timeline:seed:demo && npm run db:notifications:seed:demo",
+    "infra:dev:up": "docker compose -f infra/dev/docker-compose.yml up -d",
+    "infra:dev:down": "docker compose -f infra/dev/docker-compose.yml down",
     "dev:web": "npm run dev -w @chirper/web",
     "dev:bff": "npm run dev -w @chirper/bff",
     "dev:identity": "npm run dev -w @chirper/identity",

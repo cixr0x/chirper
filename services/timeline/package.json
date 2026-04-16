@@ -4,12 +4,13 @@
   "version": "0.1.0",
   "scripts": {
     "prisma:generate": "node ../../scripts/prisma-generate.mjs --service timeline",
-    "dev": "npm run prisma:generate && tsx watch src/main.ts",
+    "dev": "npm run build -w @chirper/contracts-events && npm run prisma:generate && tsx watch src/main.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@chirper/contracts-events": "*",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
     "@nestjs/common": "^11.1.19",
@@ -19,6 +20,7 @@
     "@prisma/client": "^6.19.3",
     "dotenv": "^17.2.3",
     "fastify": "^5.8.5",
+    "kafkajs": "^2.2.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   }

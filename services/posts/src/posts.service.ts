@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
+import { DOMAIN_EVENTS, type PostPublishedPayload } from "@chirper/contracts-events";
+import { Prisma } from "../generated/prisma";
 import { PrismaService } from "./prisma.service";
 
 type PostRecord = {
@@ -97,13 +99,36 @@ export class PostsService {
     }
 
     const visibility = input.visibility?.trim() || "public";
-    const post = await this.prisma.post.create({
-      data: {
-        id: `post_${randomUUID().replace(/-/g, "")}`,
-        authorId: input.authorUserId,
-        body,
-        visibility,
-      },
+    const postId = `post_${randomUUID().replace(/-/g, "")}`;
+    const outboxId = `outbox_${randomUUID().replace(/-/g, "")}`;
+    const post = await this.prisma.$transaction(async (tx) => {
+      const createdPost = await tx.post.create({
+        data: {
+          id: postId,
+          authorId: input.authorUserId,
+          body,
+          visibility,
+        },
+      });
+
+      const payload: PostPublishedPayload = {
+        postId: createdPost.id,
+        authorUserId: createdPost.authorId,
+        visibility: createdPost.visibility,
+        createdAt: createdPost.createdAt.toISOString(),
+      };
+
+      await tx.outboxEvent.create({
+        data: {
+          id: outboxId,
+          aggregateType: "post",
+          aggregateId: createdPost.id,
+          eventType: DOMAIN_EVENTS.postPublished,
+          payload: payload as Prisma.InputJsonValue,
+        },
+      });
+
+      return createdPost;
     });
 
     return {

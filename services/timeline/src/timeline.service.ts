@@ -1,4 +1,6 @@
 import { Injectable } from "@nestjs/common";
+import { DOMAIN_EVENTS, type PostPublishedEvent } from "@chirper/contracts-events";
+import { Prisma } from "../generated/prisma";
 import { GraphClientService } from "./clients/graph.client";
 import { PostRecord, PostsClientService } from "./clients/posts.client";
 import { PrismaService } from "./prisma.service";
@@ -86,38 +88,99 @@ export class TimelineService {
     authorUserId: string;
     createdAt: string;
   }) {
+    return this.projectPublishedPost({
+      postId: input.postId,
+      authorUserId: input.authorUserId,
+      createdAt: input.createdAt,
+    });
+  }
+
+  async consumePostPublishedEvent(event: PostPublishedEvent) {
+    return this.projectPublishedPost(
+      {
+        postId: event.payload.postId,
+        authorUserId: event.payload.authorUserId,
+        createdAt: event.payload.createdAt,
+      },
+      event,
+    );
+  }
+
+  private async projectPublishedPost(
+    input: {
+      postId: string;
+      authorUserId: string;
+      createdAt: string;
+    },
+    event?: PostPublishedEvent,
+  ) {
     const createdAt = this.parseDate(input.createdAt);
     const rankScore = this.rankScoreFor(createdAt);
     const followerUserIds = await this.graphClient.listFollowers(input.authorUserId);
     const ownerUserIds = [...new Set([input.authorUserId, ...followerUserIds])];
 
-    await this.runWithRetry(async () => {
-      if (ownerUserIds.length > 0) {
-        await this.prisma.homeEntry.createMany({
-          data: ownerUserIds.map((ownerUserId) => ({
-            id: this.homeEntryId(ownerUserId, input.postId),
-            ownerUserId,
-            sourcePostId: input.postId,
-            actorUserId: input.authorUserId,
-            insertedAt: createdAt,
-            rankScore,
-          })),
+    await this.runWithRetry(() =>
+      this.prisma.$transaction(async (tx) => {
+        if (event) {
+          const existingInboxEvent = await tx.inboxEvent.findUnique({
+            where: { id: event.id },
+          });
+
+          if (existingInboxEvent?.processedAt) {
+            return;
+          }
+
+          await tx.inboxEvent.upsert({
+            where: { id: event.id },
+            update: {
+              eventType: event.name,
+              payload: event as Prisma.InputJsonValue,
+            },
+            create: {
+              id: event.id,
+              eventType: event.name,
+              payload: event as Prisma.InputJsonValue,
+            },
+          });
+        }
+
+        if (ownerUserIds.length > 0) {
+          await tx.homeEntry.createMany({
+            data: ownerUserIds.map((ownerUserId) => ({
+              id: this.homeEntryId(ownerUserId, input.postId),
+              ownerUserId,
+              sourcePostId: input.postId,
+              actorUserId: input.authorUserId,
+              insertedAt: createdAt,
+              rankScore,
+            })),
+            skipDuplicates: true,
+          });
+        }
+
+        await tx.userEntry.createMany({
+          data: [
+            {
+              id: this.userEntryId(input.authorUserId, input.postId),
+              ownerUserId: input.authorUserId,
+              sourcePostId: input.postId,
+              insertedAt: createdAt,
+            },
+          ],
           skipDuplicates: true,
         });
-      }
 
-      await this.prisma.userEntry.createMany({
-        data: [
-          {
-            id: this.userEntryId(input.authorUserId, input.postId),
-            ownerUserId: input.authorUserId,
-            sourcePostId: input.postId,
-            insertedAt: createdAt,
-          },
-        ],
-        skipDuplicates: true,
-      });
-    });
+        if (event) {
+          await tx.inboxEvent.update({
+            where: { id: event.id },
+            data: {
+              eventType: DOMAIN_EVENTS.postPublished,
+              processedAt: new Date(),
+            },
+          });
+        }
+      }),
+    );
 
     return {
       insertedCount: ownerUserIds.length,

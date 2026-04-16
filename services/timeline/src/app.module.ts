@@ -6,6 +6,7 @@ import { PostsClientService } from "./clients/posts.client";
 import { HealthController } from "./health.controller";
 import { loadServiceEnv } from "./load-env";
 import { PrismaService } from "./prisma.service";
+import { TimelineKafkaConsumerService } from "./timeline-kafka.consumer";
 import { TimelineGrpcController } from "./timeline.grpc.controller";
 import { TimelineService } from "./timeline.service";
 
@@ -35,6 +36,12 @@ loadServiceEnv();
     ]),
   ],
   controllers: [HealthController, TimelineGrpcController],
-  providers: [PrismaService, GraphClientService, PostsClientService, TimelineService],
+  providers: [
+    PrismaService,
+    GraphClientService,
+    PostsClientService,
+    TimelineService,
+    TimelineKafkaConsumerService,
+  ],
 })
 export class AppModule {}

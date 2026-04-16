@@ -53,12 +53,6 @@ export class FeedController {
       visibility: "public",
     });
 
-    await this.timelineClient.fanOutPost({
-      postId: created.postId,
-      authorUserId: created.authorUserId,
-      createdAt: created.createdAt,
-    });
-
     const followerUserIds = await this.graphClient.listFollowers(created.authorUserId);
     await Promise.allSettled(
       followerUserIds.map((recipientUserId) =>

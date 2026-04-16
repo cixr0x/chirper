@@ -81,6 +81,24 @@ export class PostsService {
     return posts.map((post) => this.mapPost(post));
   }
 
+  async listReplies(postId: string, limit = 25): Promise<PostRecord[]> {
+    const normalizedPostId = postId.trim();
+    if (!normalizedPostId) {
+      return [];
+    }
+
+    const posts = await this.prisma.post.findMany({
+      where: {
+        inReplyToPostId: normalizedPostId,
+        visibility: "public",
+      },
+      orderBy: [{ createdAt: "asc" }],
+      take: Math.min(Math.max(limit, 1), 100),
+    });
+
+    return posts.map((post) => this.mapPost(post));
+  }
+
   async listTimelineActivitiesByUsers(actorUserIds: string[], limit = 25): Promise<TimelineActivityRecord[]> {
     const uniqueActorIds = [...new Set(actorUserIds.map((value) => value.trim()).filter(Boolean))];
     if (uniqueActorIds.length === 0) {

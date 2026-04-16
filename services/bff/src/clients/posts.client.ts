@@ -32,6 +32,14 @@ export type PostInteractionRemovalResult = {
   removed: boolean;
 };
 
+export type TimelineActivityRecord = {
+  activityId: string;
+  activityType: string;
+  actorUserId: string;
+  sourcePostId: string;
+  createdAt: string;
+};
+
 type ListPublicPostsRequest = { limit: number };
 type ListPublicPostsResponse = {
   posts: PostRecord[];
@@ -42,6 +50,20 @@ type ListPostsByAuthorsRequest = {
 };
 type ListPostsByAuthorsResponse = {
   posts: PostRecord[];
+};
+type ListRepliesRequest = {
+  postId: string;
+  limit: number;
+};
+type ListRepliesResponse = {
+  posts: PostRecord[];
+};
+type ListTimelineActivitiesByUsersRequest = {
+  actorUserIds: string[];
+  limit: number;
+};
+type ListTimelineActivitiesByUsersResponse = {
+  activities: TimelineActivityRecord[];
 };
 type GetPostsByIdsRequest = {
   postIds: string[];
@@ -75,6 +97,10 @@ type PostInteractionRequest = {
 type PostsGrpcService = {
   listPublicPosts(request: ListPublicPostsRequest): Observable<ListPublicPostsResponse>;
   listPostsByAuthors(request: ListPostsByAuthorsRequest): Observable<ListPostsByAuthorsResponse>;
+  listReplies(request: ListRepliesRequest): Observable<ListRepliesResponse>;
+  listTimelineActivitiesByUsers(
+    request: ListTimelineActivitiesByUsersRequest,
+  ): Observable<ListTimelineActivitiesByUsersResponse>;
   getPostsByIds(request: GetPostsByIdsRequest): Observable<GetPostsByIdsResponse>;
   getPostMetrics(request: GetPostMetricsRequest): Observable<GetPostMetricsResponse>;
   createPost(request: CreatePostRequest): Observable<PostRecord>;
@@ -103,6 +129,21 @@ export class PostsClientService implements OnModuleInit {
   async listPostsByAuthors(authorUserIds: string[], limit = 25) {
     const response = await lastValueFrom(this.service.listPostsByAuthors({ authorUserIds, limit }));
     return response.posts ?? [];
+  }
+
+  async listReplies(postId: string, limit = 25) {
+    const response = await lastValueFrom(this.service.listReplies({ postId, limit }));
+    return response.posts ?? [];
+  }
+
+  async listTimelineActivitiesByUsers(actorUserIds: string[], limit = 25) {
+    const response = await lastValueFrom(
+      this.service.listTimelineActivitiesByUsers({
+        actorUserIds,
+        limit,
+      }),
+    );
+    return response.activities ?? [];
   }
 
   async getPostsByIds(postIds: string[]) {

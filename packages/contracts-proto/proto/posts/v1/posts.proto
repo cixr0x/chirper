@@ -5,6 +5,7 @@ package posts.v1;
 service PostsService {
   rpc ListPublicPosts (ListPublicPostsRequest) returns (ListPublicPostsResponse);
   rpc ListPostsByAuthors (ListPostsByAuthorsRequest) returns (ListPostsByAuthorsResponse);
+  rpc ListReplies (ListRepliesRequest) returns (ListRepliesResponse);
   rpc ListTimelineActivitiesByUsers (ListTimelineActivitiesByUsersRequest) returns (ListTimelineActivitiesByUsersResponse);
   rpc GetPostsByIds (GetPostsByIdsRequest) returns (GetPostsByIdsResponse);
   rpc GetPostMetrics (GetPostMetricsRequest) returns (GetPostMetricsResponse);
@@ -35,6 +36,11 @@ message CreateReplyRequest {
 
 message ListPostsByAuthorsRequest {
   repeated string authorUserIds = 1;
+  int32 limit = 2;
+}
+
+message ListRepliesRequest {
+  string postId = 1;
   int32 limit = 2;
 }
 
@@ -108,6 +114,10 @@ message ListPublicPostsResponse {
 }
 
 message ListPostsByAuthorsResponse {
+  repeated PostRecord posts = 1;
+}
+
+message ListRepliesResponse {
   repeated PostRecord posts = 1;
 }
 

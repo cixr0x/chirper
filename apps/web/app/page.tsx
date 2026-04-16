@@ -1,19 +1,15 @@
 import { LiveNotificationEvents } from "../components/live-notification-events";
 import { AvatarBadge } from "../components/avatar-badge";
+import { FeedList } from "../components/feed-list";
 import Link from "next/link";
 import {
   changePasswordAction,
-  createReplyAction,
   createPostAction,
-  likePostAction,
   markNotificationsReadAction,
   registerAction,
-  repostPostAction,
   requestPasswordResetAction,
   signInAction,
   signOutAction,
-  undoRepostAction,
-  unlikePostAction,
 } from "./actions";
 import {
   formatPostTimestamp,
@@ -324,87 +320,21 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
 
             {feed.length === 0 ? (
-              <article className="empty-card">
-                <h3>No posts in this home timeline yet</h3>
-                <p>
-                  Create a post as the selected viewer or follow another account from its profile to
-                  backfill their recent posts.
-                </p>
-              </article>
+              <FeedList
+                emptyBody="Create a post as the selected viewer or follow another account from its profile to backfill their recent posts."
+                emptyTitle="No posts in this home timeline yet"
+                items={[]}
+                targetPath="/"
+                viewerHandle={viewer?.handle}
+              />
             ) : (
-              <div className="feed-stack">
-                {feed.map((item) => (
-                    <article className="feed-card" key={item.postId}>
-                      {item.activityType === "repost" && item.actor ? (
-                        <p className="activity-kicker">
-                          {item.actor.displayName} reposted this on{" "}
-                          {formatPostTimestamp(item.projectedAt ?? item.createdAt)}
-                        </p>
-                      ) : null}
-                      {item.activityType === "reply" && item.inReplyTo ? (
-                        <p className="activity-kicker">
-                          Replying to{" "}
-                          {item.inReplyTo.author ? `@${item.inReplyTo.author.handle}` : item.inReplyTo.postId}
-                        </p>
-                      ) : null}
-                      <div className="feed-head">
-                        <AvatarBadge
-                          avatarUrl={item.author?.avatarUrl}
-                          displayName={item.author?.displayName ?? "Unknown author"}
-                          size="small"
-                        />
-                        <div>
-                          <h3>{item.author?.displayName ?? "Unknown author"}</h3>
-                        <p className="handle">
-                          @{item.author?.handle ?? "unknown"} | {formatPostTimestamp(item.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="feed-body">{item.body}</p>
-                    <div className="feed-metrics">
-                      <span>{item.metrics.replyCount} replies</span>
-                      <span>{item.metrics.likeCount} likes</span>
-                      <span>{item.metrics.repostCount} reposts</span>
-                    </div>
-                    {viewer ? (
-                      <>
-                        <div className="feed-actions-row">
-                          <form action={item.metrics.likedByViewer ? unlikePostAction : likePostAction}>
-                            <input name="postId" type="hidden" value={item.postId} />
-                            <input name="targetPath" type="hidden" value="/" />
-                            <button className="secondary-button compact" type="submit">
-                              {item.metrics.likedByViewer ? "Unlike" : "Like"}
-                            </button>
-                          </form>
-                          <form action={item.metrics.repostedByViewer ? undoRepostAction : repostPostAction}>
-                            <input name="postId" type="hidden" value={item.postId} />
-                            <input name="targetPath" type="hidden" value="/" />
-                            <button className="secondary-button compact" type="submit">
-                              {item.metrics.repostedByViewer ? "Undo repost" : "Repost"}
-                            </button>
-                          </form>
-                        </div>
-                        <form action={createReplyAction} className="reply-form">
-                          <input name="postId" type="hidden" value={item.postId} />
-                          <input name="targetPath" type="hidden" value="/" />
-                          <label className="field">
-                            <span>Reply</span>
-                            <textarea
-                              maxLength={280}
-                              name="body"
-                              placeholder={`Reply to @${item.author?.handle ?? "unknown"}`}
-                              rows={2}
-                            />
-                          </label>
-                          <button className="primary-button compact" type="submit">
-                            Reply
-                          </button>
-                        </form>
-                      </>
-                    ) : null}
-                  </article>
-                ))}
-              </div>
+              <FeedList
+                emptyBody="Create a post as the selected viewer or follow another account from its profile to backfill their recent posts."
+                emptyTitle="No posts in this home timeline yet"
+                items={feed}
+                targetPath="/"
+                viewerHandle={viewer?.handle}
+              />
             )}
           </section>
         </div>

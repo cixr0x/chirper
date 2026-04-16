@@ -1,6 +1,22 @@
-import { BadRequestException, Body, Controller, Get, Headers, Inject, Param, Post } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Inject,
+  NotFoundException,
+  Param,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { IdentityClientService, type IdentityUser } from "./clients/identity.client";
-import { type PostMetrics, type PostRecord, PostsClientService } from "./clients/posts.client";
+import {
+  type PostMetrics,
+  type PostRecord,
+  PostsClientService,
+  type TimelineActivityRecord,
+} from "./clients/posts.client";
 import { TimelineClientService } from "./clients/timeline.client";
 import { ProfileClientService } from "./clients/profile.client";
 import { buildManagedAssetUrl } from "./media-url";
@@ -12,6 +28,12 @@ type FeedActivity = {
   actorUserId: string;
   activityType: string;
   insertedAt?: string;
+};
+
+type ThreadEnvelope = {
+  focus: Awaited<ReturnType<FeedController["buildFeedItem"]>>;
+  ancestors: Awaited<ReturnType<FeedController["buildFeed"]>>;
+  replies: Awaited<ReturnType<FeedController["buildFeed"]>>;
 };
 
 @Controller()
@@ -33,6 +55,26 @@ export class FeedController {
 
     const posts = await this.postsClient.listPublicPosts(50);
     return this.buildFeed(posts);
+  }
+
+  @Get("users/:userId/feed")
+  async getUserFeed(
+    @Param("userId") userId: string,
+    @Query("limit") limit?: string,
+    @Headers(sessionHeaderName) sessionToken?: string,
+  ) {
+    const session = await this.sessionAuth.optionalSession(sessionToken);
+    return this.buildUserFeed(userId, this.normalizeLimit(limit, 40), session?.userId);
+  }
+
+  @Get("posts/:postId/thread")
+  async getThread(
+    @Param("postId") postId: string,
+    @Query("replyLimit") replyLimit?: string,
+    @Headers(sessionHeaderName) sessionToken?: string,
+  ): Promise<ThreadEnvelope> {
+    const session = await this.sessionAuth.optionalSession(sessionToken);
+    return this.buildThread(postId, this.normalizeLimit(replyLimit, 40), session?.userId);
   }
 
   @Post("posts")
@@ -151,6 +193,40 @@ export class FeedController {
     );
   }
 
+  private async buildUserFeed(userId: string, limit = 25, viewerUserId?: string) {
+    const activities = await this.postsClient.listTimelineActivitiesByUsers([userId], limit);
+    if (activities.length === 0) {
+      return [];
+    }
+
+    const posts = await this.postsClient.getPostsByIds(activities.map((activity) => activity.sourcePostId));
+    return this.buildFeedItems(posts, this.toActivities(activities), viewerUserId);
+  }
+
+  private async buildThread(postId: string, replyLimit = 25, viewerUserId?: string): Promise<ThreadEnvelope> {
+    const [focus] = await this.postsClient.getPostsByIds([postId]);
+    if (!focus) {
+      throw new NotFoundException(`Post ${postId} was not found.`);
+    }
+
+    const [ancestors, replies] = await Promise.all([
+      this.listAncestorPosts(focus),
+      this.postsClient.listReplies(focus.postId, replyLimit),
+    ]);
+
+    const [focusItem, ancestorItems, replyItems] = await Promise.all([
+      this.buildFeedItem(focus, viewerUserId),
+      ancestors.length > 0 ? this.buildFeed(ancestors, viewerUserId) : Promise.resolve([]),
+      replies.length > 0 ? this.buildFeed(replies, viewerUserId) : Promise.resolve([]),
+    ]);
+
+    return {
+      focus: focusItem,
+      ancestors: ancestorItems,
+      replies: replyItems,
+    };
+  }
+
   private async buildFeedItem(created: {
     postId: string;
     authorUserId: string;
@@ -253,6 +329,7 @@ export class FeedController {
 
   private async buildFeed(
     posts: PostRecord[],
+    viewerUserId?: string,
   ) {
     return this.buildFeedItems(
       posts,
@@ -262,7 +339,45 @@ export class FeedController {
         activityType: post.inReplyToPostId ? "reply" : "post",
         insertedAt: post.createdAt,
       })),
+      viewerUserId,
     );
+  }
+
+  private async listAncestorPosts(post: PostRecord) {
+    const ancestors: PostRecord[] = [];
+    const seenPostIds = new Set([post.postId]);
+    let currentParentId = post.inReplyToPostId;
+
+    while (currentParentId && !seenPostIds.has(currentParentId) && ancestors.length < 12) {
+      seenPostIds.add(currentParentId);
+      const [parent] = await this.postsClient.getPostsByIds([currentParentId]);
+      if (!parent) {
+        break;
+      }
+
+      ancestors.unshift(parent);
+      currentParentId = parent.inReplyToPostId;
+    }
+
+    return ancestors;
+  }
+
+  private toActivities(activities: TimelineActivityRecord[]): FeedActivity[] {
+    return activities.map((activity) => ({
+      sourcePostId: activity.sourcePostId,
+      actorUserId: activity.actorUserId,
+      activityType: activity.activityType,
+      insertedAt: activity.createdAt,
+    }));
+  }
+
+  private normalizeLimit(value: string | undefined, fallback: number) {
+    const parsed = Number(value ?? fallback);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+
+    return Math.min(Math.max(Math.trunc(parsed), 1), 100);
   }
 
   private toActorSummary(

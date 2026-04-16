@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { followUserAction, saveProfileAction, signInAction, unfollowUserAction } from "../../actions";
-import { getUserByHandle, getViewerFollowingUserIds } from "../../../lib/bff";
+import { getUserByHandle, getUserFeed, getViewerFollowingUserIds } from "../../../lib/bff";
 import { AvatarBadge } from "../../../components/avatar-badge";
+import { FeedList } from "../../../components/feed-list";
 import { getSessionState, getSessionToken } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -34,11 +35,15 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
   const hasAuthError = !viewer && (filters?.auth === "invalid" || filters?.auth === "invalid-login");
   const accountMessage = isViewerAccountMessage(filters?.account);
   const activeSessionToken = session ? sessionToken : null;
-  const followingUserIds = activeSessionToken ? await getViewerFollowingUserIds(activeSessionToken) : [];
+  const [followingUserIds, userFeed] = await Promise.all([
+    activeSessionToken ? getViewerFollowingUserIds(activeSessionToken) : Promise.resolve([] as string[]),
+    getUserFeed(user.userId, activeSessionToken ?? undefined),
+  ]);
   const isViewer = viewer?.userId === user.userId;
   const isFollowing = viewer ? followingUserIds.includes(user.userId) : false;
   const homeHref = "/";
   const linkRows = buildEditableLinkRows(user.links);
+  const profilePath = `/u/${user.handle}`;
 
   return (
     <main className="profile-shell">
@@ -248,6 +253,31 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
             </ul>
           )}
         </article>
+      </section>
+
+      <section className="feed-section profile-feed-section">
+        <div className="section-heading compact">
+          <div>
+            <p className="eyebrow">Profile timeline</p>
+            <h2>{isViewer ? "Your recent activity" : `Recent activity from @${user.handle}`}</h2>
+          </div>
+          <p className="section-copy">
+            This view is assembled from `posts` read APIs only: original posts, public replies, and
+            repost activity, all composed through the BFF without querying foreign tables.
+          </p>
+        </div>
+
+        <FeedList
+          emptyBody={
+            isViewer
+              ? "Publish the first post from the home timeline to start building this activity stream."
+              : `@${user.handle} has not published or reposted anything public yet.`
+          }
+          emptyTitle="No public activity yet"
+          items={userFeed}
+          targetPath={profilePath}
+          viewerHandle={viewer?.handle}
+        />
       </section>
     </main>
   );

@@ -150,6 +150,15 @@ body {
   margin-top: 1rem;
 }
 
+.profile-feed-section,
+.thread-section {
+  margin-top: 1.2rem;
+}
+
+.thread-block + .thread-block {
+  margin-top: 1.2rem;
+}
+
 .section-heading {
   display: flex;
   align-items: end;

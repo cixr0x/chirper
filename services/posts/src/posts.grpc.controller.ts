@@ -18,6 +18,13 @@ export class PostsGrpcController {
     return { posts };
   }
 
+  @GrpcMethod("PostsService", "ListReplies")
+  async listReplies(data: { postId: string; limit?: number }) {
+    return {
+      posts: await this.posts.listReplies(data.postId, data.limit ?? 25),
+    };
+  }
+
   @GrpcMethod("PostsService", "ListTimelineActivitiesByUsers")
   async listTimelineActivitiesByUsers(data: { actorUserIds?: string[]; limit?: number }) {
     return {

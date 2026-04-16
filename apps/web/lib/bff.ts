@@ -73,6 +73,12 @@ export type NotificationEnvelope = {
   notifications: NotificationItem[];
 };
 
+export type ThreadEnvelope = {
+  focus: FeedItem | null;
+  ancestors: FeedItem[];
+  replies: FeedItem[];
+};
+
 export type RealtimeEventEnvelope = {
   nextSequence: number;
   events: NotificationItem[];
@@ -181,6 +187,40 @@ export async function getHomeFeed(sessionToken: string): Promise<FeedItem[]> {
     return (await response.json()) as FeedItem[];
   } catch {
     return [];
+  }
+}
+
+export async function getUserFeed(userId: string, sessionToken?: string): Promise<FeedItem[]> {
+  try {
+    const response = await fetch(`${bffBaseUrl}/api/users/${encodeURIComponent(userId)}/feed`, {
+      cache: "no-store",
+      headers: sessionHeaders(sessionToken),
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return (await response.json()) as FeedItem[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getPostThread(postId: string, sessionToken?: string): Promise<ThreadEnvelope | null> {
+  try {
+    const response = await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/thread`, {
+      cache: "no-store",
+      headers: sessionHeaders(sessionToken),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as ThreadEnvelope;
+  } catch {
+    return null;
   }
 }
 

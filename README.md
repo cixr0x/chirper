@@ -39,3 +39,19 @@ npm run check:boundaries
 Database migrations are tracked per service with Flyway. See [docs/database-migrations.md](/C:/PROJECTS/chirper/docs/database-migrations.md).
 
 See [docs/architecture.md](/C:/PROJECTS/chirper/docs/architecture.md) for the service map and boundary conventions.
+
+## Local Development
+
+Start the current local stack with:
+
+```bash
+npm run dev:identity
+npm run dev:profile
+npm run dev:posts
+npm run dev:graph
+npm run dev:timeline
+npm run dev:notifications
+npm run dev:realtime
+npm run dev:bff
+npm run dev:web
+```

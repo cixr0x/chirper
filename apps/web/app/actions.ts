@@ -276,12 +276,24 @@ function collectLinks(formData: FormData) {
   return links;
 }
 
+function collectMediaSourceUrls(formData: FormData) {
+  return [
+    ...new Set(
+      formData
+        .getAll("mediaSourceUrl")
+        .map((value) => String(value ?? "").trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
 export async function createPostAction(formData: FormData) {
   const body = String(formData.get("body") ?? "").trim();
   const targetProfileHandle = String(formData.get("targetProfileHandle") ?? "").trim();
+  const mediaSourceUrls = collectMediaSourceUrls(formData);
   const sessionToken = await getSessionToken();
 
-  if (!sessionToken || !body) {
+  if (!sessionToken || (!body && mediaSourceUrls.length === 0)) {
     redirect("/");
   }
 
@@ -290,6 +302,7 @@ export async function createPostAction(formData: FormData) {
     headers: sessionHeaders(sessionToken),
     body: JSON.stringify({
       body,
+      mediaSourceUrls,
     }),
     cache: "no-store",
   });
@@ -304,9 +317,10 @@ export async function createReplyAction(formData: FormData) {
   const postId = String(formData.get("postId") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
   const targetPath = String(formData.get("targetPath") ?? "/").trim() || "/";
+  const mediaSourceUrls = collectMediaSourceUrls(formData);
   const sessionToken = await getSessionToken();
 
-  if (!sessionToken || !postId || !body) {
+  if (!sessionToken || !postId || (!body && mediaSourceUrls.length === 0)) {
     redirect(targetPath);
   }
 
@@ -315,6 +329,7 @@ export async function createReplyAction(formData: FormData) {
     headers: sessionHeaders(sessionToken),
     body: JSON.stringify({
       body,
+      mediaSourceUrls,
     }),
     cache: "no-store",
   });

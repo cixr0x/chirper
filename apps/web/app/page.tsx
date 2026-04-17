@@ -28,6 +28,7 @@ const currentScope = [
   "Graph service plus projected home timeline",
   "Notifications service and buffered realtime fan-out",
   "Likes, replies, and reposts owned by `posts`",
+  "Managed post image attachments owned by `media`",
 ];
 
 const demoCredentials = [
@@ -79,11 +80,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <section className="app-hero">
         <div>
           <p className="eyebrow">Chirper Alpha</p>
-          <h1>The feed now supports replies, likes, and repost activity.</h1>
+          <h1>The feed now supports media attachments as first-class post content.</h1>
           <p className="lede">
             `posts` owns interaction writes and emits Kafka events for replies, likes, and reposts.
-            `timeline` projects repost activity, `notifications` creates author-facing alerts, and
-            the web app reads the resulting activity feed through the BFF.
+            `media` now registers managed image assets for posts, `timeline` projects repost activity,
+            `notifications` creates author-facing alerts, and the web app reads the resulting feed
+            through the BFF.
           </p>
         </div>
         <div className="hero-panel">
@@ -184,10 +186,22 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                         maxLength={280}
                         name="body"
                         placeholder="Share something with the people who follow you."
-                        required
                         rows={4}
                       />
                     </label>
+
+                    <div className="compose-media-grid">
+                      {[1, 2, 3, 4].map((slot) => (
+                        <label className="field" key={`compose-media-${slot}`}>
+                          <span>Image URL {slot}</span>
+                          <input
+                            name="mediaSourceUrl"
+                            placeholder={`https://images.example.com/post-${slot}.jpg`}
+                            type="url"
+                          />
+                        </label>
+                      ))}
+                    </div>
 
                     <button className="primary-button" type="submit">
                       Publish

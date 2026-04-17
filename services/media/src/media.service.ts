@@ -13,7 +13,7 @@ type MediaAsset = {
   createdAt: string;
 };
 
-const supportedPurposes = new Set(["profile_avatar", "profile_banner"]);
+const supportedPurposes = new Set(["profile_avatar", "profile_banner", "post_image"]);
 
 @Injectable()
 export class MediaLibraryService {
@@ -30,7 +30,7 @@ export class MediaLibraryService {
     const uploadId = `upload_${randomBytes(16).toString("hex")}`;
     const assetId = `asset_${randomBytes(16).toString("hex")}`;
     const storageKey = `${purpose}/${assetId}`;
-    const mimeType = inferMimeType(sourceUrl);
+    const mimeType = inferMimeType(sourceUrl, purpose);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.upload.create({
@@ -179,7 +179,7 @@ function sanitizeAssetId(value: string) {
   return trimmed;
 }
 
-function inferMimeType(sourceUrl: string) {
+function inferMimeType(sourceUrl: string, purpose: string) {
   const normalizedPath = new URL(sourceUrl).pathname.toLowerCase();
   if (normalizedPath.endsWith(".png")) {
     return "image/png";
@@ -195,6 +195,10 @@ function inferMimeType(sourceUrl: string) {
 
   if (normalizedPath.endsWith(".gif")) {
     return "image/gif";
+  }
+
+  if (purpose === "profile_avatar" || purpose === "profile_banner" || purpose === "post_image") {
+    return "image/jpeg";
   }
 
   return "application/octet-stream";

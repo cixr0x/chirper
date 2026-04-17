@@ -11,6 +11,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { IdentityClientService, type IdentityUser } from "./clients/identity.client";
+import { MediaClientService } from "./clients/media.client";
 import {
   type PostEngagementRecord,
   type PostMetrics,
@@ -20,6 +21,7 @@ import {
 } from "./clients/posts.client";
 import { TimelineClientService } from "./clients/timeline.client";
 import { ProfileClientService } from "./clients/profile.client";
+import { getGrpcErrorMessage, isGrpcInvalidArgument } from "./grpc-status";
 import { buildManagedAssetUrl } from "./media-url";
 import { sessionHeaderName } from "./session-header";
 import { SessionAuthService } from "./session-auth.service";
@@ -42,6 +44,14 @@ type EngagementActor = {
   };
 };
 
+type FeedMedia = {
+  assetId: string;
+  url: string;
+  mimeType: string;
+  purpose: string;
+  status: string;
+};
+
 type ThreadEnvelope = {
   focus: Awaited<ReturnType<FeedController["buildFeedItem"]>>;
   ancestors: Awaited<ReturnType<FeedController["buildFeed"]>>;
@@ -54,6 +64,7 @@ export class FeedController {
     @Inject(PostsClientService) private readonly postsClient: PostsClientService,
     @Inject(IdentityClientService) private readonly identityClient: IdentityClientService,
     @Inject(ProfileClientService) private readonly profileClient: ProfileClientService,
+    @Inject(MediaClientService) private readonly mediaClient: MediaClientService,
     @Inject(TimelineClientService) private readonly timelineClient: TimelineClientService,
     @Inject(SessionAuthService) private readonly sessionAuth: SessionAuthService,
   ) {}
@@ -105,19 +116,22 @@ export class FeedController {
     @Body()
     body: {
       body: string;
+      mediaSourceUrls?: string[];
     },
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
     const authorUserId = session.userId;
     const content = body.body.trim();
-    if (!content) {
-      throw new BadRequestException("Post body is required.");
+    const mediaAssetIds = await this.registerPostMediaAssets(authorUserId, body.mediaSourceUrls ?? []);
+    if (!content && mediaAssetIds.length === 0) {
+      throw new BadRequestException("Post must include text or at least one media attachment.");
     }
 
     const created = await this.postsClient.createPost({
       authorUserId,
       body: content,
       visibility: "public",
+      mediaAssetIds,
     });
 
     return this.buildFeedItem(created, authorUserId);
@@ -130,12 +144,14 @@ export class FeedController {
     @Body()
     body: {
       body: string;
+      mediaSourceUrls?: string[];
     },
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
     const content = body.body.trim();
-    if (!content) {
-      throw new BadRequestException("Reply body is required.");
+    const mediaAssetIds = await this.registerPostMediaAssets(session.userId, body.mediaSourceUrls ?? []);
+    if (!content && mediaAssetIds.length === 0) {
+      throw new BadRequestException("Reply must include text or at least one media attachment.");
     }
 
     const created = await this.postsClient.createReply({
@@ -143,6 +159,7 @@ export class FeedController {
       inReplyToPostId: postId,
       body: content,
       visibility: "public",
+      mediaAssetIds,
     });
 
     return this.buildFeedItem(created, session.userId);
@@ -256,6 +273,7 @@ export class FeedController {
     visibility: string;
     createdAt: string;
     inReplyToPostId: string;
+    mediaAssetIds: string[];
   }, viewerUserId?: string) {
     const items = await this.buildFeedItems(
       [created],
@@ -322,6 +340,7 @@ export class FeedController {
       viewerUserId,
     );
     const metricsMap = new Map(metrics.map((metric) => [metric.postId, metric]));
+    const mediaMap = await this.buildPostMediaMap(posts);
 
     const parentPostIds = [
       ...new Set(posts.map((post) => post.inReplyToPostId).filter(Boolean)),
@@ -366,6 +385,7 @@ export class FeedController {
                   author: undefined,
                 }
               : undefined,
+          media: mediaMap.get(post.postId) ?? [],
           metrics: metricsMap.get(post.postId) ?? this.emptyMetrics(post.postId),
         };
       })
@@ -449,5 +469,68 @@ export class FeedController {
       likedByViewer: false,
       repostedByViewer: false,
     };
+  }
+
+  private async registerPostMediaAssets(ownerUserId: string, mediaSourceUrls: string[]) {
+    const normalizedUrls = [...new Set(mediaSourceUrls.map((value) => value.trim()).filter(Boolean))];
+    if (normalizedUrls.length === 0) {
+      return [] as string[];
+    }
+
+    if (normalizedUrls.length > 4) {
+      throw new BadRequestException("Posts can include at most 4 media attachments.");
+    }
+
+    try {
+      const assets = await Promise.all(
+        normalizedUrls.map((sourceUrl) =>
+          this.mediaClient.createAssetFromSource({
+            ownerUserId,
+            sourceUrl,
+            purpose: "post_image",
+          }),
+        ),
+      );
+
+      return assets.map((asset) => asset.assetId);
+    } catch (error) {
+      if (isGrpcInvalidArgument(error)) {
+        throw new BadRequestException(getGrpcErrorMessage(error, "Post media registration failed."));
+      }
+
+      throw error;
+    }
+  }
+
+  private async buildPostMediaMap(posts: PostRecord[]) {
+    const assetIds = [...new Set(posts.flatMap((post) => post.mediaAssetIds ?? []).filter(Boolean))];
+    if (assetIds.length === 0) {
+      return new Map<string, FeedMedia[]>();
+    }
+
+    const assets = await this.mediaClient.getAssetsByIds(assetIds);
+    const assetMap = new Map(
+      assets.map((asset) => [
+        asset.assetId,
+        {
+          assetId: asset.assetId,
+          url: buildManagedAssetUrl(asset.assetId),
+          mimeType: asset.mimeType,
+          purpose: asset.purpose,
+          status: asset.status,
+        } satisfies FeedMedia,
+      ]),
+    );
+
+    return new Map(
+      posts
+        .map((post) => [
+          post.postId,
+          (post.mediaAssetIds ?? [])
+            .map((assetId) => assetMap.get(assetId))
+            .filter((asset): asset is FeedMedia => Boolean(asset)),
+        ] as const)
+        .filter((entry) => entry[1].length > 0),
+    );
   }
 }

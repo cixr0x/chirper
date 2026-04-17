@@ -73,7 +73,34 @@ export function FeedList({ items, targetPath, viewerHandle, emptyTitle, emptyBod
             </div>
           </div>
 
-          <p className="feed-body">{item.body}</p>
+          {item.body ? <p className="feed-body">{item.body}</p> : null}
+
+          {item.media.length > 0 ? (
+            <div className={`feed-media-grid feed-media-grid-${Math.min(item.media.length, 4)}`}>
+              {item.media.map((media, index) => (
+                <a
+                  className="feed-media-card"
+                  href={media.url}
+                  key={`${item.postId}-${media.assetId}`}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {media.mimeType.startsWith("image/") ? (
+                    <img
+                      alt={`Attachment ${index + 1} on post ${item.postId}`}
+                      className="feed-media-image"
+                      src={media.url}
+                    />
+                  ) : (
+                    <div className="feed-media-fallback">
+                      <strong>Open attachment</strong>
+                      <span>{media.mimeType || media.purpose}</span>
+                    </div>
+                  )}
+                </a>
+              ))}
+            </div>
+          ) : null}
 
           <div className="feed-metrics">
             <span>{item.metrics.replyCount} replies</span>
@@ -113,10 +140,21 @@ export function FeedList({ items, targetPath, viewerHandle, emptyTitle, emptyBod
                     maxLength={280}
                     name="body"
                     placeholder={`Reply to @${item.author?.handle ?? "unknown"}`}
-                    required
                     rows={2}
                   />
                 </label>
+                <div className="reply-media-grid">
+                  {[1, 2].map((slot) => (
+                    <label className="field" key={`${item.postId}-reply-media-${slot}`}>
+                      <span>Image URL {slot}</span>
+                      <input
+                        name="mediaSourceUrl"
+                        placeholder={`https://images.example.com/reply-${slot}.jpg`}
+                        type="url"
+                      />
+                    </label>
+                  ))}
+                </div>
                 <button className="primary-button compact" type="submit">
                   Reply
                 </button>

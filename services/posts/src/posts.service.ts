@@ -18,6 +18,7 @@ type PostRecord = {
   visibility: string;
   createdAt: string;
   inReplyToPostId: string;
+  mediaAssetIds: string[];
 };
 
 type PostInteractionRecord = {
@@ -67,7 +68,7 @@ export class PostsService {
       take: Math.min(Math.max(limit, 1), 100),
     });
 
-    return posts.map((post) => this.mapPost(post));
+    return this.mapPosts(posts);
   }
 
   async listPostsByAuthors(authorUserIds: string[], limit = 25): Promise<PostRecord[]> {
@@ -85,7 +86,7 @@ export class PostsService {
       take: Math.min(Math.max(limit, 1), 100),
     });
 
-    return posts.map((post) => this.mapPost(post));
+    return this.mapPosts(posts);
   }
 
   async listReplies(postId: string, limit = 25): Promise<PostRecord[]> {
@@ -103,7 +104,7 @@ export class PostsService {
       take: Math.min(Math.max(limit, 1), 100),
     });
 
-    return posts.map((post) => this.mapPost(post));
+    return this.mapPosts(posts);
   }
 
   async listLikes(postId: string, limit = 25): Promise<PostEngagementRecord[]> {
@@ -210,9 +211,9 @@ export class PostsService {
     });
 
     const postMap = new Map(
-      posts.map((post) => [
-        post.id,
-        this.mapPost(post),
+      (await this.mapPosts(posts)).map((post) => [
+        post.postId,
+        post,
       ]),
     );
 
@@ -298,11 +299,13 @@ export class PostsService {
     authorUserId: string;
     body: string;
     visibility?: string;
+    mediaAssetIds?: string[];
   }): Promise<PostRecord> {
     return this.createPostInternal({
       authorUserId: input.authorUserId,
       body: input.body,
       ...(input.visibility ? { visibility: input.visibility } : {}),
+      ...(input.mediaAssetIds ? { mediaAssetIds: input.mediaAssetIds } : {}),
     });
   }
 
@@ -311,6 +314,7 @@ export class PostsService {
     inReplyToPostId: string;
     body: string;
     visibility?: string;
+    mediaAssetIds?: string[];
   }): Promise<PostRecord> {
     const parentPost = await this.requirePost(input.inReplyToPostId, "Cannot reply to a missing post.");
 
@@ -318,6 +322,7 @@ export class PostsService {
       authorUserId: input.authorUserId,
       body: input.body,
       ...(input.visibility ? { visibility: input.visibility } : {}),
+      ...(input.mediaAssetIds ? { mediaAssetIds: input.mediaAssetIds } : {}),
       inReplyToPostId: parentPost.id,
       inReplyToAuthorUserId: parentPost.authorId,
     });
@@ -551,12 +556,15 @@ export class PostsService {
     authorUserId: string;
     body: string;
     visibility?: string;
+    mediaAssetIds?: string[];
     inReplyToPostId?: string;
     inReplyToAuthorUserId?: string;
   }): Promise<PostRecord> {
     const body = input.body.trim();
-    if (!body) {
-      throw new BadRequestException("Post body cannot be empty.");
+    const mediaAssetIds = sanitizeMediaAssetIds(input.mediaAssetIds ?? []);
+
+    if (!body && mediaAssetIds.length === 0) {
+      throw new BadRequestException("Post must include text or at least one media attachment.");
     }
 
     if (body.length > 280) {
@@ -564,7 +572,7 @@ export class PostsService {
     }
 
     const visibility = input.visibility?.trim() || "public";
-    const post = await this.prisma.$transaction(async (tx) => {
+    const created = await this.prisma.$transaction(async (tx) => {
       const createdPost = await tx.post.create({
         data: {
           id: newId("post"),
@@ -574,6 +582,17 @@ export class PostsService {
           visibility,
         },
       });
+
+      if (mediaAssetIds.length > 0) {
+        await tx.postMedia.createMany({
+          data: mediaAssetIds.map((assetId, index) => ({
+            id: newId("pmedia"),
+            postId: createdPost.id,
+            assetId,
+            sortOrder: index,
+          })),
+        });
+      }
 
       const payload: PostPublishedPayload = {
         postId: createdPost.id,
@@ -596,10 +615,13 @@ export class PostsService {
         },
       });
 
-      return createdPost;
+      return {
+        post: createdPost,
+        mediaAssetIds,
+      };
     });
 
-    return this.mapPost(post);
+    return this.mapPost(created.post, created.mediaAssetIds);
   }
 
   private async requirePost(postId: string, message: string) {
@@ -619,6 +641,39 @@ export class PostsService {
     return post;
   }
 
+  private async mapPosts(
+    posts: {
+      id: string;
+      authorId: string;
+      inReplyToPostId: string | null;
+      body: string;
+      visibility: string;
+      createdAt: Date;
+    }[],
+  ): Promise<PostRecord[]> {
+    if (posts.length === 0) {
+      return [];
+    }
+
+    const mediaRows = await this.prisma.postMedia.findMany({
+      where: {
+        postId: {
+          in: posts.map((post) => post.id),
+        },
+      },
+      orderBy: [{ sortOrder: "asc" }],
+    });
+
+    const mediaMap = new Map<string, string[]>();
+    for (const mediaRow of mediaRows) {
+      const assetIds = mediaMap.get(mediaRow.postId) ?? [];
+      assetIds.push(mediaRow.assetId);
+      mediaMap.set(mediaRow.postId, assetIds);
+    }
+
+    return posts.map((post) => this.mapPost(post, mediaMap.get(post.id) ?? []));
+  }
+
   private mapPost(post: {
     id: string;
     authorId: string;
@@ -626,7 +681,7 @@ export class PostsService {
     body: string;
     visibility: string;
     createdAt: Date;
-  }): PostRecord {
+  }, mediaAssetIds: string[] = []): PostRecord {
     return {
       postId: post.id,
       authorUserId: post.authorId,
@@ -634,6 +689,7 @@ export class PostsService {
       visibility: post.visibility,
       createdAt: post.createdAt.toISOString(),
       inReplyToPostId: post.inReplyToPostId ?? "",
+      mediaAssetIds,
     };
   }
 
@@ -654,4 +710,23 @@ export class PostsService {
 
 function newId(prefix: string) {
   return `${prefix}_${randomUUID().replace(/-/g, "")}`;
+}
+
+function sanitizeMediaAssetIds(values: string[]) {
+  const normalized = [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+  if (normalized.length > 4) {
+    throw new BadRequestException("Posts can include at most 4 media attachments.");
+  }
+
+  for (const assetId of normalized) {
+    if (assetId.length > 64) {
+      throw new BadRequestException("Media asset references must be 64 characters or fewer.");
+    }
+
+    if (!/^[a-z0-9_]+$/i.test(assetId)) {
+      throw new BadRequestException("Media asset references contain invalid characters.");
+    }
+  }
+
+  return normalized;
 }

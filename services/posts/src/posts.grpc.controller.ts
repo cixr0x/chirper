@@ -60,7 +60,12 @@ export class PostsGrpcController {
   }
 
   @GrpcMethod("PostsService", "CreatePost")
-  async createPost(data: { authorUserId: string; body: string; visibility?: string }) {
+  async createPost(data: {
+    authorUserId: string;
+    body: string;
+    visibility?: string;
+    mediaAssetIds?: string[];
+  }) {
     return this.posts.createPost(data);
   }
 
@@ -70,6 +75,7 @@ export class PostsGrpcController {
     inReplyToPostId: string;
     body: string;
     visibility?: string;
+    mediaAssetIds?: string[];
   }) {
     return this.posts.createReply(data);
   }

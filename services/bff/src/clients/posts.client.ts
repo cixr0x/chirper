@@ -9,6 +9,7 @@ export type PostRecord = {
   visibility: string;
   createdAt: string;
   inReplyToPostId: string;
+  mediaAssetIds: string[];
 };
 
 export type PostMetrics = {
@@ -96,12 +97,14 @@ type CreatePostRequest = {
   authorUserId: string;
   body: string;
   visibility?: string;
+  mediaAssetIds?: string[];
 };
 type CreateReplyRequest = {
   authorUserId: string;
   inReplyToPostId: string;
   body: string;
   visibility?: string;
+  mediaAssetIds?: string[];
 };
 type PostInteractionRequest = {
   userId: string;

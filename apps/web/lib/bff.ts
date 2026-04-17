@@ -43,6 +43,13 @@ export type FeedItem = {
       avatarUrl: string;
     };
   };
+  media: {
+    assetId: string;
+    url: string;
+    mimeType: string;
+    purpose: string;
+    status: string;
+  }[];
   metrics: {
     postId: string;
     replyCount: number;

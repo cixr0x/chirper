@@ -2,7 +2,7 @@ import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
 import { ClientGrpc } from "@nestjs/microservices";
 import { Observable, lastValueFrom } from "rxjs";
 
-type MediaAsset = {
+export type MediaAsset = {
   assetId: string;
   uploadId: string;
   ownerUserId: string;

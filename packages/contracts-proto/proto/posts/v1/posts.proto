@@ -27,6 +27,7 @@ message CreatePostRequest {
   string authorUserId = 1;
   string body = 2;
   string visibility = 3;
+  repeated string mediaAssetIds = 4;
 }
 
 message CreateReplyRequest {
@@ -34,6 +35,7 @@ message CreateReplyRequest {
   string inReplyToPostId = 2;
   string body = 3;
   string visibility = 4;
+  repeated string mediaAssetIds = 5;
 }
 
 message ListPostsByAuthorsRequest {
@@ -121,6 +123,7 @@ message PostRecord {
   string visibility = 4;
   string createdAt = 5;
   string inReplyToPostId = 6;
+  repeated string mediaAssetIds = 7;
 }
 
 message ListPublicPostsResponse {

@@ -474,6 +474,7 @@ export async function markNotificationsReadAction(formData: FormData) {
 export async function followUserAction(formData: FormData) {
   const followeeUserId = String(formData.get("followeeUserId") ?? "").trim();
   const targetProfileHandle = String(formData.get("targetProfileHandle") ?? "").trim();
+  const targetPath = String(formData.get("targetPath") ?? "").trim();
   const sessionToken = await getSessionToken();
 
   if (!sessionToken || !followeeUserId) {
@@ -490,6 +491,9 @@ export async function followUserAction(formData: FormData) {
   });
 
   revalidatePath("/");
+  if (targetPath) {
+    revalidatePath(targetPath);
+  }
   if (targetProfileHandle) {
     revalidatePath(`/u/${targetProfileHandle}`);
   }
@@ -498,6 +502,7 @@ export async function followUserAction(formData: FormData) {
 export async function unfollowUserAction(formData: FormData) {
   const followeeUserId = String(formData.get("followeeUserId") ?? "").trim();
   const targetProfileHandle = String(formData.get("targetProfileHandle") ?? "").trim();
+  const targetPath = String(formData.get("targetPath") ?? "").trim();
   const sessionToken = await getSessionToken();
 
   if (!sessionToken || !followeeUserId) {
@@ -514,6 +519,9 @@ export async function unfollowUserAction(formData: FormData) {
   });
 
   revalidatePath("/");
+  if (targetPath) {
+    revalidatePath(targetPath);
+  }
   if (targetProfileHandle) {
     revalidatePath(`/u/${targetProfileHandle}`);
   }

@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { followUserAction, saveProfileAction, signInAction, unfollowUserAction } from "../../actions";
-import { getUserByHandle, getUserFeed, getViewerFollowingUserIds } from "../../../lib/bff";
+import {
+  getFollowers,
+  getFollowing,
+  getUserByHandle,
+  getUserFeed,
+  getViewerFollowingUserIds,
+} from "../../../lib/bff";
 import { AvatarBadge } from "../../../components/avatar-badge";
 import { FeedList } from "../../../components/feed-list";
 import { getSessionState, getSessionToken } from "../../../lib/session";
@@ -35,9 +41,11 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
   const hasAuthError = !viewer && (filters?.auth === "invalid" || filters?.auth === "invalid-login");
   const accountMessage = isViewerAccountMessage(filters?.account);
   const activeSessionToken = session ? sessionToken : null;
-  const [followingUserIds, userFeed] = await Promise.all([
+  const [followingUserIds, userFeed, followers, following] = await Promise.all([
     activeSessionToken ? getViewerFollowingUserIds(activeSessionToken) : Promise.resolve([] as string[]),
     getUserFeed(user.userId, activeSessionToken ?? undefined),
+    getFollowers(user.userId, activeSessionToken ?? undefined),
+    getFollowing(user.userId, activeSessionToken ?? undefined),
   ]);
   const isViewer = viewer?.userId === user.userId;
   const isFollowing = viewer ? followingUserIds.includes(user.userId) : false;
@@ -68,6 +76,12 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
             <div className="profile-meta">
               <span>{user.location || "Location pending"}</span>
               <span>{user.links?.length ?? 0} public links</span>
+              <Link className="inline-link" href={`${profilePath}/followers`}>
+                {followers.length} followers
+              </Link>
+              <Link className="inline-link" href={`${profilePath}/following`}>
+                {following.length} following
+              </Link>
               {viewer ? <span>Viewing as @{viewer.handle}</span> : null}
             </div>
             {!viewer ? (
@@ -89,6 +103,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               <form action={isFollowing ? unfollowUserAction : followUserAction} className="profile-action-row">
                 <input name="followeeUserId" type="hidden" value={user.userId} />
                 <input name="targetProfileHandle" type="hidden" value={user.handle} />
+                <input name="targetPath" type="hidden" value={profilePath} />
                 <button className={isFollowing ? "secondary-button compact" : "primary-button compact"} type="submit">
                   {isFollowing ? `Unfollow @${user.handle}` : `Follow @${user.handle}`}
                 </button>
@@ -222,6 +237,14 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
         <article className="profile-panel">
           <p className="eyebrow">Follow graph</p>
           <h2>Viewer relationship</h2>
+          <div className="relationship-summary-row">
+            <Link className="inline-link" href={`${profilePath}/followers`}>
+              {followers.length} followers
+            </Link>
+            <Link className="inline-link" href={`${profilePath}/following`}>
+              {following.length} following
+            </Link>
+          </div>
           {viewer ? (
             <p>
               {isViewer
@@ -233,6 +256,10 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
           ) : (
             <p>Sign in with the profile&apos;s handle and password to follow accounts and rebuild the projected home timeline from this screen.</p>
           )}
+          <p className="relationship-note">
+            Open the follower and following lists to browse the graph as enriched profile cards instead
+            of raw user IDs.
+          </p>
         </article>
 
         <article className="profile-panel">

@@ -109,6 +109,11 @@ export type SessionEnvelope = {
   viewer: UserSummary;
 };
 
+export type RelationshipUser = UserSummary & {
+  isViewer: boolean;
+  isFollowedByViewer: boolean;
+};
+
 const bffBaseUrl = process.env.NEXT_PUBLIC_BFF_URL ?? "http://127.0.0.1:4000";
 
 function sessionHeaders(sessionToken?: string): HeadersInit {
@@ -289,6 +294,40 @@ export async function getViewerFollowingUserIds(sessionToken: string): Promise<s
 
     const payload = (await response.json()) as { userIds: string[] };
     return payload.userIds;
+  } catch {
+    return [];
+  }
+}
+
+export async function getFollowers(userId: string, sessionToken?: string): Promise<RelationshipUser[]> {
+  try {
+    const response = await fetch(`${bffBaseUrl}/api/users/${encodeURIComponent(userId)}/followers`, {
+      cache: "no-store",
+      headers: sessionHeaders(sessionToken),
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return (await response.json()) as RelationshipUser[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getFollowing(userId: string, sessionToken?: string): Promise<RelationshipUser[]> {
+  try {
+    const response = await fetch(`${bffBaseUrl}/api/users/${encodeURIComponent(userId)}/following`, {
+      cache: "no-store",
+      headers: sessionHeaders(sessionToken),
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return (await response.json()) as RelationshipUser[];
   } catch {
     return [];
   }

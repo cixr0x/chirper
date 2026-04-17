@@ -2,6 +2,7 @@ import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import {
   DOMAIN_EVENTS,
+  type PostDeletedPayload,
   type PostLikeCreatedPayload,
   type PostLikeRemovedPayload,
   type PostPublishedPayload,
@@ -550,6 +551,114 @@ export class PostsService {
 
       return { removed: true };
     });
+  }
+
+  async deletePost(input: { authorUserId: string; postId: string }): Promise<PostInteractionRemovalResult> {
+    const authorUserId = input.authorUserId.trim();
+    const postId = input.postId.trim();
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      return { removed: false };
+    }
+
+    if (post.authorId !== authorUserId) {
+      throw new BadRequestException("You can only delete your own posts.");
+    }
+
+    const deletedAt = new Date().toISOString();
+
+    await this.prisma.$transaction(async (tx) => {
+      const [likes, reposts, postMedia] = await Promise.all([
+        tx.like.findMany({
+          where: { postId },
+        }),
+        tx.repost.findMany({
+          where: { postId },
+        }),
+        tx.postMedia.findMany({
+          where: { postId },
+          orderBy: [{ sortOrder: "asc" }],
+        }),
+      ]);
+
+      await tx.postMedia.deleteMany({
+        where: { postId },
+      });
+
+      await tx.like.deleteMany({
+        where: { postId },
+      });
+
+      await tx.repost.deleteMany({
+        where: { postId },
+      });
+
+      await tx.post.delete({
+        where: { id: postId },
+      });
+
+      for (const like of likes) {
+        const payload: PostLikeRemovedPayload = {
+          likeId: like.id,
+          postId: like.postId,
+          actorUserId: like.userId,
+          postAuthorUserId: authorUserId,
+          removedAt: deletedAt,
+        };
+
+        await tx.outboxEvent.create({
+          data: {
+            id: newId("outbox"),
+            aggregateType: "like",
+            aggregateId: like.id,
+            eventType: DOMAIN_EVENTS.postLikeRemoved,
+            payload: payload as Prisma.InputJsonValue,
+          },
+        });
+      }
+
+      for (const repost of reposts) {
+        const payload: PostRepostRemovedPayload = {
+          repostId: repost.id,
+          postId: repost.postId,
+          actorUserId: repost.userId,
+          postAuthorUserId: authorUserId,
+          removedAt: deletedAt,
+        };
+
+        await tx.outboxEvent.create({
+          data: {
+            id: newId("outbox"),
+            aggregateType: "repost",
+            aggregateId: repost.id,
+            eventType: DOMAIN_EVENTS.postRepostRemoved,
+            payload: payload as Prisma.InputJsonValue,
+          },
+        });
+      }
+
+      const payload: PostDeletedPayload = {
+        postId,
+        authorUserId,
+        deletedAt,
+        mediaAssetIds: postMedia.map((media) => media.assetId),
+      };
+
+      await tx.outboxEvent.create({
+        data: {
+          id: newId("outbox"),
+          aggregateType: "post",
+          aggregateId: postId,
+          eventType: DOMAIN_EVENTS.postDeleted,
+          payload: payload as Prisma.InputJsonValue,
+        },
+      });
+    });
+
+    return { removed: true };
   }
 
   private async createPostInternal(input: {

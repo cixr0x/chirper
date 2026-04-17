@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   createReplyAction,
+  deletePostAction,
   likePostAction,
   repostPostAction,
   undoRepostAction,
@@ -13,11 +14,21 @@ type FeedListProps = {
   items: FeedItem[];
   targetPath: string;
   viewerHandle?: string | undefined;
+  viewerUserId?: string | undefined;
+  deleteRedirectPath?: string | undefined;
   emptyTitle: string;
   emptyBody: string;
 };
 
-export function FeedList({ items, targetPath, viewerHandle, emptyTitle, emptyBody }: FeedListProps) {
+export function FeedList({
+  items,
+  targetPath,
+  viewerHandle,
+  viewerUserId,
+  deleteRedirectPath,
+  emptyTitle,
+  emptyBody,
+}: FeedListProps) {
   if (items.length === 0) {
     return (
       <article className="empty-card">
@@ -29,8 +40,14 @@ export function FeedList({ items, targetPath, viewerHandle, emptyTitle, emptyBod
 
   return (
     <div className="feed-stack">
-      {items.map((item) => (
-        <article className="feed-card" key={`${item.activityType}-${item.postId}-${item.projectedAt ?? item.createdAt}`}>
+      {items.map((item) => {
+        const canDelete =
+          Boolean(viewerUserId) &&
+          item.activityType !== "repost" &&
+          item.author?.userId === viewerUserId;
+
+        return (
+          <article className="feed-card" key={`${item.activityType}-${item.postId}-${item.projectedAt ?? item.createdAt}`}>
           {item.activityType === "repost" && item.actor ? (
             <p className="activity-kicker">
               {item.actor.displayName} reposted this on {formatPostTimestamp(item.projectedAt ?? item.createdAt)}
@@ -129,6 +146,17 @@ export function FeedList({ items, targetPath, viewerHandle, emptyTitle, emptyBod
                     {item.metrics.repostedByViewer ? "Undo repost" : "Repost"}
                   </button>
                 </form>
+
+                {canDelete ? (
+                  <form action={deletePostAction}>
+                    <input name="postId" type="hidden" value={item.postId} />
+                    <input name="targetPath" type="hidden" value={targetPath} />
+                    <input name="redirectPath" type="hidden" value={deleteRedirectPath ?? targetPath} />
+                    <button className="secondary-button compact destructive-button" type="submit">
+                      Delete post
+                    </button>
+                  </form>
+                ) : null}
               </div>
 
               <form action={createReplyAction} className="reply-form">
@@ -161,8 +189,9 @@ export function FeedList({ items, targetPath, viewerHandle, emptyTitle, emptyBod
               </form>
             </>
           ) : null}
-        </article>
-      ))}
+          </article>
+        );
+      })}
     </div>
   );
 }

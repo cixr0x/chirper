@@ -3,9 +3,12 @@ import {
   KAFKA_TOPICS,
   isGraphFollowCreatedEvent,
   isGraphFollowRemovedEvent,
+  isPostDeletedEvent,
   isPostLikeCreatedEvent,
+  isPostLikeRemovedEvent,
   isPostPublishedEvent,
   isPostRepostCreatedEvent,
+  isPostRepostRemovedEvent,
 } from "@chirper/contracts-events";
 import { Consumer, Kafka, logLevel } from "kafkajs";
 import { NotificationsService } from "./notifications.service";
@@ -82,13 +85,28 @@ export class NotificationsKafkaConsumerService implements OnModuleInit, OnModule
               return;
             }
 
+            if (isPostDeletedEvent(raw)) {
+              await this.notifications.consumePostDeletedEvent(raw);
+              return;
+            }
+
             if (isPostLikeCreatedEvent(raw)) {
               await this.notifications.consumePostLikeCreatedEvent(raw);
               return;
             }
 
+            if (isPostLikeRemovedEvent(raw)) {
+              await this.notifications.consumePostLikeRemovedEvent(raw);
+              return;
+            }
+
             if (isPostRepostCreatedEvent(raw)) {
               await this.notifications.consumePostRepostCreatedEvent(raw);
+              return;
+            }
+
+            if (isPostRepostRemovedEvent(raw)) {
+              await this.notifications.consumePostRepostRemovedEvent(raw);
               return;
             }
 

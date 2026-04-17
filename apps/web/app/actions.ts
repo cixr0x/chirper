@@ -424,6 +424,33 @@ export async function undoRepostAction(formData: FormData) {
   }
 }
 
+export async function deletePostAction(formData: FormData) {
+  const postId = String(formData.get("postId") ?? "").trim();
+  const targetPath = String(formData.get("targetPath") ?? "/").trim() || "/";
+  const redirectPath = String(formData.get("redirectPath") ?? targetPath).trim() || targetPath;
+  const sessionToken = await getSessionToken();
+
+  if (!sessionToken || !postId) {
+    redirect(redirectPath);
+  }
+
+  await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/delete`, {
+    method: "POST",
+    headers: sessionHeaders(sessionToken),
+    cache: "no-store",
+  });
+
+  revalidatePath("/");
+  if (targetPath !== "/") {
+    revalidatePath(targetPath);
+  }
+  if (redirectPath !== "/" && redirectPath !== targetPath) {
+    revalidatePath(redirectPath);
+  }
+
+  redirect(redirectPath);
+}
+
 export async function markNotificationsReadAction(formData: FormData) {
   const targetPath = String(formData.get("targetPath") ?? "/").trim() || "/";
   const sessionToken = await getSessionToken();

@@ -17,6 +17,7 @@ service PostsService {
   rpc RemoveLike (PostInteractionRequest) returns (PostInteractionRemovalResult);
   rpc CreateRepost (PostInteractionRequest) returns (PostInteractionRecord);
   rpc RemoveRepost (PostInteractionRequest) returns (PostInteractionRemovalResult);
+  rpc DeletePost (DeletePostRequest) returns (PostInteractionRemovalResult);
 }
 
 message ListPublicPostsRequest {
@@ -77,6 +78,11 @@ message GetPostMetricsResponse {
 
 message PostInteractionRequest {
   string userId = 1;
+  string postId = 2;
+}
+
+message DeletePostRequest {
+  string authorUserId = 1;
   string postId = 2;
 }
 

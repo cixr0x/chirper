@@ -3,6 +3,7 @@ import {
   DOMAIN_EVENTS,
   KAFKA_TOPICS,
   type DomainEventEnvelope,
+  type PostDeletedPayload,
   type PostLikeCreatedPayload,
   type PostLikeRemovedPayload,
   type PostPublishedPayload,
@@ -139,6 +140,16 @@ function toPostsEnvelope(outboxEvent: {
     } satisfies DomainEventEnvelope<PostPublishedPayload, typeof DOMAIN_EVENTS.postPublished>;
   }
 
+  if (outboxEvent.eventType === DOMAIN_EVENTS.postDeleted) {
+    return {
+      id: outboxEvent.id,
+      name: DOMAIN_EVENTS.postDeleted,
+      aggregateId: outboxEvent.aggregateId,
+      occurredAt: outboxEvent.createdAt.toISOString(),
+      payload: outboxEvent.payload as PostDeletedPayload,
+    } satisfies DomainEventEnvelope<PostDeletedPayload, typeof DOMAIN_EVENTS.postDeleted>;
+  }
+
   if (outboxEvent.eventType === DOMAIN_EVENTS.postLikeCreated) {
     return {
       id: outboxEvent.id,
@@ -185,12 +196,17 @@ function toPostsEnvelope(outboxEvent: {
 function messageKeyFor(
   envelope:
     | DomainEventEnvelope<PostPublishedPayload, typeof DOMAIN_EVENTS.postPublished>
+    | DomainEventEnvelope<PostDeletedPayload, typeof DOMAIN_EVENTS.postDeleted>
     | DomainEventEnvelope<PostLikeCreatedPayload, typeof DOMAIN_EVENTS.postLikeCreated>
     | DomainEventEnvelope<PostLikeRemovedPayload, typeof DOMAIN_EVENTS.postLikeRemoved>
     | DomainEventEnvelope<PostRepostCreatedPayload, typeof DOMAIN_EVENTS.postRepostCreated>
     | DomainEventEnvelope<PostRepostRemovedPayload, typeof DOMAIN_EVENTS.postRepostRemoved>,
 ) {
   if (envelope.name === DOMAIN_EVENTS.postPublished) {
+    return envelope.payload.authorUserId;
+  }
+
+  if (envelope.name === DOMAIN_EVENTS.postDeleted) {
     return envelope.payload.authorUserId;
   }
 

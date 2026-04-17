@@ -4,9 +4,12 @@ import {
   DOMAIN_EVENTS,
   type GraphFollowCreatedEvent,
   type GraphFollowRemovedEvent,
+  type PostDeletedEvent,
   type PostLikeCreatedEvent,
+  type PostLikeRemovedEvent,
   type PostPublishedEvent,
   type PostRepostCreatedEvent,
+  type PostRepostRemovedEvent,
 } from "@chirper/contracts-events";
 import { Prisma } from "../generated/prisma";
 import { GraphClientService } from "./clients/graph.client";
@@ -160,6 +163,16 @@ export class NotificationsService {
     await this.markInboxProcessed(event.id, DOMAIN_EVENTS.postPublished);
   }
 
+  async consumePostDeletedEvent(event: PostDeletedEvent) {
+    const eventReserved = await this.reserveInboxEvent(event);
+    if (!eventReserved) {
+      return;
+    }
+
+    await this.deleteNotificationsByResourceIds([event.payload.postId]);
+    await this.markInboxProcessed(event.id, DOMAIN_EVENTS.postDeleted);
+  }
+
   async consumeGraphFollowCreatedEvent(event: GraphFollowCreatedEvent) {
     const eventReserved = await this.reserveInboxEvent(event);
     if (!eventReserved) {
@@ -225,6 +238,16 @@ export class NotificationsService {
     await this.markInboxProcessed(event.id, DOMAIN_EVENTS.postLikeCreated);
   }
 
+  async consumePostLikeRemovedEvent(event: PostLikeRemovedEvent) {
+    const eventReserved = await this.reserveInboxEvent(event);
+    if (!eventReserved) {
+      return;
+    }
+
+    await this.deleteNotificationsByResourceIds([event.payload.likeId]);
+    await this.markInboxProcessed(event.id, DOMAIN_EVENTS.postLikeRemoved);
+  }
+
   async consumePostRepostCreatedEvent(event: PostRepostCreatedEvent) {
     const eventReserved = await this.reserveInboxEvent(event);
     if (!eventReserved) {
@@ -241,6 +264,16 @@ export class NotificationsService {
     }
 
     await this.markInboxProcessed(event.id, DOMAIN_EVENTS.postRepostCreated);
+  }
+
+  async consumePostRepostRemovedEvent(event: PostRepostRemovedEvent) {
+    const eventReserved = await this.reserveInboxEvent(event);
+    if (!eventReserved) {
+      return;
+    }
+
+    await this.deleteNotificationsByResourceIds([event.payload.repostId]);
+    await this.markInboxProcessed(event.id, DOMAIN_EVENTS.postRepostRemoved);
   }
 
   async rebuildFollowProjection() {
@@ -325,8 +358,11 @@ export class NotificationsService {
   private async reserveInboxEvent(
     event:
       | PostPublishedEvent
+      | PostDeletedEvent
       | PostLikeCreatedEvent
+      | PostLikeRemovedEvent
       | PostRepostCreatedEvent
+      | PostRepostRemovedEvent
       | GraphFollowCreatedEvent
       | GraphFollowRemovedEvent,
   ) {
@@ -362,5 +398,48 @@ export class NotificationsService {
         processedAt: new Date(),
       },
     });
+  }
+
+  private async deleteNotificationsByResourceIds(resourceIds: string[]) {
+    const normalizedResourceIds = [...new Set(resourceIds.map((value) => value.trim()).filter(Boolean))];
+    if (normalizedResourceIds.length === 0) {
+      return { deletedCount: 0 };
+    }
+
+    const notifications = await this.prisma.notification.findMany({
+      where: {
+        resourceId: {
+          in: normalizedResourceIds,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const notificationIds = notifications.map((notification) => notification.id);
+    await this.prisma.$transaction(async (tx) => {
+      if (notificationIds.length > 0) {
+        await tx.deliveryAttempt.deleteMany({
+          where: {
+            notificationId: {
+              in: notificationIds,
+            },
+          },
+        });
+      }
+
+      await tx.notification.deleteMany({
+        where: {
+          resourceId: {
+            in: normalizedResourceIds,
+          },
+        },
+      });
+    });
+
+    return {
+      deletedCount: notificationIds.length,
+    };
   }
 }

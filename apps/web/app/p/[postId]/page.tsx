@@ -58,6 +58,7 @@ export default async function ThreadPage({ params }: PageProps) {
               items={thread.ancestors}
               targetPath={threadPath}
               viewerHandle={viewer?.handle}
+              viewerUserId={viewer?.userId}
             />
           </section>
         ) : null}
@@ -70,6 +71,8 @@ export default async function ThreadPage({ params }: PageProps) {
             items={[thread.focus]}
             targetPath={threadPath}
             viewerHandle={viewer?.handle}
+            viewerUserId={viewer?.userId}
+            deleteRedirectPath="/"
           />
         </section>
 
@@ -81,6 +84,7 @@ export default async function ThreadPage({ params }: PageProps) {
             items={thread.replies}
             targetPath={threadPath}
             viewerHandle={viewer?.handle}
+            viewerUserId={viewer?.userId}
           />
         </section>
 

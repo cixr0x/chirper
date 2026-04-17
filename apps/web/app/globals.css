@@ -659,6 +659,11 @@ body {
   cursor: pointer;
 }
 
+.destructive-button {
+  border-color: rgba(180, 35, 24, 0.22);
+  color: #b42318;
+}
+
 .count-chip {
   display: inline-flex;
   margin-left: 0.75rem;

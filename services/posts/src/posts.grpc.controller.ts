@@ -99,4 +99,9 @@ export class PostsGrpcController {
   async removeRepost(data: { userId: string; postId: string }) {
     return this.posts.removeRepost(data);
   }
+
+  @GrpcMethod("PostsService", "DeletePost")
+  async deletePost(data: { authorUserId: string; postId: string }) {
+    return this.posts.deletePost(data);
+  }
 }

@@ -110,6 +110,10 @@ type PostInteractionRequest = {
   userId: string;
   postId: string;
 };
+type DeletePostRequest = {
+  authorUserId: string;
+  postId: string;
+};
 
 type PostsGrpcService = {
   listPublicPosts(request: ListPublicPostsRequest): Observable<ListPublicPostsResponse>;
@@ -128,6 +132,7 @@ type PostsGrpcService = {
   removeLike(request: PostInteractionRequest): Observable<PostInteractionRemovalResult>;
   createRepost(request: PostInteractionRequest): Observable<PostInteractionRecord>;
   removeRepost(request: PostInteractionRequest): Observable<PostInteractionRemovalResult>;
+  deletePost(request: DeletePostRequest): Observable<PostInteractionRemovalResult>;
 };
 
 @Injectable()
@@ -212,5 +217,9 @@ export class PostsClientService implements OnModuleInit {
 
   removeRepost(request: PostInteractionRequest) {
     return lastValueFrom(this.service.removeRepost(request));
+  }
+
+  deletePost(request: DeletePostRequest) {
+    return lastValueFrom(this.service.deletePost(request));
   }
 }

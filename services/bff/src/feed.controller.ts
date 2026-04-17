@@ -213,6 +213,33 @@ export class FeedController {
     });
   }
 
+  @Post("posts/:postId/delete")
+  async deletePost(
+    @Param("postId") postId: string,
+    @Headers(sessionHeaderName) sessionToken: string | undefined,
+  ) {
+    const session = await this.sessionAuth.requireSession(sessionToken);
+
+    try {
+      const result = await this.postsClient.deletePost({
+        authorUserId: session.userId,
+        postId,
+      });
+
+      if (!result.removed) {
+        throw new NotFoundException(`Post ${postId} was not found.`);
+      }
+
+      return result;
+    } catch (error) {
+      if (isGrpcInvalidArgument(error)) {
+        throw new BadRequestException(getGrpcErrorMessage(error, "Post deletion failed."));
+      }
+
+      throw error;
+    }
+  }
+
   private async buildHomeFeed(viewerUserId: string) {
     let entries = await this.timelineClient.listHomeTimeline(viewerUserId, 50);
     if (entries.length === 0) {

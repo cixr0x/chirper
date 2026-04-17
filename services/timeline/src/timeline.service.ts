@@ -3,6 +3,7 @@ import {
   DOMAIN_EVENTS,
   type GraphFollowCreatedEvent,
   type GraphFollowRemovedEvent,
+  type PostDeletedEvent,
   type PostPublishedEvent,
   type PostRepostCreatedEvent,
   type PostRepostRemovedEvent,
@@ -118,6 +119,32 @@ export class TimelineService {
       },
       event,
     );
+  }
+
+  async consumePostDeletedEvent(event: PostDeletedEvent) {
+    const eventReserved = await this.reserveInboxEvent(event);
+    if (!eventReserved) {
+      return { removed: false };
+    }
+
+    await this.runWithRetry(() =>
+      this.prisma.$transaction(async (tx) => {
+        await tx.homeEntry.deleteMany({
+          where: {
+            sourcePostId: event.payload.postId,
+          },
+        });
+
+        await tx.userEntry.deleteMany({
+          where: {
+            sourcePostId: event.payload.postId,
+          },
+        });
+      }),
+    );
+
+    await this.markInboxProcessed(event.id, event.name);
+    return { removed: true };
   }
 
   async consumeGraphFollowCreatedEvent(event: GraphFollowCreatedEvent) {
@@ -450,6 +477,7 @@ export class TimelineService {
   private async reserveInboxEvent(
     event:
       | PostPublishedEvent
+      | PostDeletedEvent
       | PostRepostCreatedEvent
       | PostRepostRemovedEvent
       | GraphFollowCreatedEvent

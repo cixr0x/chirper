@@ -29,6 +29,7 @@ const currentScope = [
   "Notifications service and buffered realtime fan-out",
   "Likes, replies, and reposts owned by `posts`",
   "Managed post image attachments owned by `media`",
+  "Owner-only post deletion with Kafka cleanup",
 ];
 
 const demoCredentials = [
@@ -340,6 +341,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 items={[]}
                 targetPath="/"
                 viewerHandle={viewer?.handle}
+                viewerUserId={viewer?.userId}
               />
             ) : (
               <FeedList
@@ -348,6 +350,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 items={feed}
                 targetPath="/"
                 viewerHandle={viewer?.handle}
+                viewerUserId={viewer?.userId}
               />
             )}
           </section>

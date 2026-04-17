@@ -277,6 +277,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
           items={userFeed}
           targetPath={profilePath}
           viewerHandle={viewer?.handle}
+          viewerUserId={viewer?.userId}
         />
       </section>
     </main>

@@ -3,6 +3,7 @@ import {
   KAFKA_TOPICS,
   isGraphFollowCreatedEvent,
   isGraphFollowRemovedEvent,
+  isPostDeletedEvent,
   isPostRepostCreatedEvent,
   isPostRepostRemovedEvent,
   isPostPublishedEvent,
@@ -78,6 +79,11 @@ export class TimelineKafkaConsumerService implements OnModuleInit, OnModuleDestr
 
             if (isPostPublishedEvent(raw)) {
               await this.timelineService.consumePostPublishedEvent(raw);
+              return;
+            }
+
+            if (isPostDeletedEvent(raw)) {
+              await this.timelineService.consumePostDeletedEvent(raw);
               return;
             }
 

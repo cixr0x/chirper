@@ -4,6 +4,7 @@ export const DOMAIN_EVENTS = {
   graphFollowCreated: "graph.follow.created.v1",
   graphFollowRemoved: "graph.follow.removed.v1",
   postPublished: "posts.post.published.v1",
+  postDeleted: "posts.post.deleted.v1",
   postLikeCreated: "posts.like.created.v1",
   postLikeRemoved: "posts.like.removed.v1",
   postRepostCreated: "posts.repost.created.v1",
@@ -42,6 +43,18 @@ export type PostPublishedPayload = {
 export type PostPublishedEvent = DomainEventEnvelope<
   PostPublishedPayload,
   (typeof DOMAIN_EVENTS)["postPublished"]
+>;
+
+export type PostDeletedPayload = {
+  postId: string;
+  authorUserId: string;
+  deletedAt: string;
+  mediaAssetIds: string[];
+};
+
+export type PostDeletedEvent = DomainEventEnvelope<
+  PostDeletedPayload,
+  (typeof DOMAIN_EVENTS)["postDeleted"]
 >;
 
 export type PostLikeCreatedPayload = {
@@ -137,6 +150,25 @@ export function isPostPublishedEvent(value: unknown): value is PostPublishedEven
     (event.payload?.inReplyToPostId === undefined || typeof event.payload?.inReplyToPostId === "string") &&
     (event.payload?.inReplyToAuthorUserId === undefined ||
       typeof event.payload?.inReplyToAuthorUserId === "string")
+  );
+}
+
+export function isPostDeletedEvent(value: unknown): value is PostDeletedEvent {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const event = value as Partial<PostDeletedEvent>;
+  return (
+    event.name === DOMAIN_EVENTS.postDeleted &&
+    typeof event.id === "string" &&
+    typeof event.aggregateId === "string" &&
+    typeof event.occurredAt === "string" &&
+    typeof event.payload?.postId === "string" &&
+    typeof event.payload?.authorUserId === "string" &&
+    typeof event.payload?.deletedAt === "string" &&
+    Array.isArray(event.payload?.mediaAssetIds) &&
+    event.payload.mediaAssetIds.every((assetId) => typeof assetId === "string")
   );
 }
 

@@ -2,9 +2,11 @@ nameOverride: ""
 fullnameOverride: ""
 
 image:
-  repository: ghcr.io/example/chirper-service
+  repository: chirper/service
   tag: latest
   pullPolicy: IfNotPresent
+
+imagePullSecrets: []
 
 serviceAccount:
   create: true
@@ -12,12 +14,46 @@ serviceAccount:
 
 service:
   type: ClusterIP
-  port: 80
-  targetPort: 4000
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4000
+      containerPort: 4000
+      protocol: TCP
 
 deployment:
   replicaCount: 1
+  podAnnotations: {}
+  podLabels: {}
 
 env: []
+envFromSecrets: []
+envFromConfigMaps: []
+command: []
+args: []
 resources: {}
 
+probes:
+  liveness:
+    enabled: true
+    path: /api/health
+    port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    path: /api/health
+    port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 3
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  hosts: []
+  tls: []

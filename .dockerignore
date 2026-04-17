@@ -1,0 +1,16 @@
+.git
+.codex-logs
+.codex-runtime
+.codex-smoke
+.tmp-logs
+tmp
+node_modules
+apps/*/.next
+apps/*/node_modules
+apps/*/dist
+packages/*/node_modules
+packages/*/dist
+services/*/node_modules
+services/*/dist
+services/*/generated
+*.log

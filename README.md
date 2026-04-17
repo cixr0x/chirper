@@ -55,3 +55,27 @@ npm run dev:realtime
 npm run dev:bff
 npm run dev:web
 ```
+
+## Local Kubernetes
+
+Local Kubernetes deployability is scaffolded around `kind`, `helm`, and the generic chart at [infra/helm/chirper-service](/C:/PROJECTS/chirper/infra/helm/chirper-service).
+
+Bootstrap the cluster and ingress:
+
+```powershell
+npm run k8s:bootstrap
+```
+
+Build the local images and load them into `kind`:
+
+```powershell
+npm run k8s:build-images
+```
+
+Deploy the stack into the `chirper` namespace:
+
+```powershell
+npm run k8s:deploy -- -SeedDemo
+```
+
+See [docs/local-kubernetes.md](/C:/PROJECTS/chirper/docs/local-kubernetes.md) for the full flow and URLs.

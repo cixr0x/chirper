@@ -2,12 +2,16 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "chirper-service.fullname" . }}
+  labels:
+    {{- include "chirper-service.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    app.kubernetes.io/name: {{ include "chirper-service.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "chirper-service.selectorLabels" . | nindent 4 }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.targetPort }}
-
+    {{- range .Values.service.ports }}
+    - name: {{ .name }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort }}
+      protocol: {{ default "TCP" .protocol }}
+    {{- end }}

@@ -1,0 +1,34 @@
+nameOverride: posts
+fullnameOverride: posts
+
+image:
+  repository: chirper/posts
+  tag: dev
+
+service:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4003
+      containerPort: 4003
+    - name: grpc
+      port: 50053
+      targetPort: 50053
+      containerPort: 50053
+
+env:
+  - name: NODE_ENV
+    value: production
+  - name: PORT
+    value: "4003"
+  - name: GRPC_BIND_URL
+    value: 0.0.0.0:50053
+  - name: KAFKA_BROKERS
+    value: kafka:9092
+  - name: KAFKA_CLIENT_ID
+    value: chirper-posts
+  - name: KAFKA_POSTS_TOPIC
+    value: chirper.posts.events.v1
+
+envFromSecrets:
+  - chirper-database

@@ -4,7 +4,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { clearSession, getSessionToken, setSessionToken } from "../lib/session";
 
-const bffBaseUrl = process.env.NEXT_PUBLIC_BFF_URL ?? "http://127.0.0.1:4000";
+const bffBaseUrl =
+  process.env.BFF_INTERNAL_URL ??
+  process.env.NEXT_PUBLIC_BFF_URL ??
+  "http://127.0.0.1:4000";
 
 function sessionHeaders(sessionToken: string): HeadersInit {
   return {

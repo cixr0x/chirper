@@ -1,0 +1,47 @@
+nameOverride: bff
+fullnameOverride: bff
+
+image:
+  repository: chirper/bff
+  tag: dev
+
+service:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4000
+      containerPort: 4000
+
+env:
+  - name: NODE_ENV
+    value: production
+  - name: PORT
+    value: "4000"
+  - name: IDENTITY_GRPC_URL
+    value: identity:50051
+  - name: PROFILE_GRPC_URL
+    value: profile:50052
+  - name: POSTS_GRPC_URL
+    value: posts:50053
+  - name: GRAPH_GRPC_URL
+    value: graph:50054
+  - name: TIMELINE_GRPC_URL
+    value: timeline:50055
+  - name: NOTIFICATIONS_GRPC_URL
+    value: notifications:50056
+  - name: REALTIME_GRPC_URL
+    value: realtime:50057
+  - name: MEDIA_GRPC_URL
+    value: media:50058
+  - name: BFF_PUBLIC_URL
+    value: http://api.chirper.localtest.me:8088
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: api.chirper.localtest.me
+      paths:
+        - path: /
+          pathType: Prefix
+          servicePortName: http

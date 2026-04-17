@@ -1,0 +1,36 @@
+FROM node:22-bookworm-slim
+
+ARG WORKSPACE_PACKAGE
+ARG WORKSPACE_DIR
+ARG ENABLE_PRISMA=false
+ARG START_KIND=service
+
+ENV WORKSPACE_PACKAGE=${WORKSPACE_PACKAGE}
+ENV WORKSPACE_DIR=${WORKSPACE_DIR}
+ENV ENABLE_PRISMA=${ENABLE_PRISMA}
+ENV START_KIND=${START_KIND}
+
+WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates openssl \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+COPY tsconfig.base.json ./
+COPY service-boundaries.json ./
+COPY apps ./apps
+COPY packages ./packages
+COPY scripts ./scripts
+COPY services ./services
+
+RUN npm ci
+
+RUN npm run build -w @chirper/common \
+  && npm run build -w @chirper/contracts-events
+
+RUN if [ "${ENABLE_PRISMA}" = "true" ]; then npm run prisma:generate -w "${WORKSPACE_PACKAGE}"; fi
+
+RUN npm run build -w "${WORKSPACE_PACKAGE}"
+
+CMD ["sh", "-lc", "if [ \"${START_KIND}\" = \"web\" ]; then cd \"${WORKSPACE_DIR}\" && node ../../node_modules/next/dist/bin/next start -H 0.0.0.0 -p ${PORT:-3000}; else cd \"${WORKSPACE_DIR}\" && node dist/main.js; fi"]

@@ -1,0 +1,9 @@
+controller:
+  kind: DaemonSet
+  hostPort:
+    enabled: true
+  service:
+    type: ClusterIP
+  nodeSelector:
+    ingress-ready: "true"
+    kubernetes.io/os: linux

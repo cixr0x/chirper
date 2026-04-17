@@ -1,0 +1,34 @@
+nameOverride: graph
+fullnameOverride: graph
+
+image:
+  repository: chirper/graph
+  tag: dev
+
+service:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4004
+      containerPort: 4004
+    - name: grpc
+      port: 50054
+      targetPort: 50054
+      containerPort: 50054
+
+env:
+  - name: NODE_ENV
+    value: production
+  - name: PORT
+    value: "4004"
+  - name: GRPC_BIND_URL
+    value: 0.0.0.0:50054
+  - name: KAFKA_BROKERS
+    value: kafka:9092
+  - name: KAFKA_CLIENT_ID
+    value: chirper-graph
+  - name: KAFKA_GRAPH_TOPIC
+    value: chirper.graph.events.v1
+
+envFromSecrets:
+  - chirper-database

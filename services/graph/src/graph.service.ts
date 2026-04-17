@@ -15,26 +15,98 @@ type FollowRecord = {
   createdAt: string;
 };
 
+type FollowPage = {
+  userIds: string[];
+  totalCount: number;
+  nextCursor: string;
+};
+
 @Injectable()
 export class GraphService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async listFollowing(userId: string): Promise<string[]> {
+  async listFollowing(userId: string, limit = 0, cursor?: string): Promise<FollowPage> {
+    const normalizedUserId = userId.trim();
+    if (!normalizedUserId) {
+      return { userIds: [], totalCount: 0, nextCursor: "" };
+    }
+
+    const totalCount = await this.prisma.follow.count({
+      where: { followerId: normalizedUserId },
+    });
+    const normalizedLimit = normalizePageLimit(limit);
+    const cursorMarker = decodeDateIdCursor(cursor);
     const follows = await this.prisma.follow.findMany({
-      where: { followerId: userId },
-      orderBy: [{ createdAt: "desc" }],
+      where: {
+        followerId: normalizedUserId,
+        ...(normalizedLimit > 0 && cursorMarker
+          ? {
+              OR: [
+                { createdAt: { lt: cursorMarker.createdAt } },
+                {
+                  createdAt: cursorMarker.createdAt,
+                  id: { lt: cursorMarker.id },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      ...(normalizedLimit > 0 ? { take: normalizedLimit + 1 } : {}),
     });
 
-    return follows.map((follow) => follow.followeeId);
+    const pageRows = normalizedLimit > 0 ? follows.slice(0, normalizedLimit) : follows;
+    const lastRow = pageRows.at(-1);
+    return {
+      userIds: pageRows.map((follow) => follow.followeeId),
+      totalCount,
+      nextCursor:
+        normalizedLimit > 0 && follows.length > normalizedLimit && lastRow
+          ? encodeDateIdCursor(lastRow.createdAt, lastRow.id)
+          : "",
+    };
   }
 
-  async listFollowers(userId: string): Promise<string[]> {
+  async listFollowers(userId: string, limit = 0, cursor?: string): Promise<FollowPage> {
+    const normalizedUserId = userId.trim();
+    if (!normalizedUserId) {
+      return { userIds: [], totalCount: 0, nextCursor: "" };
+    }
+
+    const totalCount = await this.prisma.follow.count({
+      where: { followeeId: normalizedUserId },
+    });
+    const normalizedLimit = normalizePageLimit(limit);
+    const cursorMarker = decodeDateIdCursor(cursor);
     const follows = await this.prisma.follow.findMany({
-      where: { followeeId: userId },
-      orderBy: [{ createdAt: "desc" }],
+      where: {
+        followeeId: normalizedUserId,
+        ...(normalizedLimit > 0 && cursorMarker
+          ? {
+              OR: [
+                { createdAt: { lt: cursorMarker.createdAt } },
+                {
+                  createdAt: cursorMarker.createdAt,
+                  id: { lt: cursorMarker.id },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      ...(normalizedLimit > 0 ? { take: normalizedLimit + 1 } : {}),
     });
 
-    return follows.map((follow) => follow.followerId);
+    const pageRows = normalizedLimit > 0 ? follows.slice(0, normalizedLimit) : follows;
+    const lastRow = pageRows.at(-1);
+    return {
+      userIds: pageRows.map((follow) => follow.followerId),
+      totalCount,
+      nextCursor:
+        normalizedLimit > 0 && follows.length > normalizedLimit && lastRow
+          ? encodeDateIdCursor(lastRow.createdAt, lastRow.id)
+          : "",
+    };
   }
 
   async follow(input: {
@@ -137,5 +209,48 @@ export class GraphService {
     return {
       removed: result.count > 0,
     };
+  }
+}
+
+function normalizePageLimit(limit: number) {
+  const normalized = Number(limit);
+  if (!Number.isFinite(normalized) || normalized <= 0) {
+    return 0;
+  }
+
+  return Math.min(Math.trunc(normalized), 100);
+}
+
+function encodeDateIdCursor(createdAt: Date, id: string) {
+  return Buffer.from(
+    JSON.stringify({
+      createdAt: createdAt.toISOString(),
+      id,
+    }),
+  ).toString("base64url");
+}
+
+function decodeDateIdCursor(cursor?: string) {
+  const normalizedCursor = cursor?.trim();
+  if (!normalizedCursor) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(normalizedCursor, "base64url").toString("utf8")) as {
+      createdAt?: string;
+      id?: string;
+    };
+    const createdAt = new Date(parsed.createdAt ?? "");
+    if (!parsed.id || Number.isNaN(createdAt.getTime())) {
+      return null;
+    }
+
+    return {
+      createdAt,
+      id: parsed.id,
+    };
+  } catch {
+    return null;
   }
 }

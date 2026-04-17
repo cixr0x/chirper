@@ -56,6 +56,17 @@ type ThreadEnvelope = {
   focus: Awaited<ReturnType<FeedController["buildFeedItem"]>>;
   ancestors: Awaited<ReturnType<FeedController["buildFeed"]>>;
   replies: Awaited<ReturnType<FeedController["buildFeed"]>>;
+  nextReplyCursor: string;
+};
+
+type FeedPage = {
+  items: Awaited<ReturnType<FeedController["buildFeed"]>>;
+  nextCursor: string;
+};
+
+type EngagementPage = {
+  items: EngagementActor[];
+  nextCursor: string;
 };
 
 @Controller()
@@ -70,44 +81,68 @@ export class FeedController {
   ) {}
 
   @Get("feed")
-  async getFeed(@Headers(sessionHeaderName) sessionToken?: string) {
+  async getFeed(
+    @Query("limit") limit?: string,
+    @Query("cursor") cursor?: string,
+    @Headers(sessionHeaderName) sessionToken?: string,
+  ) {
+    const normalizedLimit = this.normalizeLimit(limit, 20);
     const session = await this.sessionAuth.optionalSession(sessionToken);
     if (session) {
-      return this.buildHomeFeed(session.userId);
+      return this.buildHomeFeed(session.userId, normalizedLimit, cursor?.trim() || undefined);
     }
 
-    const posts = await this.postsClient.listPublicPosts(50);
-    return this.buildFeed(posts);
+    const postsPage = await this.postsClient.listPublicPosts(normalizedLimit, cursor?.trim() || undefined);
+    return {
+      items: await this.buildFeed(postsPage.posts),
+      nextCursor: postsPage.nextCursor,
+    };
   }
 
   @Get("users/:userId/feed")
   async getUserFeed(
     @Param("userId") userId: string,
     @Query("limit") limit?: string,
+    @Query("cursor") cursor?: string,
     @Headers(sessionHeaderName) sessionToken?: string,
   ) {
     const session = await this.sessionAuth.optionalSession(sessionToken);
-    return this.buildUserFeed(userId, this.normalizeLimit(limit, 40), session?.userId);
+    return this.buildUserFeed(
+      userId,
+      this.normalizeLimit(limit, 15),
+      session?.userId,
+      cursor?.trim() || undefined,
+    );
   }
 
   @Get("posts/:postId/thread")
   async getThread(
     @Param("postId") postId: string,
     @Query("replyLimit") replyLimit?: string,
+    @Query("replyCursor") replyCursor?: string,
     @Headers(sessionHeaderName) sessionToken?: string,
   ): Promise<ThreadEnvelope> {
     const session = await this.sessionAuth.optionalSession(sessionToken);
-    return this.buildThread(postId, this.normalizeLimit(replyLimit, 40), session?.userId);
+    return this.buildThread(
+      postId,
+      this.normalizeLimit(replyLimit, 12),
+      session?.userId,
+      replyCursor?.trim() || undefined,
+    );
   }
 
   @Get("posts/:postId/likes")
-  async getLikes(@Param("postId") postId: string, @Query("limit") limit?: string) {
-    return this.buildEngagement(this.postsClient.listLikes(postId, this.normalizeLimit(limit, 40)));
+  async getLikes(@Param("postId") postId: string, @Query("limit") limit?: string, @Query("cursor") cursor?: string) {
+    return this.buildEngagement(
+      this.postsClient.listLikes(postId, this.normalizeLimit(limit, 12), cursor?.trim() || undefined),
+    );
   }
 
   @Get("posts/:postId/reposts")
-  async getReposts(@Param("postId") postId: string, @Query("limit") limit?: string) {
-    return this.buildEngagement(this.postsClient.listReposts(postId, this.normalizeLimit(limit, 40)));
+  async getReposts(@Param("postId") postId: string, @Query("limit") limit?: string, @Query("cursor") cursor?: string) {
+    return this.buildEngagement(
+      this.postsClient.listReposts(postId, this.normalizeLimit(limit, 12), cursor?.trim() || undefined),
+    );
   }
 
   @Post("posts")
@@ -240,36 +275,51 @@ export class FeedController {
     }
   }
 
-  private async buildHomeFeed(viewerUserId: string) {
-    let entries = await this.timelineClient.listHomeTimeline(viewerUserId, 50);
-    if (entries.length === 0) {
-      entries = await this.timelineClient.rebuildHomeTimeline(viewerUserId, 50);
+  private async buildHomeFeed(viewerUserId: string, limit = 20, cursor?: string): Promise<FeedPage> {
+    let timelinePage = await this.timelineClient.listHomeTimeline(viewerUserId, limit, cursor);
+    if (timelinePage.entries.length === 0 && !cursor) {
+      timelinePage = await this.timelineClient.rebuildHomeTimeline(viewerUserId, limit, cursor);
     }
 
-    const posts = await this.postsClient.getPostsByIds(entries.map((entry) => entry.sourcePostId));
-    return this.buildFeedItems(
+    const posts = await this.postsClient.getPostsByIds(
+      timelinePage.entries.map((entry) => entry.sourcePostId),
+    );
+    return {
+      items: await this.buildFeedItems(
       posts,
-      entries.map((entry) => ({
+      timelinePage.entries.map((entry) => ({
         sourcePostId: entry.sourcePostId,
         actorUserId: entry.actorUserId,
         activityType: entry.activityType,
         insertedAt: entry.insertedAt,
       })),
       viewerUserId,
-    );
+      ),
+      nextCursor: timelinePage.nextCursor,
+    };
   }
 
-  private async buildUserFeed(userId: string, limit = 25, viewerUserId?: string) {
-    const activities = await this.postsClient.listTimelineActivitiesByUsers([userId], limit);
-    if (activities.length === 0) {
-      return [];
+  private async buildUserFeed(userId: string, limit = 25, viewerUserId?: string, cursor?: string): Promise<FeedPage> {
+    const activityPage = await this.postsClient.listTimelineActivitiesByUsers([userId], limit, cursor);
+    if (activityPage.activities.length === 0) {
+      return { items: [], nextCursor: "" };
     }
 
-    const posts = await this.postsClient.getPostsByIds(activities.map((activity) => activity.sourcePostId));
-    return this.buildFeedItems(posts, this.toActivities(activities), viewerUserId);
+    const posts = await this.postsClient.getPostsByIds(
+      activityPage.activities.map((activity) => activity.sourcePostId),
+    );
+    return {
+      items: await this.buildFeedItems(posts, this.toActivities(activityPage.activities), viewerUserId),
+      nextCursor: activityPage.nextCursor,
+    };
   }
 
-  private async buildThread(postId: string, replyLimit = 25, viewerUserId?: string): Promise<ThreadEnvelope> {
+  private async buildThread(
+    postId: string,
+    replyLimit = 25,
+    viewerUserId?: string,
+    replyCursor?: string,
+  ): Promise<ThreadEnvelope> {
     const [focus] = await this.postsClient.getPostsByIds([postId]);
     if (!focus) {
       throw new NotFoundException(`Post ${postId} was not found.`);
@@ -277,19 +327,20 @@ export class FeedController {
 
     const [ancestors, replies] = await Promise.all([
       this.listAncestorPosts(focus),
-      this.postsClient.listReplies(focus.postId, replyLimit),
+      this.postsClient.listReplies(focus.postId, replyLimit, replyCursor),
     ]);
 
     const [focusItem, ancestorItems, replyItems] = await Promise.all([
       this.buildFeedItem(focus, viewerUserId),
       ancestors.length > 0 ? this.buildFeed(ancestors, viewerUserId) : Promise.resolve([]),
-      replies.length > 0 ? this.buildFeed(replies, viewerUserId) : Promise.resolve([]),
+      replies.posts.length > 0 ? this.buildFeed(replies.posts, viewerUserId) : Promise.resolve([]),
     ]);
 
     return {
       focus: focusItem,
       ancestors: ancestorItems,
       replies: replyItems,
+      nextReplyCursor: replies.nextCursor,
     };
   }
 
@@ -318,14 +369,15 @@ export class FeedController {
     return items[0] ?? null;
   }
 
-  private async buildEngagement(recordsPromise: Promise<PostEngagementRecord[]>) {
-    const records = await recordsPromise;
+  private async buildEngagement(recordsPromise: Promise<{ records: PostEngagementRecord[]; nextCursor: string }>) {
+    const { records, nextCursor } = await recordsPromise;
     if (records.length === 0) {
-      return [] as EngagementActor[];
+      return { items: [] as EngagementActor[], nextCursor };
     }
 
     const authorMap = await this.buildAuthorMap(records.map((record) => record.userId));
-    return records
+    return {
+      items: records
       .map((record) => {
         const actor = authorMap.get(record.userId);
         if (!actor) {
@@ -338,7 +390,9 @@ export class FeedController {
           actor,
         } satisfies EngagementActor;
       })
-      .filter((record): record is EngagementActor => Boolean(record));
+      .filter((record): record is EngagementActor => Boolean(record)),
+      nextCursor,
+    } satisfies EngagementPage;
   }
 
   private async buildAuthorMap(authorUserIds: string[]) {

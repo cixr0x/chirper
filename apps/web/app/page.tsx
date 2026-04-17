@@ -19,6 +19,7 @@ import {
   getUserDirectory,
   getViewerFollowingUserIds,
 } from "../lib/bff";
+import { appendCursorTrail, buildPathWithSearch, collectPaginatedPages, parseCursorTrail } from "../lib/pagination";
 import { getSessionState, getSessionToken } from "../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,8 @@ type HomePageProps = {
   searchParams?: Promise<{
     auth?: string;
     account?: string;
+    feedTrail?: string;
+    notificationsTrail?: string;
   }>;
 };
 
@@ -54,18 +57,49 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const viewer = session?.viewer ?? null;
   const authMessage = !viewer ? getAuthMessage(filters?.auth) : null;
   const accountMessage = viewer ? getAccountMessage(filters?.account) : null;
+  const feedTrail = parseCursorTrail(filters?.feedTrail);
+  const notificationsTrail = parseCursorTrail(filters?.notificationsTrail);
+  const homePath = buildPathWithSearch("/", filters);
   const activeSessionToken = session ? sessionToken : null;
-  const [feed, followingUserIds, notifications] = activeSessionToken
+  const [feedResult, followingUserIds, notificationsResult] = activeSessionToken
     ? await Promise.all([
-        getHomeFeed(activeSessionToken),
+        collectPaginatedPages({
+          trail: feedTrail,
+          loadPage: (cursor) => getHomeFeed(activeSessionToken, 4, cursor),
+          getItems: (page) => page.items,
+          getNextCursor: (page) => page.nextCursor,
+        }),
         getViewerFollowingUserIds(activeSessionToken),
-        getNotifications(activeSessionToken),
+        collectPaginatedPages({
+          trail: notificationsTrail,
+          loadPage: (cursor) => getNotifications(activeSessionToken, 4, cursor),
+          getItems: (page) => page.notifications,
+          getNextCursor: (page) => page.nextCursor,
+        }),
       ])
     : await Promise.all([
-        getPublicFeed(),
+        collectPaginatedPages({
+          trail: feedTrail,
+          loadPage: (cursor) => getPublicFeed(4, cursor),
+          getItems: (page) => page.items,
+          getNextCursor: (page) => page.nextCursor,
+        }),
         Promise.resolve([] as string[]),
-        Promise.resolve({ unreadCount: 0, notifications: [] }),
+        Promise.resolve(null),
       ]);
+  const feed = feedResult.items;
+  const feedNextCursor = feedResult.nextCursor;
+  const notifications = notificationsResult
+    ? {
+        unreadCount: notificationsResult.lastPage.unreadCount,
+        notifications: notificationsResult.items,
+        nextCursor: notificationsResult.nextCursor,
+      }
+    : {
+        unreadCount: 0,
+        notifications: [],
+        nextCursor: "",
+      };
   const followingSet = new Set(followingUserIds);
   const needsOnboarding = viewer
     ? !viewer.bio &&
@@ -339,7 +373,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 emptyBody="Create a post as the selected viewer or follow another account from its profile to backfill their recent posts."
                 emptyTitle="No posts in this home timeline yet"
                 items={[]}
-                targetPath="/"
+                targetPath={homePath}
                 viewerHandle={viewer?.handle}
                 viewerUserId={viewer?.userId}
               />
@@ -348,11 +382,21 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 emptyBody="Create a post as the selected viewer or follow another account from its profile to backfill their recent posts."
                 emptyTitle="No posts in this home timeline yet"
                 items={feed}
-                targetPath="/"
+                targetPath={homePath}
                 viewerHandle={viewer?.handle}
                 viewerUserId={viewer?.userId}
               />
             )}
+            {feedNextCursor ? (
+              <div className="pagination-actions">
+                <Link
+                  className="inline-link"
+                  href={appendCursorTrail("/", filters, "feedTrail", feedNextCursor)}
+                >
+                  Load more posts
+                </Link>
+              </div>
+            ) : null}
           </section>
         </div>
 
@@ -403,12 +447,23 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
               <div className="notification-actions">
                 <form action={markNotificationsReadAction}>
-                  <input name="targetPath" type="hidden" value="/" />
+                  <input name="targetPath" type="hidden" value={homePath} />
                   <button className="secondary-button compact" type="submit">
                     Mark all as read
                   </button>
                 </form>
               </div>
+
+              {notifications.nextCursor ? (
+                <div className="pagination-actions">
+                  <Link
+                    className="inline-link"
+                    href={appendCursorTrail("/", filters, "notificationsTrail", notifications.nextCursor)}
+                  >
+                    Load more notifications
+                  </Link>
+                </div>
+              ) : null}
 
               <LiveNotificationEvents />
             </section>

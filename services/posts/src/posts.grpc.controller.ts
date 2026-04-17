@@ -7,9 +7,8 @@ export class PostsGrpcController {
   constructor(@Inject(PostsService) private readonly posts: PostsService) {}
 
   @GrpcMethod("PostsService", "ListPublicPosts")
-  async listPublicPosts(data: { limit?: number }) {
-    const posts = await this.posts.listPublicPosts(data.limit ?? 25);
-    return { posts };
+  async listPublicPosts(data: { limit?: number; cursor?: string }) {
+    return this.posts.listPublicPosts(data.limit ?? 25, data.cursor?.trim() || undefined);
   }
 
   @GrpcMethod("PostsService", "ListPostsByAuthors")
@@ -19,31 +18,31 @@ export class PostsGrpcController {
   }
 
   @GrpcMethod("PostsService", "ListReplies")
-  async listReplies(data: { postId: string; limit?: number }) {
-    return {
-      posts: await this.posts.listReplies(data.postId, data.limit ?? 25),
-    };
+  async listReplies(data: { postId: string; limit?: number; cursor?: string }) {
+    return this.posts.listReplies(data.postId, data.limit ?? 25, data.cursor?.trim() || undefined);
   }
 
   @GrpcMethod("PostsService", "ListLikes")
-  async listLikes(data: { postId: string; limit?: number }) {
-    return {
-      records: await this.posts.listLikes(data.postId, data.limit ?? 25),
-    };
+  async listLikes(data: { postId: string; limit?: number; cursor?: string }) {
+    return this.posts.listLikes(data.postId, data.limit ?? 25, data.cursor?.trim() || undefined);
   }
 
   @GrpcMethod("PostsService", "ListReposts")
-  async listReposts(data: { postId: string; limit?: number }) {
-    return {
-      records: await this.posts.listReposts(data.postId, data.limit ?? 25),
-    };
+  async listReposts(data: { postId: string; limit?: number; cursor?: string }) {
+    return this.posts.listReposts(data.postId, data.limit ?? 25, data.cursor?.trim() || undefined);
   }
 
   @GrpcMethod("PostsService", "ListTimelineActivitiesByUsers")
-  async listTimelineActivitiesByUsers(data: { actorUserIds?: string[]; limit?: number }) {
-    return {
-      activities: await this.posts.listTimelineActivitiesByUsers(data.actorUserIds ?? [], data.limit ?? 25),
-    };
+  async listTimelineActivitiesByUsers(data: {
+    actorUserIds?: string[];
+    limit?: number;
+    cursor?: string;
+  }) {
+    return this.posts.listTimelineActivitiesByUsers(
+      data.actorUserIds ?? [],
+      data.limit ?? 25,
+      data.cursor?.trim() || undefined,
+    );
   }
 
   @GrpcMethod("PostsService", "GetPostsByIds")

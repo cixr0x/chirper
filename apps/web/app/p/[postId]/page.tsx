@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AvatarBadge } from "../../../components/avatar-badge";
 import { FeedList } from "../../../components/feed-list";
 import { formatPostTimestamp, getPostLikes, getPostReposts, getPostThread } from "../../../lib/bff";
+import { appendCursorTrail, buildPathWithSearch, collectPaginatedPages, parseCursorTrail } from "../../../lib/pagination";
 import { getSessionState, getSessionToken } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -11,24 +12,52 @@ type PageProps = {
   params: Promise<{
     postId: string;
   }>;
+  searchParams?: Promise<{
+    replyTrail?: string;
+    likeTrail?: string;
+    repostTrail?: string;
+  }>;
 };
 
-export default async function ThreadPage({ params }: PageProps) {
+export default async function ThreadPage({ params, searchParams }: PageProps) {
   const { postId } = await params;
+  const filters = searchParams ? await searchParams : undefined;
   const [session, sessionToken] = await Promise.all([getSessionState(), getSessionToken()]);
   const viewer = session?.viewer ?? null;
   const activeSessionToken = session ? sessionToken ?? undefined : undefined;
-  const [thread, likes, reposts] = await Promise.all([
-    getPostThread(postId, activeSessionToken),
-    getPostLikes(postId, activeSessionToken),
-    getPostReposts(postId, activeSessionToken),
+  const replyTrail = parseCursorTrail(filters?.replyTrail);
+  const likeTrail = parseCursorTrail(filters?.likeTrail);
+  const repostTrail = parseCursorTrail(filters?.repostTrail);
+  const [threadResult, likesResult, repostsResult] = await Promise.all([
+    collectPaginatedPages({
+      trail: replyTrail,
+      loadPage: (cursor) => getPostThread(postId, activeSessionToken, 2, cursor),
+      getItems: (page) => page?.replies ?? [],
+      getNextCursor: (page) => page?.nextReplyCursor ?? "",
+    }),
+    collectPaginatedPages({
+      trail: likeTrail,
+      loadPage: (cursor) => getPostLikes(postId, activeSessionToken, 2, cursor),
+      getItems: (page) => page.items,
+      getNextCursor: (page) => page.nextCursor,
+    }),
+    collectPaginatedPages({
+      trail: repostTrail,
+      loadPage: (cursor) => getPostReposts(postId, activeSessionToken, 2, cursor),
+      getItems: (page) => page.items,
+      getNextCursor: (page) => page.nextCursor,
+    }),
   ]);
+  const thread = threadResult.lastPage;
+  const likes = likesResult.items;
+  const reposts = repostsResult.items;
 
   if (!thread?.focus) {
     notFound();
   }
 
   const threadPath = `/p/${thread.focus.postId}`;
+  const threadTargetPath = buildPathWithSearch(threadPath, filters);
   const participants = buildParticipantRows(thread, likes, reposts);
 
   return (
@@ -56,7 +85,7 @@ export default async function ThreadPage({ params }: PageProps) {
               emptyBody=""
               emptyTitle=""
               items={thread.ancestors}
-              targetPath={threadPath}
+              targetPath={threadTargetPath}
               viewerHandle={viewer?.handle}
               viewerUserId={viewer?.userId}
             />
@@ -69,7 +98,7 @@ export default async function ThreadPage({ params }: PageProps) {
             emptyBody=""
             emptyTitle=""
             items={[thread.focus]}
-            targetPath={threadPath}
+            targetPath={threadTargetPath}
             viewerHandle={viewer?.handle}
             viewerUserId={viewer?.userId}
             deleteRedirectPath="/"
@@ -81,11 +110,21 @@ export default async function ThreadPage({ params }: PageProps) {
           <FeedList
             emptyBody="No direct replies yet. Use the reply form to start the conversation from this page."
             emptyTitle="No replies yet"
-            items={thread.replies}
-            targetPath={threadPath}
+            items={threadResult.items}
+            targetPath={threadTargetPath}
             viewerHandle={viewer?.handle}
             viewerUserId={viewer?.userId}
           />
+          {thread.nextReplyCursor ? (
+            <div className="pagination-actions">
+              <Link
+                className="inline-link"
+                href={appendCursorTrail(threadPath, filters, "replyTrail", thread.nextReplyCursor)}
+              >
+                Load more replies
+              </Link>
+            </div>
+          ) : null}
         </section>
 
         <section className="thread-block engagement-layout">
@@ -127,20 +166,40 @@ export default async function ThreadPage({ params }: PageProps) {
 
           <article className="profile-panel">
             <p className="eyebrow">Likes</p>
-            <h2>{likes.length} accounts liked this post</h2>
+            <h2>{thread.focus.metrics.likeCount} accounts liked this post</h2>
             <EngagementList
               emptyMessage="No likes yet."
               items={likes}
             />
+            {likesResult.nextCursor ? (
+              <div className="pagination-actions">
+                <Link
+                  className="inline-link"
+                  href={appendCursorTrail(threadPath, filters, "likeTrail", likesResult.nextCursor)}
+                >
+                  Load more likes
+                </Link>
+              </div>
+            ) : null}
           </article>
 
           <article className="profile-panel">
             <p className="eyebrow">Reposts</p>
-            <h2>{reposts.length} accounts reposted this post</h2>
+            <h2>{thread.focus.metrics.repostCount} accounts reposted this post</h2>
             <EngagementList
               emptyMessage="No reposts yet."
               items={reposts}
             />
+            {repostsResult.nextCursor ? (
+              <div className="pagination-actions">
+                <Link
+                  className="inline-link"
+                  href={appendCursorTrail(threadPath, filters, "repostTrail", repostsResult.nextCursor)}
+                >
+                  Load more reposts
+                </Link>
+              </div>
+            ) : null}
           </article>
         </section>
       </section>
@@ -152,7 +211,7 @@ function EngagementList({
   items,
   emptyMessage,
 }: {
-  items: Awaited<ReturnType<typeof getPostLikes>>;
+  items: Awaited<ReturnType<typeof getPostLikes>>["items"];
   emptyMessage: string;
 }) {
   if (items.length === 0) {
@@ -183,8 +242,8 @@ function EngagementList({
 
 function buildParticipantRows(
   thread: NonNullable<Awaited<ReturnType<typeof getPostThread>>>,
-  likes: Awaited<ReturnType<typeof getPostLikes>>,
-  reposts: Awaited<ReturnType<typeof getPostReposts>>,
+  likes: Awaited<ReturnType<typeof getPostLikes>>["items"],
+  reposts: Awaited<ReturnType<typeof getPostReposts>>["items"],
 ) {
   const participantMap = new Map<
     string,

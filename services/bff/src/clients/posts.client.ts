@@ -48,9 +48,10 @@ export type TimelineActivityRecord = {
   createdAt: string;
 };
 
-type ListPublicPostsRequest = { limit: number };
+type ListPublicPostsRequest = { limit: number; cursor?: string };
 type ListPublicPostsResponse = {
   posts: PostRecord[];
+  nextCursor?: string;
 };
 type ListPostsByAuthorsRequest = {
   authorUserIds: string[];
@@ -62,23 +63,29 @@ type ListPostsByAuthorsResponse = {
 type ListRepliesRequest = {
   postId: string;
   limit: number;
+  cursor?: string;
 };
 type ListRepliesResponse = {
   posts: PostRecord[];
+  nextCursor?: string;
 };
 type ListPostEngagementRequest = {
   postId: string;
   limit: number;
+  cursor?: string;
 };
 type ListPostEngagementResponse = {
   records: PostEngagementRecord[];
+  nextCursor?: string;
 };
 type ListTimelineActivitiesByUsersRequest = {
   actorUserIds: string[];
   limit: number;
+  cursor?: string;
 };
 type ListTimelineActivitiesByUsersResponse = {
   activities: TimelineActivityRecord[];
+  nextCursor?: string;
 };
 type GetPostsByIdsRequest = {
   postIds: string[];
@@ -145,9 +152,17 @@ export class PostsClientService implements OnModuleInit {
     this.service = this.client.getService<PostsGrpcService>("PostsService");
   }
 
-  async listPublicPosts(limit = 25) {
-    const response = await lastValueFrom(this.service.listPublicPosts({ limit }));
-    return response.posts ?? [];
+  async listPublicPosts(limit = 25, cursor?: string) {
+    const response = await lastValueFrom(
+      this.service.listPublicPosts({
+        limit,
+        ...(cursor ? { cursor } : {}),
+      }),
+    );
+    return {
+      posts: response.posts ?? [],
+      nextCursor: response.nextCursor ?? "",
+    };
   }
 
   async listPostsByAuthors(authorUserIds: string[], limit = 25) {
@@ -155,29 +170,60 @@ export class PostsClientService implements OnModuleInit {
     return response.posts ?? [];
   }
 
-  async listReplies(postId: string, limit = 25) {
-    const response = await lastValueFrom(this.service.listReplies({ postId, limit }));
-    return response.posts ?? [];
+  async listReplies(postId: string, limit = 25, cursor?: string) {
+    const response = await lastValueFrom(
+      this.service.listReplies({
+        postId,
+        limit,
+        ...(cursor ? { cursor } : {}),
+      }),
+    );
+    return {
+      posts: response.posts ?? [],
+      nextCursor: response.nextCursor ?? "",
+    };
   }
 
-  async listLikes(postId: string, limit = 25) {
-    const response = await lastValueFrom(this.service.listLikes({ postId, limit }));
-    return response.records ?? [];
+  async listLikes(postId: string, limit = 25, cursor?: string) {
+    const response = await lastValueFrom(
+      this.service.listLikes({
+        postId,
+        limit,
+        ...(cursor ? { cursor } : {}),
+      }),
+    );
+    return {
+      records: response.records ?? [],
+      nextCursor: response.nextCursor ?? "",
+    };
   }
 
-  async listReposts(postId: string, limit = 25) {
-    const response = await lastValueFrom(this.service.listReposts({ postId, limit }));
-    return response.records ?? [];
+  async listReposts(postId: string, limit = 25, cursor?: string) {
+    const response = await lastValueFrom(
+      this.service.listReposts({
+        postId,
+        limit,
+        ...(cursor ? { cursor } : {}),
+      }),
+    );
+    return {
+      records: response.records ?? [],
+      nextCursor: response.nextCursor ?? "",
+    };
   }
 
-  async listTimelineActivitiesByUsers(actorUserIds: string[], limit = 25) {
+  async listTimelineActivitiesByUsers(actorUserIds: string[], limit = 25, cursor?: string) {
     const response = await lastValueFrom(
       this.service.listTimelineActivitiesByUsers({
         actorUserIds,
         limit,
+        ...(cursor ? { cursor } : {}),
       }),
     );
-    return response.activities ?? [];
+    return {
+      activities: response.activities ?? [],
+      nextCursor: response.nextCursor ?? "",
+    };
   }
 
   async getPostsByIds(postIds: string[]) {

@@ -7,10 +7,12 @@ export class NotificationsGrpcController {
   constructor(@Inject(NotificationsService) private readonly notifications: NotificationsService) {}
 
   @GrpcMethod("NotificationsService", "ListNotifications")
-  async listNotifications(data: { userId: string; limit?: number }) {
-    return {
-      notifications: await this.notifications.listNotifications(data.userId, data.limit ?? 20),
-    };
+  async listNotifications(data: { userId: string; limit?: number; cursor?: string }) {
+    return this.notifications.listNotifications(
+      data.userId,
+      data.limit ?? 20,
+      data.cursor?.trim() || undefined,
+    );
   }
 
   @GrpcMethod("NotificationsService", "GetUnreadCount")

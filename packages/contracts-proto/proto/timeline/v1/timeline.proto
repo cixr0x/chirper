@@ -11,6 +11,7 @@ service TimelineService {
 message ListHomeTimelineRequest {
   string ownerUserId = 1;
   int32 limit = 2;
+  string cursor = 3;
 }
 
 message TimelineEntry {
@@ -25,15 +26,18 @@ message TimelineEntry {
 
 message ListHomeTimelineResponse {
   repeated TimelineEntry entries = 1;
+  string nextCursor = 2;
 }
 
 message RebuildHomeTimelineRequest {
   string ownerUserId = 1;
   int32 limit = 2;
+  string cursor = 3;
 }
 
 message RebuildHomeTimelineResponse {
   repeated TimelineEntry entries = 1;
+  string nextCursor = 2;
 }
 
 message FanOutPostRequest {

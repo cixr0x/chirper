@@ -58,18 +58,57 @@ type TimelineActivityRecord = {
   createdAt: string;
 };
 
+type PostPage = {
+  posts: PostRecord[];
+  nextCursor: string;
+};
+
+type EngagementPage = {
+  records: PostEngagementRecord[];
+  nextCursor: string;
+};
+
+type ActivityPage = {
+  activities: TimelineActivityRecord[];
+  nextCursor: string;
+};
+
 @Injectable()
 export class PostsService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async listPublicPosts(limit = 25): Promise<PostRecord[]> {
+  async listPublicPosts(limit = 25, cursor?: string): Promise<PostPage> {
+    const normalizedLimit = normalizePageLimit(limit, 25);
+    const cursorMarker = decodeDateIdCursor(cursor);
     const posts = await this.prisma.post.findMany({
-      where: { visibility: "public" },
-      orderBy: [{ createdAt: "desc" }],
-      take: Math.min(Math.max(limit, 1), 100),
+      where: {
+        visibility: "public",
+        ...(cursorMarker
+          ? {
+              OR: [
+                { createdAt: { lt: cursorMarker.createdAt } },
+                {
+                  createdAt: cursorMarker.createdAt,
+                  id: { lt: cursorMarker.id },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: normalizedLimit + 1,
     });
 
-    return this.mapPosts(posts);
+    const pageRows = posts.slice(0, normalizedLimit);
+    const lastRow = pageRows.at(-1);
+    const mappedPosts = await this.mapPosts(pageRows);
+    return {
+      posts: mappedPosts,
+      nextCursor:
+        posts.length > normalizedLimit && lastRow
+          ? encodeDateIdCursor(lastRow.createdAt, lastRow.id)
+          : "",
+    };
   }
 
   async listPostsByAuthors(authorUserIds: string[], limit = 25): Promise<PostRecord[]> {
@@ -90,80 +129,160 @@ export class PostsService {
     return this.mapPosts(posts);
   }
 
-  async listReplies(postId: string, limit = 25): Promise<PostRecord[]> {
+  async listReplies(postId: string, limit = 25, cursor?: string): Promise<PostPage> {
     const normalizedPostId = postId.trim();
     if (!normalizedPostId) {
-      return [];
+      return { posts: [], nextCursor: "" };
     }
 
+    const normalizedLimit = normalizePageLimit(limit, 25);
+    const cursorMarker = decodeDateIdCursor(cursor);
     const posts = await this.prisma.post.findMany({
       where: {
         inReplyToPostId: normalizedPostId,
         visibility: "public",
+        ...(cursorMarker
+          ? {
+              OR: [
+                { createdAt: { gt: cursorMarker.createdAt } },
+                {
+                  createdAt: cursorMarker.createdAt,
+                  id: { gt: cursorMarker.id },
+                },
+              ],
+            }
+          : {}),
       },
-      orderBy: [{ createdAt: "asc" }],
-      take: Math.min(Math.max(limit, 1), 100),
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      take: normalizedLimit + 1,
     });
 
-    return this.mapPosts(posts);
+    const pageRows = posts.slice(0, normalizedLimit);
+    const lastRow = pageRows.at(-1);
+    const mappedPosts = await this.mapPosts(pageRows);
+    return {
+      posts: mappedPosts,
+      nextCursor:
+        posts.length > normalizedLimit && lastRow
+          ? encodeDateIdCursor(lastRow.createdAt, lastRow.id)
+          : "",
+    };
   }
 
-  async listLikes(postId: string, limit = 25): Promise<PostEngagementRecord[]> {
+  async listLikes(postId: string, limit = 25, cursor?: string): Promise<EngagementPage> {
     const normalizedPostId = postId.trim();
     if (!normalizedPostId) {
-      return [];
+      return { records: [], nextCursor: "" };
     }
 
+    const normalizedLimit = normalizePageLimit(limit, 25);
+    const cursorMarker = decodeDateIdCursor(cursor);
     const likes = await this.prisma.like.findMany({
       where: {
         postId: normalizedPostId,
+        ...(cursorMarker
+          ? {
+              OR: [
+                { createdAt: { lt: cursorMarker.createdAt } },
+                {
+                  createdAt: cursorMarker.createdAt,
+                  id: { lt: cursorMarker.id },
+                },
+              ],
+            }
+          : {}),
       },
-      orderBy: [{ createdAt: "desc" }],
-      take: Math.min(Math.max(limit, 1), 100),
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: normalizedLimit + 1,
     });
 
-    return likes.map((like) => this.mapEngagement(like));
+    const pageRows = likes.slice(0, normalizedLimit);
+    const lastRow = pageRows.at(-1);
+    return {
+      records: pageRows.map((like) => this.mapEngagement(like)),
+      nextCursor:
+        likes.length > normalizedLimit && lastRow
+          ? encodeDateIdCursor(lastRow.createdAt, lastRow.id)
+          : "",
+    };
   }
 
-  async listReposts(postId: string, limit = 25): Promise<PostEngagementRecord[]> {
+  async listReposts(postId: string, limit = 25, cursor?: string): Promise<EngagementPage> {
     const normalizedPostId = postId.trim();
     if (!normalizedPostId) {
-      return [];
+      return { records: [], nextCursor: "" };
     }
 
+    const normalizedLimit = normalizePageLimit(limit, 25);
+    const cursorMarker = decodeDateIdCursor(cursor);
     const reposts = await this.prisma.repost.findMany({
       where: {
         postId: normalizedPostId,
+        ...(cursorMarker
+          ? {
+              OR: [
+                { createdAt: { lt: cursorMarker.createdAt } },
+                {
+                  createdAt: cursorMarker.createdAt,
+                  id: { lt: cursorMarker.id },
+                },
+              ],
+            }
+          : {}),
       },
-      orderBy: [{ createdAt: "desc" }],
-      take: Math.min(Math.max(limit, 1), 100),
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: normalizedLimit + 1,
     });
 
-    return reposts.map((repost) => this.mapEngagement(repost));
+    const pageRows = reposts.slice(0, normalizedLimit);
+    const lastRow = pageRows.at(-1);
+    return {
+      records: pageRows.map((repost) => this.mapEngagement(repost)),
+      nextCursor:
+        reposts.length > normalizedLimit && lastRow
+          ? encodeDateIdCursor(lastRow.createdAt, lastRow.id)
+          : "",
+    };
   }
 
-  async listTimelineActivitiesByUsers(actorUserIds: string[], limit = 25): Promise<TimelineActivityRecord[]> {
+  async listTimelineActivitiesByUsers(actorUserIds: string[], limit = 25, cursor?: string): Promise<ActivityPage> {
     const uniqueActorIds = [...new Set(actorUserIds.map((value) => value.trim()).filter(Boolean))];
     if (uniqueActorIds.length === 0) {
-      return [];
+      return { activities: [], nextCursor: "" };
     }
 
-    const normalizedLimit = Math.min(Math.max(limit, 1), 100);
+    const normalizedLimit = normalizePageLimit(limit, 25);
+    const cursorMarker = decodeActivityCursor(cursor);
+    const fetchSize = normalizedLimit * 3;
     const [posts, reposts] = await Promise.all([
       this.prisma.post.findMany({
         where: {
           authorId: { in: uniqueActorIds },
           visibility: "public",
+          ...(cursorMarker
+            ? {
+                createdAt: {
+                  lte: cursorMarker.createdAtDate,
+                },
+              }
+            : {}),
         },
-        orderBy: [{ createdAt: "desc" }],
-        take: normalizedLimit,
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: fetchSize,
       }),
       this.prisma.repost.findMany({
         where: {
           userId: { in: uniqueActorIds },
+          ...(cursorMarker
+            ? {
+                createdAt: {
+                  lte: cursorMarker.createdAtDate,
+                },
+              }
+            : {}),
         },
-        orderBy: [{ createdAt: "desc" }],
-        take: normalizedLimit,
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: fetchSize,
       }),
     ]);
 
@@ -194,9 +313,20 @@ export class PostsService {
         })),
     ];
 
-    return activities
-      .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
-      .slice(0, normalizedLimit);
+    const filteredActivities = cursorMarker
+      ? activities.filter((activity) => compareTimelineActivityDesc(activity, cursorMarker) > 0)
+      : activities;
+    const sortedActivities = filteredActivities.sort(compareTimelineActivityDesc);
+    const pageActivities = sortedActivities.slice(0, normalizedLimit);
+    const lastActivity = pageActivities.at(-1);
+
+    return {
+      activities: pageActivities,
+      nextCursor:
+        sortedActivities.length > normalizedLimit && lastActivity
+          ? encodeActivityCursor(lastActivity)
+          : "",
+    };
   }
 
   async getPostsByIds(postIds: string[]): Promise<PostRecord[]> {
@@ -838,4 +968,111 @@ function sanitizeMediaAssetIds(values: string[]) {
   }
 
   return normalized;
+}
+
+function normalizePageLimit(limit: number, fallback: number) {
+  const normalized = Number(limit);
+  if (!Number.isFinite(normalized)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(Math.trunc(normalized), 1), 100);
+}
+
+function encodeDateIdCursor(createdAt: Date, id: string) {
+  return Buffer.from(
+    JSON.stringify({
+      createdAt: createdAt.toISOString(),
+      id,
+    }),
+  ).toString("base64url");
+}
+
+function decodeDateIdCursor(cursor?: string) {
+  const normalizedCursor = cursor?.trim();
+  if (!normalizedCursor) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(normalizedCursor, "base64url").toString("utf8")) as {
+      createdAt?: string;
+      id?: string;
+    };
+    const createdAt = new Date(parsed.createdAt ?? "");
+    if (!parsed.id || Number.isNaN(createdAt.getTime())) {
+      return null;
+    }
+
+    return {
+      createdAt,
+      id: parsed.id,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function encodeActivityCursor(activity: {
+  createdAt: string;
+  activityId: string;
+  activityType: string;
+}) {
+  return Buffer.from(
+    JSON.stringify({
+      createdAt: activity.createdAt,
+      activityId: activity.activityId,
+      activityType: activity.activityType,
+    }),
+  ).toString("base64url");
+}
+
+function decodeActivityCursor(cursor?: string) {
+  const normalizedCursor = cursor?.trim();
+  if (!normalizedCursor) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(normalizedCursor, "base64url").toString("utf8")) as {
+      createdAt?: string;
+      activityId?: string;
+      activityType?: string;
+    };
+    const createdAt = new Date(parsed.createdAt ?? "");
+    if (!parsed.activityId || !parsed.activityType || Number.isNaN(createdAt.getTime())) {
+      return null;
+    }
+
+    return {
+      createdAt: parsed.createdAt ?? "",
+      createdAtDate: createdAt,
+      activityId: parsed.activityId,
+      activityType: parsed.activityType,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function compareTimelineActivityDesc(
+  left: {
+    createdAt: string;
+    activityId: string;
+    activityType: string;
+  },
+  right: {
+    createdAt: string;
+    activityId: string;
+    activityType: string;
+  },
+) {
+  const createdAtDelta = new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+  if (createdAtDelta !== 0) {
+    return createdAtDelta;
+  }
+
+  const leftKey = `${left.activityType}:${left.activityId}`;
+  const rightKey = `${right.activityType}:${right.activityId}`;
+  return rightKey.localeCompare(leftKey);
 }

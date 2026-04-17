@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Inject, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Inject, Param, Post, Query } from "@nestjs/common";
 import { GraphClientService } from "./clients/graph.client";
 import { sessionHeaderName } from "./session-header";
 import { SessionAuthService } from "./session-auth.service";
@@ -49,19 +49,31 @@ export class GraphController {
   @Get("users/:userId/followers")
   async listFollowerSummaries(
     @Param("userId") userId: string,
+    @Query("limit") limit?: string,
+    @Query("cursor") cursor?: string,
     @Headers(sessionHeaderName) sessionToken?: string,
   ) {
-    const followerIds = await this.graphClient.listFollowers(userId);
-    return this.buildRelationshipSummaries(followerIds, sessionToken);
+    const followerPage = await this.graphClient.listFollowersPage(
+      userId,
+      this.normalizeLimit(limit, 12),
+      cursor?.trim() || undefined,
+    );
+    return this.buildRelationshipSummaries(followerPage, sessionToken);
   }
 
   @Get("users/:userId/following")
   async listFollowingSummaries(
     @Param("userId") userId: string,
+    @Query("limit") limit?: string,
+    @Query("cursor") cursor?: string,
     @Headers(sessionHeaderName) sessionToken?: string,
   ) {
-    const followingIds = await this.graphClient.listFollowing(userId);
-    return this.buildRelationshipSummaries(followingIds, sessionToken);
+    const followingPage = await this.graphClient.listFollowingPage(
+      userId,
+      this.normalizeLimit(limit, 12),
+      cursor?.trim() || undefined,
+    );
+    return this.buildRelationshipSummaries(followingPage, sessionToken);
   }
 
   @Post("follows")
@@ -99,15 +111,23 @@ export class GraphController {
   }
 
   private async buildRelationshipSummaries(
-    userIds: string[],
+    page: {
+      userIds: string[];
+      totalCount: number;
+      nextCursor: string;
+    },
     sessionToken?: string,
-  ): Promise<RelationshipUserSummary[]> {
+  ): Promise<{
+    items: RelationshipUserSummary[];
+    totalCount: number;
+    nextCursor: string;
+  }> {
     const session = await this.sessionAuth.optionalSession(sessionToken);
     const viewerFollowingIds = session ? await this.graphClient.listFollowing(session.userId) : [];
     const viewerFollowingSet = new Set(viewerFollowingIds);
 
-    return Promise.all(
-      userIds.map(async (userId) => {
+    const items = await Promise.all(
+      page.userIds.map(async (userId) => {
         const summary = await this.userSummaryService.getUserSummaryById(userId);
         return {
           ...summary,
@@ -116,5 +136,20 @@ export class GraphController {
         };
       }),
     );
+
+    return {
+      items,
+      totalCount: page.totalCount,
+      nextCursor: page.nextCursor,
+    };
+  }
+
+  private normalizeLimit(value: string | undefined, fallback: number) {
+    const parsed = Number(value ?? fallback);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+
+    return Math.min(Math.max(Math.trunc(parsed), 1), 100);
   }
 }

@@ -7,17 +7,13 @@ export class GraphGrpcController {
   constructor(@Inject(GraphService) private readonly graph: GraphService) {}
 
   @GrpcMethod("GraphService", "ListFollowing")
-  async listFollowing(data: { userId: string }) {
-    return {
-      userIds: await this.graph.listFollowing(data.userId),
-    };
+  async listFollowing(data: { userId: string; limit?: number; cursor?: string }) {
+    return this.graph.listFollowing(data.userId, data.limit ?? 0, data.cursor?.trim() || undefined);
   }
 
   @GrpcMethod("GraphService", "ListFollowers")
-  async listFollowers(data: { userId: string }) {
-    return {
-      userIds: await this.graph.listFollowers(data.userId),
-    };
+  async listFollowers(data: { userId: string; limit?: number; cursor?: string }) {
+    return this.graph.listFollowers(data.userId, data.limit ?? 0, data.cursor?.trim() || undefined);
   }
 
   @GrpcMethod("GraphService", "Follow")

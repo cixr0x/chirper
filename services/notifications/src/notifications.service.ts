@@ -27,6 +27,11 @@ type NotificationRecord = {
   createdAt: string;
 };
 
+type NotificationPage = {
+  notifications: NotificationRecord[];
+  nextCursor: string;
+};
+
 @Injectable()
 export class NotificationsService {
   constructor(
@@ -36,14 +41,37 @@ export class NotificationsService {
     @Inject(RealtimeClientService) private readonly realtime: RealtimeClientService,
   ) {}
 
-  async listNotifications(userId: string, limit = 20): Promise<NotificationRecord[]> {
+  async listNotifications(userId: string, limit = 20, cursor?: string): Promise<NotificationPage> {
+    const normalizedLimit = normalizePageLimit(limit, 20);
+    const cursorMarker = decodeDateIdCursor(cursor);
     const notifications = await this.prisma.notification.findMany({
-      where: { recipientId: userId },
-      orderBy: [{ createdAt: "desc" }],
-      take: Math.min(Math.max(limit, 1), 100),
+      where: {
+        recipientId: userId,
+        ...(cursorMarker
+          ? {
+              OR: [
+                { createdAt: { lt: cursorMarker.createdAt } },
+                {
+                  createdAt: cursorMarker.createdAt,
+                  id: { lt: cursorMarker.id },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: normalizedLimit + 1,
     });
 
-    return notifications.map((notification) => this.mapNotification(notification));
+    const pageRows = notifications.slice(0, normalizedLimit);
+    const lastRow = pageRows.at(-1);
+    return {
+      notifications: pageRows.map((notification) => this.mapNotification(notification)),
+      nextCursor:
+        notifications.length > normalizedLimit && lastRow
+          ? encodeDateIdCursor(lastRow.createdAt, lastRow.id)
+          : "",
+    };
   }
 
   async getUnreadCount(userId: string) {
@@ -441,5 +469,48 @@ export class NotificationsService {
     return {
       deletedCount: notificationIds.length,
     };
+  }
+}
+
+function normalizePageLimit(limit: number, fallback: number) {
+  const normalized = Number(limit);
+  if (!Number.isFinite(normalized)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(Math.trunc(normalized), 1), 100);
+}
+
+function encodeDateIdCursor(createdAt: Date, id: string) {
+  return Buffer.from(
+    JSON.stringify({
+      createdAt: createdAt.toISOString(),
+      id,
+    }),
+  ).toString("base64url");
+}
+
+function decodeDateIdCursor(cursor?: string) {
+  const normalizedCursor = cursor?.trim();
+  if (!normalizedCursor) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(normalizedCursor, "base64url").toString("utf8")) as {
+      createdAt?: string;
+      id?: string;
+    };
+    const createdAt = new Date(parsed.createdAt ?? "");
+    if (!parsed.id || Number.isNaN(createdAt.getTime())) {
+      return null;
+    }
+
+    return {
+      createdAt,
+      id: parsed.id,
+    };
+  } catch {
+    return null;
   }
 }

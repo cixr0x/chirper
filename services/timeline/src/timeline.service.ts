@@ -24,6 +24,11 @@ type TimelineEntry = {
   activityType: string;
 };
 
+type TimelinePage = {
+  entries: TimelineEntry[];
+  nextCursor: string;
+};
+
 @Injectable()
 export class TimelineService {
   constructor(
@@ -33,17 +38,40 @@ export class TimelineService {
     @Inject(PostsClientService) private readonly postsClient: PostsClientService,
   ) {}
 
-  async listHomeTimeline(ownerUserId: string, limit = 25): Promise<TimelineEntry[]> {
+  async listHomeTimeline(ownerUserId: string, limit = 25, cursor?: string): Promise<TimelinePage> {
+    const normalizedLimit = normalizePageLimit(limit, 25);
+    const cursorMarker = decodeDateIdCursor(cursor);
     const entries = await this.prisma.homeEntry.findMany({
-      where: { ownerUserId },
-      orderBy: [{ rankScore: "desc" }, { insertedAt: "desc" }],
-      take: Math.min(Math.max(limit, 1), 100),
+      where: {
+        ownerUserId,
+        ...(cursorMarker
+          ? {
+              OR: [
+                { insertedAt: { lt: cursorMarker.createdAt } },
+                {
+                  insertedAt: cursorMarker.createdAt,
+                  id: { lt: cursorMarker.id },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ rankScore: "desc" }, { insertedAt: "desc" }, { id: "desc" }],
+      take: normalizedLimit + 1,
     });
 
-    return entries.map((entry) => this.mapEntry(entry));
+    const pageRows = entries.slice(0, normalizedLimit);
+    const lastRow = pageRows.at(-1);
+    return {
+      entries: pageRows.map((entry) => this.mapEntry(entry)),
+      nextCursor:
+        entries.length > normalizedLimit && lastRow
+          ? encodeDateIdCursor(lastRow.insertedAt, lastRow.id)
+          : "",
+    };
   }
 
-  async rebuildHomeTimeline(ownerUserId: string, limit = 25): Promise<TimelineEntry[]> {
+  async rebuildHomeTimeline(ownerUserId: string, limit = 25, cursor?: string): Promise<TimelinePage> {
     const followingUserIds = await this.listProjectedFollowing(ownerUserId);
     const authorUserIds = [...new Set([ownerUserId, ...followingUserIds])];
     const activities = await this.postsClient.listTimelineActivitiesByUsers(authorUserIds, limit);
@@ -91,7 +119,7 @@ export class TimelineService {
       }),
     );
 
-    return this.listHomeTimeline(ownerUserId, limit);
+    return this.listHomeTimeline(ownerUserId, limit, cursor);
   }
 
   async fanOutPost(input: {
@@ -229,7 +257,7 @@ export class TimelineService {
     let rebuiltTimelineCount = 0;
     for (const user of users) {
       const entries = await this.rebuildHomeTimeline(user.userId, 50);
-      rebuiltTimelineCount += entries.length;
+      rebuiltTimelineCount += entries.entries.length;
     }
 
     return {
@@ -388,7 +416,7 @@ export class TimelineService {
 
     return {
       rebuilt: true,
-      entryCount: entries.length,
+      entryCount: entries.entries.length,
     };
   }
 
@@ -541,5 +569,48 @@ export class TimelineService {
       "code" in error &&
       error.code === "P2034"
     );
+  }
+}
+
+function normalizePageLimit(limit: number, fallback: number) {
+  const normalized = Number(limit);
+  if (!Number.isFinite(normalized)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(Math.trunc(normalized), 1), 100);
+}
+
+function encodeDateIdCursor(createdAt: Date, id: string) {
+  return Buffer.from(
+    JSON.stringify({
+      createdAt: createdAt.toISOString(),
+      id,
+    }),
+  ).toString("base64url");
+}
+
+function decodeDateIdCursor(cursor?: string) {
+  const normalizedCursor = cursor?.trim();
+  if (!normalizedCursor) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(normalizedCursor, "base64url").toString("utf8")) as {
+      createdAt?: string;
+      id?: string;
+    };
+    const createdAt = new Date(parsed.createdAt ?? "");
+    if (!parsed.id || Number.isNaN(createdAt.getTime())) {
+      return null;
+    }
+
+    return {
+      createdAt,
+      id: parsed.id,
+    };
+  } catch {
+    return null;
   }
 }

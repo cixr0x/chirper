@@ -20,22 +20,25 @@ export class NotificationsController {
   @Get("notifications")
   async listNotifications(
     @Query("limit") limit?: string,
+    @Query("cursor") cursor?: string,
     @Headers(sessionHeaderName) sessionToken?: string,
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
     const viewerUserId = session.userId;
-    const normalizedLimit = Number(limit ?? 12);
-    const [notifications, unreadCount] = await Promise.all([
+    const normalizedLimit = Number(limit ?? 8);
+    const [notificationPage, unreadCount] = await Promise.all([
       this.notificationsClient.listNotifications(
         viewerUserId,
-        Number.isNaN(normalizedLimit) ? 12 : normalizedLimit,
+        Number.isNaN(normalizedLimit) ? 8 : normalizedLimit,
+        cursor?.trim() || undefined,
       ),
       this.notificationsClient.getUnreadCount(viewerUserId),
     ]);
 
     return {
       unreadCount,
-      notifications: await this.enrichNotifications(notifications),
+      notifications: await this.enrichNotifications(notificationPage.notifications),
+      nextCursor: notificationPage.nextCursor,
     };
   }
 

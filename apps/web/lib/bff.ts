@@ -78,12 +78,14 @@ export type NotificationItem = {
 export type NotificationEnvelope = {
   unreadCount: number;
   notifications: NotificationItem[];
+  nextCursor: string;
 };
 
 export type ThreadEnvelope = {
   focus: FeedItem | null;
   ancestors: FeedItem[];
   replies: FeedItem[];
+  nextReplyCursor: string;
 };
 
 export type EngagementActor = {
@@ -114,6 +116,22 @@ export type RelationshipUser = UserSummary & {
   isFollowedByViewer: boolean;
 };
 
+export type FeedPage = {
+  items: FeedItem[];
+  nextCursor: string;
+};
+
+export type EngagementPage = {
+  items: EngagementActor[];
+  nextCursor: string;
+};
+
+export type RelationshipPage = {
+  items: RelationshipUser[];
+  totalCount: number;
+  nextCursor: string;
+};
+
 const bffBaseUrl = process.env.NEXT_PUBLIC_BFF_URL ?? "http://127.0.0.1:4000";
 
 function sessionHeaders(sessionToken?: string): HeadersInit {
@@ -124,6 +142,19 @@ function sessionHeaders(sessionToken?: string): HeadersInit {
   return {
     "x-chirper-session-token": sessionToken,
   };
+}
+
+function withPagination(pathname: string, limit?: number, cursor?: string) {
+  const params = new URLSearchParams();
+  if (typeof limit === "number") {
+    params.set("limit", String(limit));
+  }
+  if (cursor) {
+    params.set("cursor", cursor);
+  }
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
 }
 
 export async function getUserDirectory(): Promise<UserSummary[]> {
@@ -180,62 +211,84 @@ export async function getUserById(userId: string): Promise<UserSummary | null> {
   }
 }
 
-export async function getPublicFeed(): Promise<FeedItem[]> {
+export async function getPublicFeed(limit = 12, cursor?: string): Promise<FeedPage> {
   try {
-    const response = await fetch(`${bffBaseUrl}/api/feed`, {
+    const response = await fetch(`${bffBaseUrl}${withPagination("/api/feed", limit, cursor)}`, {
       cache: "no-store",
     });
 
     if (!response.ok) {
-      return [];
+      return { items: [], nextCursor: "" };
     }
 
-    return (await response.json()) as FeedItem[];
+    return (await response.json()) as FeedPage;
   } catch {
-    return [];
+    return { items: [], nextCursor: "" };
   }
 }
 
-export async function getHomeFeed(sessionToken: string): Promise<FeedItem[]> {
+export async function getHomeFeed(sessionToken: string, limit = 12, cursor?: string): Promise<FeedPage> {
   try {
-    const response = await fetch(`${bffBaseUrl}/api/feed`, {
+    const response = await fetch(`${bffBaseUrl}${withPagination("/api/feed", limit, cursor)}`, {
       cache: "no-store",
       headers: sessionHeaders(sessionToken),
     });
 
     if (!response.ok) {
-      return [];
+      return { items: [], nextCursor: "" };
     }
 
-    return (await response.json()) as FeedItem[];
+    return (await response.json()) as FeedPage;
   } catch {
-    return [];
+    return { items: [], nextCursor: "" };
   }
 }
 
-export async function getUserFeed(userId: string, sessionToken?: string): Promise<FeedItem[]> {
+export async function getUserFeed(
+  userId: string,
+  sessionToken?: string,
+  limit = 12,
+  cursor?: string,
+): Promise<FeedPage> {
   try {
-    const response = await fetch(`${bffBaseUrl}/api/users/${encodeURIComponent(userId)}/feed`, {
+    const response = await fetch(
+      `${bffBaseUrl}${withPagination(`/api/users/${encodeURIComponent(userId)}/feed`, limit, cursor)}`,
+      {
       cache: "no-store",
       headers: sessionHeaders(sessionToken),
-    });
+      },
+    );
 
     if (!response.ok) {
-      return [];
+      return { items: [], nextCursor: "" };
     }
 
-    return (await response.json()) as FeedItem[];
+    return (await response.json()) as FeedPage;
   } catch {
-    return [];
+    return { items: [], nextCursor: "" };
   }
 }
 
-export async function getPostThread(postId: string, sessionToken?: string): Promise<ThreadEnvelope | null> {
+export async function getPostThread(
+  postId: string,
+  sessionToken?: string,
+  replyLimit = 8,
+  replyCursor?: string,
+): Promise<ThreadEnvelope | null> {
   try {
-    const response = await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/thread`, {
-      cache: "no-store",
-      headers: sessionHeaders(sessionToken),
-    });
+    const params = new URLSearchParams();
+    params.set("replyLimit", String(replyLimit));
+    if (replyCursor) {
+      params.set("replyCursor", replyCursor);
+    }
+    const query = params.toString();
+    const response = await fetch(
+      `${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/thread${query ? `?${query}` : ""}`,
+      {
+        cache: "no-store",
+        headers: sessionHeaders(sessionToken),
+      },
+    );
 
     if (!response.ok) {
       return null;
@@ -247,37 +300,53 @@ export async function getPostThread(postId: string, sessionToken?: string): Prom
   }
 }
 
-export async function getPostLikes(postId: string, sessionToken?: string): Promise<EngagementActor[]> {
+export async function getPostLikes(
+  postId: string,
+  sessionToken?: string,
+  limit = 8,
+  cursor?: string,
+): Promise<EngagementPage> {
   try {
-    const response = await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/likes`, {
-      cache: "no-store",
-      headers: sessionHeaders(sessionToken),
-    });
+    const response = await fetch(
+      `${bffBaseUrl}${withPagination(`/api/posts/${encodeURIComponent(postId)}/likes`, limit, cursor)}`,
+      {
+        cache: "no-store",
+        headers: sessionHeaders(sessionToken),
+      },
+    );
 
     if (!response.ok) {
-      return [];
+      return { items: [], nextCursor: "" };
     }
 
-    return (await response.json()) as EngagementActor[];
+    return (await response.json()) as EngagementPage;
   } catch {
-    return [];
+    return { items: [], nextCursor: "" };
   }
 }
 
-export async function getPostReposts(postId: string, sessionToken?: string): Promise<EngagementActor[]> {
+export async function getPostReposts(
+  postId: string,
+  sessionToken?: string,
+  limit = 8,
+  cursor?: string,
+): Promise<EngagementPage> {
   try {
-    const response = await fetch(`${bffBaseUrl}/api/posts/${encodeURIComponent(postId)}/reposts`, {
-      cache: "no-store",
-      headers: sessionHeaders(sessionToken),
-    });
+    const response = await fetch(
+      `${bffBaseUrl}${withPagination(`/api/posts/${encodeURIComponent(postId)}/reposts`, limit, cursor)}`,
+      {
+        cache: "no-store",
+        headers: sessionHeaders(sessionToken),
+      },
+    );
 
     if (!response.ok) {
-      return [];
+      return { items: [], nextCursor: "" };
     }
 
-    return (await response.json()) as EngagementActor[];
+    return (await response.json()) as EngagementPage;
   } catch {
-    return [];
+    return { items: [], nextCursor: "" };
   }
 }
 
@@ -299,43 +368,59 @@ export async function getViewerFollowingUserIds(sessionToken: string): Promise<s
   }
 }
 
-export async function getFollowers(userId: string, sessionToken?: string): Promise<RelationshipUser[]> {
+export async function getFollowers(
+  userId: string,
+  sessionToken?: string,
+  limit = 12,
+  cursor?: string,
+): Promise<RelationshipPage> {
   try {
-    const response = await fetch(`${bffBaseUrl}/api/users/${encodeURIComponent(userId)}/followers`, {
-      cache: "no-store",
-      headers: sessionHeaders(sessionToken),
-    });
+    const response = await fetch(
+      `${bffBaseUrl}${withPagination(`/api/users/${encodeURIComponent(userId)}/followers`, limit, cursor)}`,
+      {
+        cache: "no-store",
+        headers: sessionHeaders(sessionToken),
+      },
+    );
 
     if (!response.ok) {
-      return [];
+      return { items: [], totalCount: 0, nextCursor: "" };
     }
 
-    return (await response.json()) as RelationshipUser[];
+    return (await response.json()) as RelationshipPage;
   } catch {
-    return [];
+    return { items: [], totalCount: 0, nextCursor: "" };
   }
 }
 
-export async function getFollowing(userId: string, sessionToken?: string): Promise<RelationshipUser[]> {
+export async function getFollowing(
+  userId: string,
+  sessionToken?: string,
+  limit = 12,
+  cursor?: string,
+): Promise<RelationshipPage> {
   try {
-    const response = await fetch(`${bffBaseUrl}/api/users/${encodeURIComponent(userId)}/following`, {
-      cache: "no-store",
-      headers: sessionHeaders(sessionToken),
-    });
+    const response = await fetch(
+      `${bffBaseUrl}${withPagination(`/api/users/${encodeURIComponent(userId)}/following`, limit, cursor)}`,
+      {
+        cache: "no-store",
+        headers: sessionHeaders(sessionToken),
+      },
+    );
 
     if (!response.ok) {
-      return [];
+      return { items: [], totalCount: 0, nextCursor: "" };
     }
 
-    return (await response.json()) as RelationshipUser[];
+    return (await response.json()) as RelationshipPage;
   } catch {
-    return [];
+    return { items: [], totalCount: 0, nextCursor: "" };
   }
 }
 
-export async function getNotifications(sessionToken: string): Promise<NotificationEnvelope> {
+export async function getNotifications(sessionToken: string, limit = 8, cursor?: string): Promise<NotificationEnvelope> {
   try {
-    const response = await fetch(`${bffBaseUrl}/api/notifications`, {
+    const response = await fetch(`${bffBaseUrl}${withPagination("/api/notifications", limit, cursor)}`, {
       cache: "no-store",
       headers: sessionHeaders(sessionToken),
     });
@@ -344,6 +429,7 @@ export async function getNotifications(sessionToken: string): Promise<Notificati
       return {
         unreadCount: 0,
         notifications: [],
+        nextCursor: "",
       };
     }
 
@@ -352,6 +438,7 @@ export async function getNotifications(sessionToken: string): Promise<Notificati
     return {
       unreadCount: 0,
       notifications: [],
+      nextCursor: "",
     };
   }
 }

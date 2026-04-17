@@ -11,18 +11,26 @@ service GraphService {
 
 message ListFollowingRequest {
   string userId = 1;
+  int32 limit = 2;
+  string cursor = 3;
 }
 
 message ListFollowingResponse {
   repeated string userIds = 1;
+  int32 totalCount = 2;
+  string nextCursor = 3;
 }
 
 message ListFollowersRequest {
   string userId = 1;
+  int32 limit = 2;
+  string cursor = 3;
 }
 
 message ListFollowersResponse {
   repeated string userIds = 1;
+  int32 totalCount = 2;
+  string nextCursor = 3;
 }
 
 message FollowRequest {

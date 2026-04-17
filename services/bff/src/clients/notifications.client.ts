@@ -15,9 +15,11 @@ export type NotificationRecord = {
 type ListNotificationsRequest = {
   userId: string;
   limit: number;
+  cursor?: string;
 };
 type ListNotificationsResponse = {
   notifications: NotificationRecord[];
+  nextCursor?: string;
 };
 type GetUnreadCountRequest = {
   userId: string;
@@ -55,9 +57,18 @@ export class NotificationsClientService implements OnModuleInit {
     this.service = this.client.getService<NotificationsGrpcService>("NotificationsService");
   }
 
-  async listNotifications(userId: string, limit = 20) {
-    const response = await lastValueFrom(this.service.listNotifications({ userId, limit }));
-    return response.notifications ?? [];
+  async listNotifications(userId: string, limit = 20, cursor?: string) {
+    const response = await lastValueFrom(
+      this.service.listNotifications({
+        userId,
+        limit,
+        ...(cursor ? { cursor } : {}),
+      }),
+    );
+    return {
+      notifications: response.notifications ?? [],
+      nextCursor: response.nextCursor ?? "",
+    };
   }
 
   async getUnreadCount(userId: string) {

@@ -8,6 +8,7 @@ import {
   getUserFeed,
   getViewerFollowingUserIds,
 } from "../../../lib/bff";
+import { appendCursorTrail, buildPathWithSearch, collectPaginatedPages, parseCursorTrail } from "../../../lib/pagination";
 import { AvatarBadge } from "../../../components/avatar-badge";
 import { FeedList } from "../../../components/feed-list";
 import { getSessionState, getSessionToken } from "../../../lib/session";
@@ -21,6 +22,7 @@ type PageProps = {
   searchParams?: Promise<{
     auth?: string;
     account?: string;
+    feedTrail?: string;
   }>;
 };
 
@@ -40,18 +42,26 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
   const viewer = session?.viewer ?? null;
   const hasAuthError = !viewer && (filters?.auth === "invalid" || filters?.auth === "invalid-login");
   const accountMessage = isViewerAccountMessage(filters?.account);
+  const feedTrail = parseCursorTrail(filters?.feedTrail);
   const activeSessionToken = session ? sessionToken : null;
-  const [followingUserIds, userFeed, followers, following] = await Promise.all([
+  const profilePath = `/u/${user.handle}`;
+  const profileTargetPath = buildPathWithSearch(profilePath, filters);
+  const [followingUserIds, userFeedResult, followers, following] = await Promise.all([
     activeSessionToken ? getViewerFollowingUserIds(activeSessionToken) : Promise.resolve([] as string[]),
-    getUserFeed(user.userId, activeSessionToken ?? undefined),
-    getFollowers(user.userId, activeSessionToken ?? undefined),
-    getFollowing(user.userId, activeSessionToken ?? undefined),
+    collectPaginatedPages({
+      trail: feedTrail,
+      loadPage: (cursor) => getUserFeed(user.userId, activeSessionToken ?? undefined, 4, cursor),
+      getItems: (page) => page.items,
+      getNextCursor: (page) => page.nextCursor,
+    }),
+    getFollowers(user.userId, activeSessionToken ?? undefined, 1),
+    getFollowing(user.userId, activeSessionToken ?? undefined, 1),
   ]);
   const isViewer = viewer?.userId === user.userId;
   const isFollowing = viewer ? followingUserIds.includes(user.userId) : false;
   const homeHref = "/";
   const linkRows = buildEditableLinkRows(user.links);
-  const profilePath = `/u/${user.handle}`;
+  const userFeed = userFeedResult.items;
 
   return (
     <main className="profile-shell">
@@ -77,10 +87,10 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               <span>{user.location || "Location pending"}</span>
               <span>{user.links?.length ?? 0} public links</span>
               <Link className="inline-link" href={`${profilePath}/followers`}>
-                {followers.length} followers
+                {followers.totalCount} followers
               </Link>
               <Link className="inline-link" href={`${profilePath}/following`}>
-                {following.length} following
+                {following.totalCount} following
               </Link>
               {viewer ? <span>Viewing as @{viewer.handle}</span> : null}
             </div>
@@ -103,7 +113,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               <form action={isFollowing ? unfollowUserAction : followUserAction} className="profile-action-row">
                 <input name="followeeUserId" type="hidden" value={user.userId} />
                 <input name="targetProfileHandle" type="hidden" value={user.handle} />
-                <input name="targetPath" type="hidden" value={profilePath} />
+                <input name="targetPath" type="hidden" value={profileTargetPath} />
                 <button className={isFollowing ? "secondary-button compact" : "primary-button compact"} type="submit">
                   {isFollowing ? `Unfollow @${user.handle}` : `Follow @${user.handle}`}
                 </button>
@@ -239,10 +249,10 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
           <h2>Viewer relationship</h2>
           <div className="relationship-summary-row">
             <Link className="inline-link" href={`${profilePath}/followers`}>
-              {followers.length} followers
+              {followers.totalCount} followers
             </Link>
             <Link className="inline-link" href={`${profilePath}/following`}>
-              {following.length} following
+              {following.totalCount} following
             </Link>
           </div>
           {viewer ? (
@@ -302,10 +312,20 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
           }
           emptyTitle="No public activity yet"
           items={userFeed}
-          targetPath={profilePath}
+          targetPath={profileTargetPath}
           viewerHandle={viewer?.handle}
           viewerUserId={viewer?.userId}
         />
+        {userFeedResult.nextCursor ? (
+          <div className="pagination-actions">
+            <Link
+              className="inline-link"
+              href={appendCursorTrail(profilePath, filters, "feedTrail", userFeedResult.nextCursor)}
+            >
+              Load more activity
+            </Link>
+          </div>
+        ) : null}
       </section>
     </main>
   );

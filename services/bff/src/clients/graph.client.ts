@@ -2,10 +2,10 @@ import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
 import { ClientGrpc } from "@nestjs/microservices";
 import { Observable, lastValueFrom } from "rxjs";
 
-type ListFollowingRequest = { userId: string };
-type ListFollowingResponse = { userIds: string[] };
-type ListFollowersRequest = { userId: string };
-type ListFollowersResponse = { userIds: string[] };
+type ListFollowingRequest = { userId: string; limit?: number; cursor?: string };
+type ListFollowingResponse = { userIds: string[]; totalCount?: number; nextCursor?: string };
+type ListFollowersRequest = { userId: string; limit?: number; cursor?: string };
+type ListFollowersResponse = { userIds: string[]; totalCount?: number; nextCursor?: string };
 type FollowRequest = {
   followerUserId: string;
   followeeUserId: string;
@@ -46,9 +46,39 @@ export class GraphClientService implements OnModuleInit {
     return response.userIds ?? [];
   }
 
+  async listFollowingPage(userId: string, limit = 25, cursor?: string) {
+    const response = await lastValueFrom(
+      this.service.listFollowing({
+        userId,
+        limit,
+        ...(cursor ? { cursor } : {}),
+      }),
+    );
+    return {
+      userIds: response.userIds ?? [],
+      totalCount: response.totalCount ?? 0,
+      nextCursor: response.nextCursor ?? "",
+    };
+  }
+
   async listFollowers(userId: string) {
     const response = await lastValueFrom(this.service.listFollowers({ userId }));
     return response.userIds ?? [];
+  }
+
+  async listFollowersPage(userId: string, limit = 25, cursor?: string) {
+    const response = await lastValueFrom(
+      this.service.listFollowers({
+        userId,
+        limit,
+        ...(cursor ? { cursor } : {}),
+      }),
+    );
+    return {
+      userIds: response.userIds ?? [],
+      totalCount: response.totalCount ?? 0,
+      nextCursor: response.nextCursor ?? "",
+    };
   }
 
   follow(request: FollowRequest) {

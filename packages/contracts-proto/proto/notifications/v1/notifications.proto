@@ -12,6 +12,7 @@ service NotificationsService {
 message ListNotificationsRequest {
   string userId = 1;
   int32 limit = 2;
+  string cursor = 3;
 }
 
 message GetUnreadCountRequest {
@@ -41,6 +42,7 @@ message NotificationRecord {
 
 message ListNotificationsResponse {
   repeated NotificationRecord notifications = 1;
+  string nextCursor = 2;
 }
 
 message GetUnreadCountResponse {

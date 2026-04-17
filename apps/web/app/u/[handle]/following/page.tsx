@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RelationshipList } from "../../../../components/relationship-list";
 import { getFollowing, getUserByHandle } from "../../../../lib/bff";
+import { appendCursorTrail, buildPathWithSearch, collectPaginatedPages, parseCursorTrail } from "../../../../lib/pagination";
 import { getSessionState, getSessionToken } from "../../../../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -10,15 +11,19 @@ type PageProps = {
   params: Promise<{
     handle: string;
   }>;
+  searchParams?: Promise<{
+    trail?: string;
+  }>;
 };
 
-export default async function FollowingPage({ params }: PageProps) {
+export default async function FollowingPage({ params, searchParams }: PageProps) {
   const { handle } = await params;
   const [user, session, sessionToken] = await Promise.all([
     getUserByHandle(handle),
     getSessionState(),
     getSessionToken(),
   ]);
+  const filters = searchParams ? await searchParams : undefined;
 
   if (!user) {
     notFound();
@@ -26,8 +31,16 @@ export default async function FollowingPage({ params }: PageProps) {
 
   const viewer = session?.viewer ?? null;
   const activeSessionToken = session ? sessionToken : null;
-  const following = await getFollowing(user.userId, activeSessionToken ?? undefined);
   const targetPath = `/u/${user.handle}/following`;
+  const pageTargetPath = buildPathWithSearch(targetPath, filters);
+  const followingTrail = parseCursorTrail(filters?.trail);
+  const following = await collectPaginatedPages({
+    trail: followingTrail,
+    loadPage: (cursor) => getFollowing(user.userId, activeSessionToken ?? undefined, 2, cursor),
+    getItems: (page) => page.items,
+    getNextCursor: (page) => page.nextCursor,
+  });
+  const followingTotalCount = following.lastPage.totalCount;
 
   return (
     <main className="profile-shell">
@@ -53,7 +66,7 @@ export default async function FollowingPage({ params }: PageProps) {
         </div>
 
         <div className="relationship-summary-row">
-          <span className="count-chip">{following.length} total</span>
+          <span className="count-chip">{followingTotalCount} total</span>
           {viewer ? (
             <span className="follow-chip viewer">Viewing as @{viewer.handle}</span>
           ) : (
@@ -70,10 +83,20 @@ export default async function FollowingPage({ params }: PageProps) {
         <RelationshipList
           emptyBody={`@${user.handle} is not following anyone yet.`}
           emptyTitle="No followed accounts yet"
-          items={following}
-          targetPath={targetPath}
+          items={following.items}
+          targetPath={pageTargetPath}
           viewerUserId={viewer?.userId}
         />
+        {following.nextCursor ? (
+          <div className="pagination-actions">
+            <Link
+              className="inline-link"
+              href={appendCursorTrail(targetPath, filters, "trail", following.nextCursor)}
+            >
+              Load more following
+            </Link>
+          </div>
+        ) : null}
       </section>
     </main>
   );

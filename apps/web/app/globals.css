@@ -835,6 +835,14 @@ body {
   margin-top: 1rem;
 }
 
+.pagination-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
 .compact-card {
   min-height: 0;
 }

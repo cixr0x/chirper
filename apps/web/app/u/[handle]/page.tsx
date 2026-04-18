@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { followUserAction, saveProfileAction, signInAction, unfollowUserAction } from "../../actions";
+import { AppShell } from "../../../components/app-shell";
+import { AvatarBadge } from "../../../components/avatar-badge";
+import { FeedList } from "../../../components/feed-list";
+import { followUserAction, saveProfileAction, unfollowUserAction } from "../../actions";
 import {
   getFollowers,
   getFollowing,
@@ -9,8 +12,6 @@ import {
   getViewerFollowingUserIds,
 } from "../../../lib/bff";
 import { appendCursorTrail, buildPathWithSearch, collectPaginatedPages, parseCursorTrail } from "../../../lib/pagination";
-import { AvatarBadge } from "../../../components/avatar-badge";
-import { FeedList } from "../../../components/feed-list";
 import { getSessionState, getSessionToken } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,6 @@ type PageProps = {
     handle: string;
   }>;
   searchParams?: Promise<{
-    auth?: string;
     account?: string;
     feedTrail?: string;
   }>;
@@ -28,290 +28,257 @@ type PageProps = {
 
 export default async function UserProfilePage({ params, searchParams }: PageProps) {
   const { handle } = await params;
-  const [user, session, sessionToken] = await Promise.all([
+  const [user, session, sessionToken, filters] = await Promise.all([
     getUserByHandle(handle),
     getSessionState(),
     getSessionToken(),
+    searchParams ? searchParams : Promise.resolve(undefined),
   ]);
-  const filters = searchParams ? await searchParams : undefined;
 
   if (!user) {
     notFound();
   }
 
   const viewer = session?.viewer ?? null;
-  const hasAuthError = !viewer && (filters?.auth === "invalid" || filters?.auth === "invalid-login");
-  const accountMessage = isViewerAccountMessage(filters?.account);
-  const feedTrail = parseCursorTrail(filters?.feedTrail);
   const activeSessionToken = session ? sessionToken : null;
   const profilePath = `/u/${user.handle}`;
   const profileTargetPath = buildPathWithSearch(profilePath, filters);
+  const feedTrail = parseCursorTrail(filters?.feedTrail);
   const [followingUserIds, userFeedResult, followers, following] = await Promise.all([
     activeSessionToken ? getViewerFollowingUserIds(activeSessionToken) : Promise.resolve([] as string[]),
     collectPaginatedPages({
       trail: feedTrail,
-      loadPage: (cursor) => getUserFeed(user.userId, activeSessionToken ?? undefined, 4, cursor),
+      loadPage: (cursor) => getUserFeed(user.userId, activeSessionToken ?? undefined, 8, cursor),
       getItems: (page) => page.items,
       getNextCursor: (page) => page.nextCursor,
     }),
-    getFollowers(user.userId, activeSessionToken ?? undefined, 1),
-    getFollowing(user.userId, activeSessionToken ?? undefined, 1),
+    getFollowers(user.userId, activeSessionToken ?? undefined, 3),
+    getFollowing(user.userId, activeSessionToken ?? undefined, 3),
   ]);
   const isViewer = viewer?.userId === user.userId;
   const isFollowing = viewer ? followingUserIds.includes(user.userId) : false;
-  const homeHref = "/";
+  const accountMessage = getProfileMessage(filters?.account);
   const linkRows = buildEditableLinkRows(user.links);
-  const userFeed = userFeedResult.items;
 
   return (
-    <main className="profile-shell">
-      <Link className="back-link" href={homeHref}>
-        Back to timeline
-      </Link>
-
-      <section className="profile-hero">
-        <div
-          className={`banner-panel ${user.bannerUrl ? "banner-panel-image" : ""}`}
-          style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : undefined}
-        />
-        <div className="profile-card">
-          <AvatarBadge avatarUrl={user.avatarUrl} displayName={user.displayName} size="profile" />
-          <div className="profile-copy">
-            <div className="identity-row">
-              <h1>{user.displayName}</h1>
-              <span className={`status-pill ${user.status}`}>{user.status}</span>
+    <AppShell
+      active={isViewer ? "profile" : undefined}
+      description={isViewer ? "Manage your profile and track your public activity." : `See what @${user.handle} is posting and how their graph is evolving.`}
+      eyebrow="Profile"
+      title={isViewer ? "Your profile" : `@${user.handle}`}
+      viewer={viewer}
+      rightRail={
+        <>
+          <section className="rail-card">
+            <div className="section-intro">
+              <p className="eyebrow">Overview</p>
+              <h2>{user.displayName}</h2>
             </div>
-            <p className="handle">@{user.handle}</p>
-            <p className="bio large">{user.bio || "This profile is ready for its first post."}</p>
+            <p className="muted-copy">{user.bio || "This profile has not added a bio yet."}</p>
             <div className="profile-meta">
               <span>{user.location || "Location pending"}</span>
-              <span>{user.links?.length ?? 0} public links</span>
               <Link className="inline-link" href={`${profilePath}/followers`}>
                 {followers.totalCount} followers
               </Link>
               <Link className="inline-link" href={`${profilePath}/following`}>
                 {following.totalCount} following
               </Link>
-              {viewer ? <span>Viewing as @{viewer.handle}</span> : null}
             </div>
-            {!viewer ? (
-              <form action={signInAction} className="profile-action-row">
-                <input name="redirectTo" type="hidden" value={`/u/${user.handle}`} />
-                <input name="handle" type="hidden" value={user.handle} />
-                <label className="field inline-field">
-                  <span>Password</span>
-                  <input name="password" placeholder={`Password for @${user.handle}`} required type="password" />
-                </label>
-                <button className="primary-button compact" type="submit">
-                  Continue as @{user.handle}
-                </button>
-                <Link className="inline-link" href="/reset">
-                  Reset password
-                </Link>
-              </form>
-            ) : viewer && !isViewer ? (
-              <form action={isFollowing ? unfollowUserAction : followUserAction} className="profile-action-row">
-                <input name="followeeUserId" type="hidden" value={user.userId} />
-                <input name="targetProfileHandle" type="hidden" value={user.handle} />
-                <input name="targetPath" type="hidden" value={profileTargetPath} />
-                <button className={isFollowing ? "secondary-button compact" : "primary-button compact"} type="submit">
-                  {isFollowing ? `Unfollow @${user.handle}` : `Follow @${user.handle}`}
-                </button>
-              </form>
+          </section>
+
+          <section className="rail-card">
+            <div className="section-intro">
+              <p className="eyebrow">Links</p>
+              <h2>Public references</h2>
+            </div>
+            {(user.links?.length ?? 0) === 0 ? (
+              <p className="muted-copy">No public links configured yet.</p>
             ) : (
-              <>
-                <p className="session-badge">This profile is the active signed-in account.</p>
-                {accountMessage ? (
-                  <p className={`notice ${accountMessage.tone === "error" ? "notice-error" : "notice-success"}`}>
-                    {accountMessage.text}
-                  </p>
-                ) : null}
-              </>
+              <ul className="link-list">
+                {(user.links ?? []).map((link) => (
+                  <li key={`${user.userId}-${link.label}`}>
+                    <span>{link.label}</span>
+                    <a href={link.url} rel="noreferrer" target="_blank">
+                      {link.url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             )}
-            {hasAuthError ? <p className="auth-error profile-error">Invalid handle or password.</p> : null}
-          </div>
-        </div>
-      </section>
-
-      <section className="profile-columns">
-        <article className="profile-panel">
-          <p className="eyebrow">Owned by `profile`</p>
-          <h2>{isViewer ? "Edit profile details" : "Profile details"}</h2>
-          {isViewer ? (
-            <>
-              <p>
-                This form writes through the BFF into `profile_*` only. The signed-in identity and
-                session remain unchanged.
-              </p>
-
-              <form action={saveProfileAction} className="stack-form">
-                <input name="redirectTo" type="hidden" value={`/u/${user.handle}`} />
-                <input name="successState" type="hidden" value="profile-saved" />
-
-                <label className="field">
-                  <span>Bio</span>
-                  <textarea
-                    defaultValue={user.bio}
-                    maxLength={280}
-                    name="bio"
-                    placeholder="Tell people what this account is about."
-                    rows={4}
-                  />
-                </label>
-
-                <label className="field">
-                  <span>Location</span>
-                  <input
-                    defaultValue={user.location}
-                    maxLength={128}
-                    name="location"
-                    placeholder="Monterrey"
-                    type="text"
-                  />
-                </label>
-
-                <div className="asset-grid">
-                  <label className="field">
-                    <span>New avatar source URL</span>
-                    <input
-                      name="avatarSourceUrl"
-                      placeholder="https://images.example.com/avatar.png"
-                      type="url"
-                    />
-                  </label>
-
-                  <label className="field inline-toggle">
-                    <input name="clearAvatar" type="checkbox" value="1" />
-                    <span>Clear current avatar</span>
-                  </label>
+          </section>
+        </>
+      }
+    >
+      <section className="panel profile-hero-card">
+        <div
+          className={`banner-panel ${user.bannerUrl ? "banner-panel-image" : ""}`}
+          style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : undefined}
+        />
+        <div className="profile-summary">
+          <div className="profile-summary-head">
+            <div className="profile-summary-copy">
+              <AvatarBadge avatarUrl={user.avatarUrl} displayName={user.displayName} size="profile" />
+              <div>
+                <div className="identity-row">
+                  <h2>{user.displayName}</h2>
+                  <span className={`status-pill ${user.status}`}>{user.status}</span>
                 </div>
+                <p className="handle">@{user.handle}</p>
+              </div>
+            </div>
 
-                <div className="asset-grid">
-                  <label className="field">
-                    <span>New banner source URL</span>
-                    <input
-                      name="bannerSourceUrl"
-                      placeholder="https://images.example.com/banner.jpg"
-                      type="url"
-                    />
-                  </label>
-
-                  <label className="field inline-toggle">
-                    <input name="clearBanner" type="checkbox" value="1" />
-                    <span>Clear current banner</span>
-                  </label>
-                </div>
-
-                <div className="link-editor">
-                  <div className="section-heading compact">
-                    <div>
-                      <p className="eyebrow">Public links</p>
-                      <h3>Outbound references</h3>
-                    </div>
-                    <p className="section-copy">
-                      Save replaces the owned `profile_profile_links` rows for this account.
-                    </p>
-                  </div>
-                  {linkRows.map((link, index) => (
-                    <div className="link-row" key={`profile-link-${index}`}>
-                      <label className="field">
-                        <span>Label {index + 1}</span>
-                        <input defaultValue={link.label} maxLength={32} name="linkLabel" placeholder="GitHub" type="text" />
-                      </label>
-                      <label className="field">
-                        <span>URL {index + 1}</span>
-                        <input defaultValue={link.url} name="linkUrl" placeholder="https://github.com/you" type="url" />
-                      </label>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="profile-action-row">
-                  <button className="primary-button compact" type="submit">
-                    Save profile
-                  </button>
-                  <Link className="inline-link" href="/onboarding">
-                    Open onboarding
+            <div className="profile-cta-row">
+              {!viewer ? (
+                <Link className="primary-link-button" href="/">
+                  Sign in to interact
+                </Link>
+              ) : isViewer ? (
+                <>
+                  <Link className="secondary-button compact" href="/onboarding">
+                    Edit onboarding
                   </Link>
-                </div>
-              </form>
-            </>
-          ) : (
-            <p>
-              This screen is composed through the BFF from `identity` and `profile` data without any
-              shared-table shortcut.
-            </p>
-          )}
-        </article>
+                  <span className="follow-chip viewer">Your account</span>
+                </>
+              ) : (
+                <form action={isFollowing ? unfollowUserAction : followUserAction}>
+                  <input name="followeeUserId" type="hidden" value={user.userId} />
+                  <input name="targetProfileHandle" type="hidden" value={user.handle} />
+                  <input name="targetPath" type="hidden" value={profileTargetPath} />
+                  <button className={isFollowing ? "secondary-button compact" : "primary-button compact"} type="submit">
+                    {isFollowing ? `Unfollow @${user.handle}` : `Follow @${user.handle}`}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
 
-        <article className="profile-panel">
-          <p className="eyebrow">Follow graph</p>
-          <h2>Viewer relationship</h2>
-          <div className="relationship-summary-row">
+          <p className="bio large">{user.bio || "This profile is ready for its next post."}</p>
+          <div className="profile-meta">
+            <span>{user.location || "Location pending"}</span>
             <Link className="inline-link" href={`${profilePath}/followers`}>
               {followers.totalCount} followers
             </Link>
             <Link className="inline-link" href={`${profilePath}/following`}>
               {following.totalCount} following
             </Link>
+            {viewer ? <span>Viewing as @{viewer.handle}</span> : null}
           </div>
-          {viewer ? (
-            <p>
-              {isViewer
-                ? "This is the active session account. It always sees its own posts in the projected home timeline."
-                : isFollowing
-                  ? `@${viewer.handle} currently follows @${user.handle}.`
-                  : `@${viewer.handle} does not follow @${user.handle} yet.`}
-            </p>
-          ) : (
-            <p>Sign in with the profile&apos;s handle and password to follow accounts and rebuild the projected home timeline from this screen.</p>
-          )}
-          <p className="relationship-note">
-            Open the follower and following lists to browse the graph as enriched profile cards instead
-            of raw user IDs.
-          </p>
-        </article>
-
-        <article className="profile-panel">
-          <p className="eyebrow">Public links</p>
-          <h2>Outbound references</h2>
-          {(user.links?.length ?? 0) === 0 ? (
-            <p>No public links configured yet.</p>
-          ) : (
-            <ul className="link-list">
-              {(user.links ?? []).map((link) => (
-                <li key={`${user.userId}-${link.label}`}>
-                  <span>{link.label}</span>
-                  <a href={link.url} rel="noreferrer" target="_blank">
-                    {link.url}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-        </article>
+        </div>
       </section>
 
-      <section className="feed-section profile-feed-section">
-        <div className="section-heading compact">
-          <div>
-            <p className="eyebrow">Profile timeline</p>
-            <h2>{isViewer ? "Your recent activity" : `Recent activity from @${user.handle}`}</h2>
+      {accountMessage ? (
+        <p className={`notice ${accountMessage.tone === "error" ? "notice-error" : "notice-success"}`}>
+          {accountMessage.text}
+        </p>
+      ) : null}
+
+      {isViewer ? (
+        <section className="panel editor-panel">
+          <div className="section-intro">
+            <p className="eyebrow">Edit profile</p>
+            <h2>Refine how this account appears across the app</h2>
           </div>
-          <p className="section-copy">
-            This view is assembled from `posts` read APIs only: original posts, public replies, and
-            repost activity, all composed through the BFF without querying foreign tables.
-          </p>
+
+          <form action={saveProfileAction} className="stack-form">
+            <input name="redirectTo" type="hidden" value={`/u/${user.handle}`} />
+            <input name="successState" type="hidden" value="profile-saved" />
+
+            <label className="field">
+              <span>Bio</span>
+              <textarea
+                defaultValue={user.bio}
+                maxLength={280}
+                name="bio"
+                placeholder="Tell people what this account is about."
+                rows={4}
+              />
+            </label>
+
+            <div className="inline-form-grid">
+              <label className="field">
+                <span>Location</span>
+                <input
+                  defaultValue={user.location}
+                  maxLength={128}
+                  name="location"
+                  placeholder="Monterrey"
+                  type="text"
+                />
+              </label>
+              <label className="field">
+                <span>Avatar URL</span>
+                <input
+                  name="avatarSourceUrl"
+                  placeholder="https://images.example.com/avatar.png"
+                  type="url"
+                />
+              </label>
+              <label className="field">
+                <span>Banner URL</span>
+                <input
+                  name="bannerSourceUrl"
+                  placeholder="https://images.example.com/banner.jpg"
+                  type="url"
+                />
+              </label>
+            </div>
+
+            <div className="toggle-row">
+              <label className="inline-toggle">
+                <input name="clearAvatar" type="checkbox" value="1" />
+                <span>Clear current avatar</span>
+              </label>
+              <label className="inline-toggle">
+                <input name="clearBanner" type="checkbox" value="1" />
+                <span>Clear current banner</span>
+              </label>
+            </div>
+
+            <div className="link-editor">
+              <div className="section-intro">
+                <p className="eyebrow">Profile links</p>
+                <h2>Outbound references</h2>
+              </div>
+              {linkRows.map((link, index) => (
+                <div className="link-row" key={`profile-link-${index}`}>
+                  <label className="field">
+                    <span>Label {index + 1}</span>
+                    <input defaultValue={link.label} maxLength={32} name="linkLabel" placeholder="GitHub" type="text" />
+                  </label>
+                  <label className="field">
+                    <span>URL {index + 1}</span>
+                    <input defaultValue={link.url} name="linkUrl" placeholder="https://github.com/you" type="url" />
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            <div className="composer-actions">
+              <button className="primary-button" type="submit">
+                Save profile
+              </button>
+              <Link className="inline-link" href="/onboarding">
+                Open onboarding
+              </Link>
+            </div>
+          </form>
+        </section>
+      ) : null}
+
+      <section className="panel timeline-panel">
+        <div className="section-intro">
+          <p className="eyebrow">Activity</p>
+          <h2>{isViewer ? "Your posts, replies, and reposts" : `Recent activity from @${user.handle}`}</h2>
         </div>
 
         <FeedList
           emptyBody={
             isViewer
-              ? "Publish the first post from the home timeline to start building this activity stream."
-              : `@${user.handle} has not published or reposted anything public yet.`
+              ? "Publish a first post from Home to start building this activity stream."
+              : `@${user.handle} has not published anything public yet.`
           }
           emptyTitle="No public activity yet"
-          items={userFeed}
+          items={userFeedResult.items}
           targetPath={profileTargetPath}
           viewerHandle={viewer?.handle}
           viewerUserId={viewer?.userId}
@@ -327,11 +294,11 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
           </div>
         ) : null}
       </section>
-    </main>
+    </AppShell>
   );
 }
 
-function isViewerAccountMessage(status?: string) {
+function getProfileMessage(status?: string) {
   switch (status) {
     case "profile-saved":
       return { tone: "success" as const, text: "Profile updated successfully." };

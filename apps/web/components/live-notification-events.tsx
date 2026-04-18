@@ -5,7 +5,7 @@ import type { NotificationItem, RealtimeEventEnvelope } from "../lib/bff";
 
 export function LiveNotificationEvents() {
   const [events, setEvents] = useState<NotificationItem[]>([]);
-  const [status, setStatus] = useState("Waiting for live updates...");
+  const [status, setStatus] = useState("Waiting for live activity...");
   const cursorRef = useRef(0);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export function LiveNotificationEvents() {
 
         if (!response.ok) {
           if (active) {
-            setStatus("Live updates unavailable.");
+            setStatus("Live activity is unavailable.");
           }
           return;
         }
@@ -32,16 +32,16 @@ export function LiveNotificationEvents() {
 
         if (payload.events.length > 0 && active) {
           setEvents((current) => [...payload.events.slice().reverse(), ...current].slice(0, 6));
-          setStatus("Receiving live notification fan-out.");
+          setStatus("Fresh notifications are arriving.");
           return;
         }
 
         if (active && payload.nextSequence === 0) {
-          setStatus("No live updates yet.");
+          setStatus("No live activity yet.");
         }
       } catch {
         if (active) {
-          setStatus("Live updates unavailable.");
+          setStatus("Live activity is unavailable.");
         }
       }
     }
@@ -59,8 +59,8 @@ export function LiveNotificationEvents() {
 
   return (
     <div className="live-events">
-      <p className="eyebrow">Realtime</p>
-      <h3>Live fan-out buffer</h3>
+      <p className="eyebrow">Live activity</p>
+      <h3>Latest notifications</h3>
       <p className="section-copy">{status}</p>
       {events.length === 0 ? null : (
         <div className="live-event-stack">

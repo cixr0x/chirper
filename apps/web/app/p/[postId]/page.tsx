@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AppShell } from "../../../components/app-shell";
 import { AvatarBadge } from "../../../components/avatar-badge";
 import { FeedList } from "../../../components/feed-list";
 import { formatPostTimestamp, getPostLikes, getPostReposts, getPostThread } from "../../../lib/bff";
@@ -21,8 +22,11 @@ type PageProps = {
 
 export default async function ThreadPage({ params, searchParams }: PageProps) {
   const { postId } = await params;
-  const filters = searchParams ? await searchParams : undefined;
-  const [session, sessionToken] = await Promise.all([getSessionState(), getSessionToken()]);
+  const [filters, session, sessionToken] = await Promise.all([
+    searchParams ? searchParams : Promise.resolve(undefined),
+    getSessionState(),
+    getSessionToken(),
+  ]);
   const viewer = session?.viewer ?? null;
   const activeSessionToken = session ? sessionToken ?? undefined : undefined;
   const replyTrail = parseCursorTrail(filters?.replyTrail);
@@ -31,26 +35,24 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
   const [threadResult, likesResult, repostsResult] = await Promise.all([
     collectPaginatedPages({
       trail: replyTrail,
-      loadPage: (cursor) => getPostThread(postId, activeSessionToken, 2, cursor),
+      loadPage: (cursor) => getPostThread(postId, activeSessionToken, 6, cursor),
       getItems: (page) => page?.replies ?? [],
       getNextCursor: (page) => page?.nextReplyCursor ?? "",
     }),
     collectPaginatedPages({
       trail: likeTrail,
-      loadPage: (cursor) => getPostLikes(postId, activeSessionToken, 2, cursor),
+      loadPage: (cursor) => getPostLikes(postId, activeSessionToken, 6, cursor),
       getItems: (page) => page.items,
       getNextCursor: (page) => page.nextCursor,
     }),
     collectPaginatedPages({
       trail: repostTrail,
-      loadPage: (cursor) => getPostReposts(postId, activeSessionToken, 2, cursor),
+      loadPage: (cursor) => getPostReposts(postId, activeSessionToken, 6, cursor),
       getItems: (page) => page.items,
       getNextCursor: (page) => page.nextCursor,
     }),
   ]);
   const thread = threadResult.lastPage;
-  const likes = likesResult.items;
-  const reposts = repostsResult.items;
 
   if (!thread?.focus) {
     notFound();
@@ -58,90 +60,27 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
 
   const threadPath = `/p/${thread.focus.postId}`;
   const threadTargetPath = buildPathWithSearch(threadPath, filters);
-  const participants = buildParticipantRows(thread, likes, reposts);
+  const participants = buildParticipantRows(thread, likesResult.items, repostsResult.items);
 
   return (
-    <main className="profile-shell">
-      <Link className="back-link" href="/">
-        Back to timeline
-      </Link>
-
-      <section className="feed-section thread-section">
-        <div className="section-heading compact">
-          <div>
-            <p className="eyebrow">Thread</p>
-            <h1>Conversation around this post</h1>
-          </div>
-          <p className="section-copy">
-            Ancestors and direct replies are fetched from `posts` read APIs, while likes and repost
-            metrics still come from the owned interaction tables behind the BFF.
-          </p>
-        </div>
-
-        {thread.ancestors.length > 0 ? (
-          <section className="thread-block">
-            <p className="eyebrow">Context</p>
-            <FeedList
-              emptyBody=""
-              emptyTitle=""
-              items={thread.ancestors}
-              targetPath={threadTargetPath}
-              viewerHandle={viewer?.handle}
-              viewerUserId={viewer?.userId}
-            />
-          </section>
-        ) : null}
-
-        <section className="thread-block">
-          <p className="eyebrow">Focus post</p>
-          <FeedList
-            emptyBody=""
-            emptyTitle=""
-            items={[thread.focus]}
-            targetPath={threadTargetPath}
-            viewerHandle={viewer?.handle}
-            viewerUserId={viewer?.userId}
-            deleteRedirectPath="/"
-          />
-        </section>
-
-        <section className="thread-block">
-          <p className="eyebrow">Replies</p>
-          <FeedList
-            emptyBody="No direct replies yet. Use the reply form to start the conversation from this page."
-            emptyTitle="No replies yet"
-            items={threadResult.items}
-            targetPath={threadTargetPath}
-            viewerHandle={viewer?.handle}
-            viewerUserId={viewer?.userId}
-          />
-          {thread.nextReplyCursor ? (
-            <div className="pagination-actions">
-              <Link
-                className="inline-link"
-                href={appendCursorTrail(threadPath, filters, "replyTrail", thread.nextReplyCursor)}
-              >
-                Load more replies
-              </Link>
+    <AppShell
+      description="Follow the parent context, the focus post, and the reply chain in a single reading flow."
+      eyebrow="Thread"
+      title="Conversation"
+      viewer={viewer}
+      rightRail={
+        <>
+          <section className="rail-card">
+            <div className="section-intro">
+              <p className="eyebrow">Participants</p>
+              <h2>{participants.length} people involved</h2>
             </div>
-          ) : null}
-        </section>
-
-        <section className="thread-block engagement-layout">
-          <article className="profile-panel">
-            <p className="eyebrow">Participants</p>
-            <h2>{participants.length} people in this thread</h2>
-            <p className="section-copy">
-              Derived from the focus post, direct replies, and engagement actors already returned by
-              owned read APIs.
-            </p>
-
             {participants.length === 0 ? (
-              <p>No public participants recorded yet.</p>
+              <p className="muted-copy">No participants recorded yet.</p>
             ) : (
               <div className="engagement-stack">
                 {participants.map((participant) => (
-                  <article className="engagement-card" key={`participant-${participant.userId}`}>
+                  <article className="engagement-card" key={participant.userId}>
                     <div className="feed-head">
                       <AvatarBadge
                         avatarUrl={participant.avatarUrl}
@@ -162,15 +101,14 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
                 ))}
               </div>
             )}
-          </article>
+          </section>
 
-          <article className="profile-panel">
-            <p className="eyebrow">Likes</p>
-            <h2>{thread.focus.metrics.likeCount} accounts liked this post</h2>
-            <EngagementList
-              emptyMessage="No likes yet."
-              items={likes}
-            />
+          <section className="rail-card">
+            <div className="section-intro">
+              <p className="eyebrow">Likes</p>
+              <h2>{thread.focus.metrics.likeCount} total</h2>
+            </div>
+            <EngagementList emptyMessage="No likes yet." items={likesResult.items} />
             {likesResult.nextCursor ? (
               <div className="pagination-actions">
                 <Link
@@ -181,15 +119,14 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
                 </Link>
               </div>
             ) : null}
-          </article>
+          </section>
 
-          <article className="profile-panel">
-            <p className="eyebrow">Reposts</p>
-            <h2>{thread.focus.metrics.repostCount} accounts reposted this post</h2>
-            <EngagementList
-              emptyMessage="No reposts yet."
-              items={reposts}
-            />
+          <section className="rail-card">
+            <div className="section-intro">
+              <p className="eyebrow">Reposts</p>
+              <h2>{thread.focus.metrics.repostCount} total</h2>
+            </div>
+            <EngagementList emptyMessage="No reposts yet." items={repostsResult.items} />
             {repostsResult.nextCursor ? (
               <div className="pagination-actions">
                 <Link
@@ -200,10 +137,68 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
                 </Link>
               </div>
             ) : null}
-          </article>
+          </section>
+        </>
+      }
+    >
+      {thread.ancestors.length > 0 ? (
+        <section className="panel timeline-panel">
+          <div className="section-intro">
+            <p className="eyebrow">Context</p>
+            <h2>Posts leading into this conversation</h2>
+          </div>
+          <FeedList
+            emptyBody=""
+            emptyTitle=""
+            items={thread.ancestors}
+            targetPath={threadTargetPath}
+            viewerHandle={viewer?.handle}
+            viewerUserId={viewer?.userId}
+          />
         </section>
+      ) : null}
+
+      <section className="panel timeline-panel">
+        <div className="section-intro">
+          <p className="eyebrow">Focus post</p>
+          <h2>Thread starter</h2>
+        </div>
+        <FeedList
+          deleteRedirectPath="/"
+          emptyBody=""
+          emptyTitle=""
+          items={[thread.focus]}
+          targetPath={threadTargetPath}
+          viewerHandle={viewer?.handle}
+          viewerUserId={viewer?.userId}
+        />
       </section>
-    </main>
+
+      <section className="panel timeline-panel">
+        <div className="section-intro">
+          <p className="eyebrow">Replies</p>
+          <h2>Direct responses</h2>
+        </div>
+        <FeedList
+          emptyBody="No direct replies yet. Use the reply composer on the focus post to start the conversation."
+          emptyTitle="No replies yet"
+          items={threadResult.items}
+          targetPath={threadTargetPath}
+          viewerHandle={viewer?.handle}
+          viewerUserId={viewer?.userId}
+        />
+        {thread.nextReplyCursor ? (
+          <div className="pagination-actions">
+            <Link
+              className="inline-link"
+              href={appendCursorTrail(threadPath, filters, "replyTrail", thread.nextReplyCursor)}
+            >
+              Load more replies
+            </Link>
+          </div>
+        ) : null}
+      </section>
+    </AppShell>
   );
 }
 
@@ -215,7 +210,7 @@ function EngagementList({
   emptyMessage: string;
 }) {
   if (items.length === 0) {
-    return <p>{emptyMessage}</p>;
+    return <p className="muted-copy">{emptyMessage}</p>;
   }
 
   return (
@@ -288,7 +283,7 @@ function buildParticipantRows(
 
   upsert(thread.focus?.author, "Author");
   for (const reply of thread.replies) {
-    upsert(reply.author, "Reply participant");
+    upsert(reply.author, "Reply");
   }
   for (const like of likes) {
     upsert(like.actor, "Liked");

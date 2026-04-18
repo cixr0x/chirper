@@ -1,7 +1,8 @@
-import { LiveNotificationEvents } from "../components/live-notification-events";
-import { AvatarBadge } from "../components/avatar-badge";
-import { FeedList } from "../components/feed-list";
 import Link from "next/link";
+import { AppShell } from "../components/app-shell";
+import { FeedList } from "../components/feed-list";
+import { LiveNotificationEvents } from "../components/live-notification-events";
+import { NotificationList } from "../components/notification-list";
 import {
   changePasswordAction,
   createPostAction,
@@ -9,29 +10,12 @@ import {
   registerAction,
   requestPasswordResetAction,
   signInAction,
-  signOutAction,
 } from "./actions";
-import {
-  formatPostTimestamp,
-  getHomeFeed,
-  getNotifications,
-  getPublicFeed,
-  getUserDirectory,
-  getViewerFollowingUserIds,
-} from "../lib/bff";
+import { getHomeFeed, getNotifications, getPublicFeed, getUserDirectory, getViewerFollowingUserIds } from "../lib/bff";
 import { appendCursorTrail, buildPathWithSearch, collectPaginatedPages, parseCursorTrail } from "../lib/pagination";
 import { getSessionState, getSessionToken } from "../lib/session";
 
 export const dynamic = "force-dynamic";
-
-const currentScope = [
-  "DB-backed identity and profile services",
-  "Graph service plus projected home timeline",
-  "Notifications service and buffered realtime fan-out",
-  "Likes, replies, and reposts owned by `posts`",
-  "Managed post image attachments owned by `media`",
-  "Owner-only post deletion with Kafka cleanup",
-];
 
 const demoCredentials = [
   { handle: "alana", password: "chirper-alana" },
@@ -43,514 +27,355 @@ type HomePageProps = {
     auth?: string;
     account?: string;
     feedTrail?: string;
-    notificationsTrail?: string;
   }>;
 };
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const [users, session, sessionToken] = await Promise.all([
+  const [users, session, sessionToken, filters] = await Promise.all([
     getUserDirectory(),
     getSessionState(),
     getSessionToken(),
+    searchParams ? searchParams : Promise.resolve(undefined),
   ]);
-  const filters = searchParams ? await searchParams : undefined;
   const viewer = session?.viewer ?? null;
   const authMessage = !viewer ? getAuthMessage(filters?.auth) : null;
   const accountMessage = viewer ? getAccountMessage(filters?.account) : null;
   const feedTrail = parseCursorTrail(filters?.feedTrail);
-  const notificationsTrail = parseCursorTrail(filters?.notificationsTrail);
   const homePath = buildPathWithSearch("/", filters);
-  const activeSessionToken = session ? sessionToken : null;
-  const [feedResult, followingUserIds, notificationsResult] = activeSessionToken
-    ? await Promise.all([
-        collectPaginatedPages({
-          trail: feedTrail,
-          loadPage: (cursor) => getHomeFeed(activeSessionToken, 4, cursor),
-          getItems: (page) => page.items,
-          getNextCursor: (page) => page.nextCursor,
-        }),
-        getViewerFollowingUserIds(activeSessionToken),
-        collectPaginatedPages({
-          trail: notificationsTrail,
-          loadPage: (cursor) => getNotifications(activeSessionToken, 4, cursor),
-          getItems: (page) => page.notifications,
-          getNextCursor: (page) => page.nextCursor,
-        }),
-      ])
-    : await Promise.all([
-        collectPaginatedPages({
-          trail: feedTrail,
-          loadPage: (cursor) => getPublicFeed(4, cursor),
-          getItems: (page) => page.items,
-          getNextCursor: (page) => page.nextCursor,
-        }),
-        Promise.resolve([] as string[]),
-        Promise.resolve(null),
-      ]);
-  const feed = feedResult.items;
-  const feedNextCursor = feedResult.nextCursor;
-  const notifications = notificationsResult
-    ? {
-        unreadCount: notificationsResult.lastPage.unreadCount,
-        notifications: notificationsResult.items,
-        nextCursor: notificationsResult.nextCursor,
-      }
-    : {
-        unreadCount: 0,
-        notifications: [],
-        nextCursor: "",
-      };
+
+  if (!viewer || !sessionToken) {
+    const publicPreview = await getPublicFeed(4);
+
+    return (
+      <main className="auth-shell">
+        <section className="auth-hero-grid">
+          <article className="auth-hero-copy">
+            <p className="eyebrow">Chirper</p>
+            <h1>Join the conversation without the scaffolding feel.</h1>
+            <p className="lede">
+              A cleaner front door for the app: simple access, a familiar timeline flow, and a layout
+              that keeps the conversation at the center.
+            </p>
+
+            <div className="credential-row">
+              {demoCredentials.map((credential) => (
+                <article className="credential-chip" key={credential.handle}>
+                  <strong>@{credential.handle}</strong>
+                  <span>{credential.password}</span>
+                </article>
+              ))}
+            </div>
+
+            <div className="auth-feature-list">
+              <article className="feature-card">
+                <h2>Follow the main social loop</h2>
+                <p>Post, reply, like, repost, follow, and move through thread and profile views.</p>
+              </article>
+              <article className="feature-card">
+                <h2>Backed by real service boundaries</h2>
+                <p>Profiles, posts, follows, notifications, and media already power the full app loop.</p>
+              </article>
+            </div>
+          </article>
+
+          <div className="auth-card-stack">
+            {authMessage ? (
+              <p className={`notice ${authMessage.tone === "error" ? "notice-error" : "notice-success"}`}>
+                {authMessage.text}
+              </p>
+            ) : null}
+
+            <article className="auth-card">
+              <div className="section-intro">
+                <p className="eyebrow">Sign in</p>
+                <h2>Welcome back</h2>
+              </div>
+              <form action={signInAction} className="stack-form">
+                <input name="redirectTo" type="hidden" value="/" />
+                <label className="field">
+                  <span>Handle</span>
+                  <input name="handle" placeholder="alana" required type="text" />
+                </label>
+                <label className="field">
+                  <span>Password</span>
+                  <input name="password" placeholder="chirper-alana" required type="password" />
+                </label>
+                <button className="primary-button wide-button" type="submit">
+                  Sign in
+                </button>
+              </form>
+              <Link className="inline-link" href="/reset">
+                Forgot your password?
+              </Link>
+            </article>
+
+            <article className="auth-card">
+              <div className="section-intro">
+                <p className="eyebrow">Create account</p>
+                <h2>Get started</h2>
+              </div>
+              <form action={registerAction} className="stack-form">
+                <input name="redirectTo" type="hidden" value="/" />
+                <label className="field">
+                  <span>Handle</span>
+                  <input name="handle" placeholder="new_handle" required type="text" />
+                </label>
+                <label className="field">
+                  <span>Display name</span>
+                  <input name="displayName" placeholder="Dana Torres" required type="text" />
+                </label>
+                <label className="field">
+                  <span>Password</span>
+                  <input name="password" placeholder="At least 8 characters" required type="password" />
+                </label>
+                <button className="secondary-button wide-button" type="submit">
+                  Create account
+                </button>
+              </form>
+            </article>
+
+            <article className="auth-card auth-card-soft">
+              <div className="section-intro">
+                <p className="eyebrow">Reset access</p>
+                <h2>Need a recovery token?</h2>
+              </div>
+              <form action={requestPasswordResetAction} className="stack-form">
+                <label className="field">
+                  <span>Handle</span>
+                  <input name="handle" placeholder="alana" required type="text" />
+                </label>
+                <button className="secondary-button wide-button" type="submit">
+                  Open reset flow
+                </button>
+              </form>
+            </article>
+          </div>
+        </section>
+
+        <section className="auth-preview-grid">
+          <article className="panel auth-preview-panel">
+            <div className="section-intro">
+              <p className="eyebrow">Timeline preview</p>
+              <h2>Public posts</h2>
+            </div>
+            <FeedList
+              emptyBody="Create the first account to start the public conversation."
+              emptyTitle="No public posts yet"
+              items={publicPreview.items}
+              targetPath="/"
+            />
+          </article>
+
+          <article className="panel auth-preview-panel">
+            <div className="section-intro">
+              <p className="eyebrow">What you get</p>
+              <h2>Once you sign in</h2>
+            </div>
+            <ul className="auth-bullet-list">
+              <li>A left navigation rail with Home, Chat, Profile, and Notifications.</li>
+              <li>A centered timeline with a compose form pinned to the top of the flow.</li>
+              <li>Profile, thread, and notification surfaces aligned to the same app shell.</li>
+            </ul>
+            {users.length > 0 ? (
+              <p className="muted-copy">{users.length} seeded users are available in the current environment.</p>
+            ) : null}
+          </article>
+        </section>
+      </main>
+    );
+  }
+
+  const [feedResult, followingUserIds, notifications] = await Promise.all([
+    collectPaginatedPages({
+      trail: feedTrail,
+      loadPage: (cursor) => getHomeFeed(sessionToken, 8, cursor),
+      getItems: (page) => page.items,
+      getNextCursor: (page) => page.nextCursor,
+    }),
+    getViewerFollowingUserIds(sessionToken),
+    getNotifications(sessionToken, 4),
+  ]);
+  const suggestedUsers = users.filter((user) => user.userId !== viewer.userId).slice(0, 5);
   const followingSet = new Set(followingUserIds);
-  const needsOnboarding = viewer
-    ? !viewer.bio &&
-      !viewer.location &&
-      !viewer.avatarAssetId &&
-      !viewer.bannerAssetId &&
-      !viewer.avatarUrl &&
-      !viewer.bannerUrl
-    : false;
+  const needsOnboarding =
+    !viewer.bio &&
+    !viewer.location &&
+    !viewer.avatarAssetId &&
+    !viewer.bannerAssetId &&
+    !viewer.avatarUrl &&
+    !viewer.bannerUrl;
 
   return (
-    <main className="app-shell">
-      <section className="app-hero">
-        <div>
-          <p className="eyebrow">Chirper Alpha</p>
-          <h1>The feed now supports media attachments as first-class post content.</h1>
-          <p className="lede">
-            `posts` owns interaction writes and emits Kafka events for replies, likes, and reposts.
-            `media` now registers managed image assets for posts, `timeline` projects repost activity,
-            `notifications` creates author-facing alerts, and the web app reads the resulting feed
-            through the BFF.
-          </p>
-        </div>
-        <div className="hero-panel">
-          <p className="panel-label">Delivered now</p>
-          <ul className="roadmap-list">
-            {currentScope.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className="timeline-layout">
-        <div className="timeline-column">
-          <section className="compose-card">
-            <div className="section-heading compact">
-              <div>
-                <p className="eyebrow">Session</p>
-                <h2>{viewer ? `Home timeline for @${viewer.handle}` : "Sign in to Chirper Alpha"}</h2>
-              </div>
-              <p className="section-copy">
-                An opaque identity-issued session cookie now defines the active viewer, and `web`
-                forwards the session token to `bff` for protected reads and mutations.
-              </p>
-            </div>
-
-            <>
-              <div className="session-toolbar">
-                <form action={signInAction} className="viewer-switcher">
-                  <input name="redirectTo" type="hidden" value="/" />
-                  <div className="auth-fields">
-                    <label className="field">
-                      <span>{viewer ? "Switch account" : "Handle"}</span>
-                      <input
-                        defaultValue={viewer?.handle ?? ""}
-                        name="handle"
-                        placeholder="alana"
-                        required
-                        type="text"
-                      />
-                    </label>
-
-                    <label className="field">
-                      <span>Password</span>
-                      <input name="password" placeholder="chirper-alana" required type="password" />
-                    </label>
-                  </div>
-
-                  <div className="session-actions">
-                    <button className="secondary-button compact" type="submit">
-                      {viewer ? "Switch account" : "Sign in"}
-                    </button>
-                    {!viewer ? (
-                      <Link className="inline-link" href="/reset">
-                        Forgot password?
-                      </Link>
-                    ) : null}
-                  </div>
-                </form>
-
-                {viewer ? (
-                  <form action={signOutAction}>
-                    <input name="redirectTo" type="hidden" value="/" />
-                    <button className="secondary-button compact" type="submit">
-                      Sign out
-                    </button>
-                  </form>
-                ) : null}
-              </div>
-
-              {viewer ? (
-                <>
-                  <p className="session-badge">Signed in as @{viewer.handle}</p>
-                  {accountMessage ? (
-                    <p className={`notice ${accountMessage.tone === "error" ? "notice-error" : "notice-success"}`}>
-                      {accountMessage.text}
-                    </p>
-                  ) : null}
-                  {needsOnboarding ? (
-                    <article className="subcard onboarding-callout">
-                      <p className="eyebrow">Next step</p>
-                      <h3>Finish the public profile</h3>
-                      <p className="subcard-copy">
-                        This account is live but still blank. Add a bio, location, and optional asset
-                        links before other users start discovering it in the directory.
-                      </p>
-                      <Link className="inline-link" href="/onboarding">
-                        Open onboarding
-                      </Link>
-                    </article>
-                  ) : null}
-                  <form action={createPostAction} className="compose-form">
-                    <input name="targetProfileHandle" type="hidden" value={viewer.handle} />
-
-                    <label className="field">
-                      <span>Post as @{viewer.handle}</span>
-                      <textarea
-                        maxLength={280}
-                        name="body"
-                        placeholder="Share something with the people who follow you."
-                        rows={4}
-                      />
-                    </label>
-
-                    <div className="compose-media-grid">
-                      {[1, 2, 3, 4].map((slot) => (
-                        <label className="field" key={`compose-media-${slot}`}>
-                          <span>Image URL {slot}</span>
-                          <input
-                            name="mediaSourceUrl"
-                            placeholder={`https://images.example.com/post-${slot}.jpg`}
-                            type="url"
-                          />
-                        </label>
-                      ))}
-                    </div>
-
-                    <button className="primary-button" type="submit">
-                      Publish
-                    </button>
-                  </form>
-
-                  <article className="subcard security-card">
-                    <div className="section-heading compact">
-                      <div>
-                        <p className="eyebrow">Security</p>
-                        <h3>Change password</h3>
-                      </div>
-                      <p className="section-copy">
-                        Password changes stay inside `identity`; the current session remains active.
-                      </p>
-                    </div>
-
-                    <form action={changePasswordAction} className="stack-form">
-                      <input name="redirectTo" type="hidden" value="/" />
-                      <label className="field">
-                        <span>Current password</span>
-                        <input name="currentPassword" required type="password" />
-                      </label>
-                      <label className="field">
-                        <span>New password</span>
-                        <input name="nextPassword" required type="password" />
-                      </label>
-                      <button className="secondary-button" type="submit">
-                        Update password
-                      </button>
-                    </form>
-                  </article>
-                </>
-              ) : (
-                <>
-                  <article className="empty-card compact-card">
-                    <h3>Use a password-backed login to continue</h3>
-                    <p>
-                      The public feed still renders when signed out, but posting, following, and
-                      notification reads now require an active session.
-                    </p>
-                    {authMessage ? (
-                      <p className={`notice ${authMessage.tone === "error" ? "notice-error" : "notice-success"}`}>
-                        {authMessage.text}
-                      </p>
-                    ) : null}
-                    {users.length > 0 ? (
-                      <div className="demo-credential-list">
-                        {demoCredentials.map((credential) => (
-                          <article className="demo-credential-card" key={credential.handle}>
-                            <h4>@{credential.handle}</h4>
-                            <p>
-                              Password: <code>{credential.password}</code>
-                            </p>
-                          </article>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="subcard-copy">
-                        This database has no seeded demo accounts yet. Use the registration form to
-                        create the first one.
-                      </p>
-                    )}
-                  </article>
-
-                  <div className="auth-grid">
-                    <article className="subcard">
-                      <p className="eyebrow">Registration</p>
-                      <h3>Create account</h3>
-                      <p className="subcard-copy">
-                        Signup creates `ident_users`, `ident_credentials`, a session, and a blank
-                        `profile` record through the BFF.
-                      </p>
-                      <form action={registerAction} className="stack-form">
-                        <input name="redirectTo" type="hidden" value="/" />
-                        <label className="field">
-                          <span>Handle</span>
-                          <input name="handle" placeholder="new_handle" required type="text" />
-                        </label>
-                        <label className="field">
-                          <span>Display name</span>
-                          <input name="displayName" placeholder="Dana Torres" required type="text" />
-                        </label>
-                        <label className="field">
-                          <span>Password</span>
-                          <input name="password" placeholder="At least 8 characters" required type="password" />
-                        </label>
-                        <button className="primary-button" type="submit">
-                          Create account
-                        </button>
-                      </form>
-                    </article>
-
-                    <article className="subcard">
-                      <p className="eyebrow">Recovery</p>
-                      <h3>Need a reset link?</h3>
-                      <p className="subcard-copy">
-                        Request a password reset token. In a production system this would be emailed;
-                        in this demo it is shown in a dedicated reset workspace.
-                      </p>
-                      <form action={requestPasswordResetAction} className="stack-form">
-                        <label className="field">
-                          <span>Handle</span>
-                          <input name="handle" placeholder="alana" required type="text" />
-                        </label>
-                        <button className="secondary-button" type="submit">
-                          Open reset flow
-                        </button>
-                      </form>
-                      <Link className="inline-link" href="/reset">
-                        Go to reset workspace
-                      </Link>
-                    </article>
-                  </div>
-                </>
-              )}
-            </>
-          </section>
-
-          <section className="feed-section">
-            <div className="section-heading compact">
-              <div>
-                <p className="eyebrow">Timeline</p>
-                <h2>{viewer ? `Projected feed for @${viewer.handle}` : "Public feed"}</h2>
-              </div>
-              <p className="section-copy">
-                Signed-in viewers now read a feed of projected activities: original posts, replies,
-                and reposts. Signed-out visitors still fall back to the public post list.
-              </p>
-            </div>
-
-            {feed.length === 0 ? (
-              <FeedList
-                emptyBody="Create a post as the selected viewer or follow another account from its profile to backfill their recent posts."
-                emptyTitle="No posts in this home timeline yet"
-                items={[]}
-                targetPath={homePath}
-                viewerHandle={viewer?.handle}
-                viewerUserId={viewer?.userId}
-              />
-            ) : (
-              <FeedList
-                emptyBody="Create a post as the selected viewer or follow another account from its profile to backfill their recent posts."
-                emptyTitle="No posts in this home timeline yet"
-                items={feed}
-                targetPath={homePath}
-                viewerHandle={viewer?.handle}
-                viewerUserId={viewer?.userId}
-              />
-            )}
-            {feedNextCursor ? (
-              <div className="pagination-actions">
-                <Link
-                  className="inline-link"
-                  href={appendCursorTrail("/", filters, "feedTrail", feedNextCursor)}
-                >
-                  Load more posts
-                </Link>
-              </div>
-            ) : null}
-          </section>
-        </div>
-
-        <section className="directory-section">
-          {viewer ? (
-            <section className="notifications-card">
-              <div className="section-heading compact">
-                <div>
-                  <p className="eyebrow">Inbox</p>
-                  <h2>
-                    Notifications for @{viewer.handle}
-                    <span className="count-chip">{notifications.unreadCount} unread</span>
-                  </h2>
-                </div>
-                <p className="section-copy">
-                  Follows and followed-account posts create durable `notify_*` records and also hit
-                  the live delivery buffer.
-                </p>
-              </div>
-
-              {notifications.notifications.length === 0 ? (
-                <article className="empty-card compact-card">
-                  <h3>No notifications yet</h3>
-                  <p>Follow activity and new posts from followed users will appear here.</p>
-                </article>
-              ) : (
-                <div className="notification-stack">
-                  {notifications.notifications.map((notification) => (
-                    <article className="notification-card" key={notification.notificationId}>
-                      <div className="feed-head">
-                        <AvatarBadge
-                          avatarUrl={notification.actor?.avatarUrl}
-                          displayName={notification.actor?.displayName ?? "Unknown actor"}
-                          size="small"
-                        />
-                        <div>
-                          <h3>{notification.actor?.displayName ?? "Unknown actor"}</h3>
-                          <p className="handle">
-                            @{notification.actor?.handle ?? "unknown"} | {formatPostTimestamp(notification.createdAt)}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="notification-copy">{notification.summary}</p>
-                    </article>
-                  ))}
-                </div>
-              )}
-
-              <div className="notification-actions">
-                <form action={markNotificationsReadAction}>
-                  <input name="targetPath" type="hidden" value={homePath} />
-                  <button className="secondary-button compact" type="submit">
-                    Mark all as read
-                  </button>
-                </form>
-              </div>
-
-              {notifications.nextCursor ? (
-                <div className="pagination-actions">
-                  <Link
-                    className="inline-link"
-                    href={appendCursorTrail("/", filters, "notificationsTrail", notifications.nextCursor)}
-                  >
-                    Load more notifications
-                  </Link>
-                </div>
-              ) : null}
-
-              <LiveNotificationEvents />
-            </section>
-          ) : null}
-
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Directory</p>
-              <h2>Use profiles to inspect and change the follow graph</h2>
-            </div>
-          <p className="section-copy">
-              Demo follows are stored in `graph_*`; timeline rows rebuild into `timeline_*`; follow
-              and post interaction events also populate the notification pipeline.
-            </p>
+    <AppShell
+      active="home"
+      description="Posts from the accounts you follow, your own activity, and quick access to what is happening around you."
+      eyebrow="Timeline"
+      notificationCount={notifications.unreadCount}
+      title="Home"
+      viewer={viewer}
+      rightRail={
+        <>
+          <section className="rail-card" id="notifications">
+            <div className="section-intro">
+            <p className="eyebrow">Notifications</p>
+            <h2>{notifications.unreadCount} unread</h2>
           </div>
+          <NotificationList
+              emptyBody="Once people follow or interact with your posts, alerts will land here."
+              emptyTitle="Nothing new yet"
+              items={notifications.notifications}
+            />
+            <div className="rail-actions">
+              <Link className="inline-link" href="/notifications">
+                Open inbox
+              </Link>
+              <form action={markNotificationsReadAction}>
+                <input name="targetPath" type="hidden" value="/" />
+                <button className="secondary-button compact" type="submit">
+                  Mark read
+                </button>
+              </form>
+            </div>
+          </section>
 
-          {users.length === 0 ? (
-            <article className="empty-card">
-              <h3>No profiles available yet</h3>
-              <p>Create the first account from the registration panel to bootstrap the directory.</p>
-            </article>
-          ) : (
-            <div className="directory-grid">
-              {users.map((user) => {
-                const isViewer = viewer?.userId === user.userId;
-                const isFollowing = followingSet.has(user.userId);
-                const profileHref = `/u/${user.handle}`;
-
-                return (
-                  <article className="user-card" key={user.userId}>
-                    <AvatarBadge avatarUrl={user.avatarUrl} displayName={user.displayName} />
-                    <div className="user-meta">
-                      <div className="identity-row">
-                        <h3>{user.displayName}</h3>
-                        <span className={`status-pill ${user.status}`}>{user.status}</span>
-                      </div>
-                      <p className="handle">@{user.handle}</p>
-                      <p className="bio">{user.bio || "Profile is ready for the next update."}</p>
-                      <div className="card-footer">
-                        <span>{user.location || "Location pending"}</span>
-                        <span>{user.links?.length ?? 0} links</span>
-                      </div>
-                      <div className="user-card-actions">
-                        <Link className="inline-link" href={profileHref}>
-                          Open profile
-                        </Link>
-                        <span
-                          className={`follow-chip ${isViewer ? "viewer" : isFollowing ? "following" : ""}`}
-                        >
-                          {viewer
-                            ? isViewer
-                              ? "Viewer"
-                              : isFollowing
-                                ? "Following"
-                                : "Not followed"
-                            : "Signed out"}
-                        </span>
-                      </div>
+          <section className="rail-card">
+            <div className="section-intro">
+              <p className="eyebrow">People</p>
+              <h2>Keep the feed moving</h2>
+            </div>
+            <div className="mini-profile-list">
+              {suggestedUsers.length === 0 ? (
+                <p className="muted-copy">More profiles will appear here as the environment grows.</p>
+              ) : (
+                suggestedUsers.map((user) => (
+                  <article className="mini-profile-card" key={user.userId}>
+                    <div>
+                      <p className="mini-profile-name">{user.displayName}</p>
+                      <p className="mini-profile-handle">@{user.handle}</p>
+                    </div>
+                    <div className="mini-profile-meta">
+                      <span className={`follow-chip ${followingSet.has(user.userId) ? "following" : ""}`}>
+                        {followingSet.has(user.userId) ? "Following" : "Explore"}
+                      </span>
+                      <Link className="inline-link" href={`/u/${user.handle}`}>
+                        View
+                      </Link>
                     </div>
                   </article>
-                );
-              })}
+                ))
+              )}
             </div>
-          )}
+          </section>
+
+          <section className="rail-card">
+            <LiveNotificationEvents />
+          </section>
+        </>
+      }
+    >
+      {accountMessage ? (
+        <p className={`notice ${accountMessage.tone === "error" ? "notice-error" : "notice-success"}`}>
+          {accountMessage.text}
+        </p>
+      ) : null}
+
+      {needsOnboarding ? (
+        <section className="inline-banner">
+          <div>
+            <p className="eyebrow">Profile setup</p>
+            <h2>Complete your public profile before you settle into the timeline.</h2>
+          </div>
+          <Link className="primary-link-button" href="/onboarding">
+            Finish onboarding
+          </Link>
         </section>
+      ) : null}
+
+      <section className="panel composer-panel">
+        <div className="section-intro">
+          <p className="eyebrow">Compose</p>
+          <h2>Post something</h2>
+        </div>
+        <form action={createPostAction} className="composer-form">
+          <input name="targetProfileHandle" type="hidden" value={viewer.handle} />
+          <label className="field">
+            <span>Post body</span>
+            <textarea
+              maxLength={280}
+              name="body"
+              placeholder={`What is happening, @${viewer.handle}?`}
+              rows={4}
+            />
+          </label>
+          <div className="compact-media-grid">
+            {[1, 2].map((slot) => (
+              <label className="field" key={`media-slot-${slot}`}>
+                <span>Image URL {slot}</span>
+                <input
+                  name="mediaSourceUrl"
+                  placeholder={`https://images.example.com/post-${slot}.jpg`}
+                  type="url"
+                />
+              </label>
+            ))}
+          </div>
+          <div className="composer-actions">
+            <button className="primary-button" type="submit">
+              Post
+            </button>
+            <Link className="inline-link" href={`/u/${viewer.handle}`}>
+              Open profile
+            </Link>
+          </div>
+        </form>
       </section>
 
-      <section className="notes-strip">
-        <article>
-          <h3>Service boundary</h3>
-          <p>
-            <code>web</code> stores the opaque session token cookie, <code>bff</code> validates it through
-            <code> identity</code>, and the interaction flow now goes <code>web -&gt; bff -&gt; posts</code>,
-            with timeline and notifications reacting from Kafka rather than direct orchestration.
-          </p>
-        </article>
-        <article>
-          <h3>Database rule</h3>
-          <p>
-            <code>identity</code> owns <code>ident_sessions</code> and <code>ident_credentials</code>;
-            <code> profile</code> owns profile links and asset references; <code>media</code> owns upload
-            metadata; <code>posts</code> owns replies, likes, and reposts; <code>timeline</code> and
-            <code> notifications</code> consume events into their own projections without reading foreign tables.
-          </p>
-        </article>
+      <section className="panel timeline-panel">
+        <div className="section-intro">
+          <p className="eyebrow">For you</p>
+          <h2>Scrollable home timeline</h2>
+        </div>
+        <FeedList
+          emptyBody="Follow a few people or publish the first post to start shaping this home feed."
+          emptyTitle="Your timeline is empty"
+          items={feedResult.items}
+          targetPath={homePath}
+          viewerHandle={viewer.handle}
+          viewerUserId={viewer.userId}
+        />
+        {feedResult.nextCursor ? (
+          <div className="pagination-actions">
+            <Link
+              className="inline-link"
+              href={appendCursorTrail("/", filters, "feedTrail", feedResult.nextCursor)}
+            >
+              Load more posts
+            </Link>
+          </div>
+        ) : null}
       </section>
-    </main>
+
+      <section className="panel security-panel">
+        <div className="section-intro">
+          <p className="eyebrow">Account</p>
+          <h2>Update your password</h2>
+        </div>
+        <form action={changePasswordAction} className="inline-form-grid">
+          <input name="redirectTo" type="hidden" value="/" />
+          <label className="field">
+            <span>Current password</span>
+            <input name="currentPassword" required type="password" />
+          </label>
+          <label className="field">
+            <span>New password</span>
+            <input name="nextPassword" required type="password" />
+          </label>
+          <button className="secondary-button" type="submit">
+            Update password
+          </button>
+        </form>
+      </section>
+    </AppShell>
   );
 }
 

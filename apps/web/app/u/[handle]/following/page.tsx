@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AppShell } from "../../../../components/app-shell";
 import { RelationshipList } from "../../../../components/relationship-list";
 import { getFollowing, getUserByHandle } from "../../../../lib/bff";
 import { appendCursorTrail, buildPathWithSearch, collectPaginatedPages, parseCursorTrail } from "../../../../lib/pagination";
@@ -18,12 +19,12 @@ type PageProps = {
 
 export default async function FollowingPage({ params, searchParams }: PageProps) {
   const { handle } = await params;
-  const [user, session, sessionToken] = await Promise.all([
+  const [user, session, sessionToken, filters] = await Promise.all([
     getUserByHandle(handle),
     getSessionState(),
     getSessionToken(),
+    searchParams ? searchParams : Promise.resolve(undefined),
   ]);
-  const filters = searchParams ? await searchParams : undefined;
 
   if (!user) {
     notFound();
@@ -36,50 +37,35 @@ export default async function FollowingPage({ params, searchParams }: PageProps)
   const followingTrail = parseCursorTrail(filters?.trail);
   const following = await collectPaginatedPages({
     trail: followingTrail,
-    loadPage: (cursor) => getFollowing(user.userId, activeSessionToken ?? undefined, 2, cursor),
+    loadPage: (cursor) => getFollowing(user.userId, activeSessionToken ?? undefined, 12, cursor),
     getItems: (page) => page.items,
     getNextCursor: (page) => page.nextCursor,
   });
-  const followingTotalCount = following.lastPage.totalCount;
 
   return (
-    <main className="profile-shell">
-      <div className="relationship-nav">
-        <Link className="back-link" href={`/u/${user.handle}`}>
-          Back to @{user.handle}
-        </Link>
-        <Link className="inline-link" href="/">
-          Back to timeline
-        </Link>
-      </div>
-
-      <section className="feed-section relationship-section">
-        <div className="section-heading compact">
-          <div>
-            <p className="eyebrow">Following</p>
-            <h1>People @{user.handle} follows</h1>
+    <AppShell
+      active={viewer?.userId === user.userId ? "profile" : undefined}
+      description={`Browse the accounts @${user.handle} follows in the same layout as the rest of the app.`}
+      eyebrow="Following"
+      title={`People @${user.handle} follows`}
+      viewer={viewer}
+      rightRail={
+        <section className="rail-card">
+          <div className="section-intro">
+            <p className="eyebrow">Overview</p>
+            <h2>{following.lastPage.totalCount} total</h2>
           </div>
-          <p className="section-copy">
-            This surface reads the follow graph through `graph`, then composes identity and profile
-            details through the BFF into relationship-aware cards for the current viewer.
+          <p className="muted-copy">
+            These cards are composed through the BFF on top of graph edges rather than by reading
+            foreign tables directly.
           </p>
-        </div>
-
-        <div className="relationship-summary-row">
-          <span className="count-chip">{followingTotalCount} total</span>
-          {viewer ? (
-            <span className="follow-chip viewer">Viewing as @{viewer.handle}</span>
-          ) : (
-            <span className="follow-chip">Signed out</span>
-          )}
-        </div>
-
-        {!viewer ? (
-          <p className="relationship-note">
-            Sign in to follow or unfollow accounts directly from this list.
-          </p>
-        ) : null}
-
+          <Link className="inline-link" href={`/u/${user.handle}`}>
+            Back to @{user.handle}
+          </Link>
+        </section>
+      }
+    >
+      <section className="panel timeline-panel">
         <RelationshipList
           emptyBody={`@${user.handle} is not following anyone yet.`}
           emptyTitle="No followed accounts yet"
@@ -98,6 +84,6 @@ export default async function FollowingPage({ params, searchParams }: PageProps)
           </div>
         ) : null}
       </section>
-    </main>
+    </AppShell>
   );
 }

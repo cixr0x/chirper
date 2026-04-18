@@ -2,15 +2,17 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="not-found-shell">
-      <p className="eyebrow">404</p>
-      <h1>That profile does not exist yet.</h1>
-      <p className="lede">
-        The requested handle is not currently available through the BFF directory.
-      </p>
-      <Link className="back-link" href="/">
-        Back to directory
-      </Link>
+    <main className="auth-shell auth-shell-narrow">
+      <section className="panel not-found-panel">
+        <p className="eyebrow">404</p>
+        <h1>That page is not available.</h1>
+        <p className="lede">
+          The profile or thread you requested is not currently available through the Chirper BFF.
+        </p>
+        <Link className="primary-link-button" href="/">
+          Back to home
+        </Link>
+      </section>
     </main>
   );
 }

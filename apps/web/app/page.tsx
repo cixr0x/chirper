@@ -6,12 +6,11 @@ import { NotificationList } from "../components/notification-list";
 import {
   changePasswordAction,
   createPostAction,
-  markNotificationsReadAction,
   registerAction,
-  requestPasswordResetAction,
   signInAction,
+  markNotificationsReadAction,
 } from "./actions";
-import { getHomeFeed, getNotifications, getPublicFeed, getUserDirectory, getViewerFollowingUserIds } from "../lib/bff";
+import { getHomeFeed, getNotifications, getUserDirectory, getViewerFollowingUserIds } from "../lib/bff";
 import { appendCursorTrail, buildPathWithSearch, collectPaginatedPages, parseCursorTrail } from "../lib/pagination";
 import { getSessionState, getSessionToken } from "../lib/session";
 
@@ -27,12 +26,12 @@ type HomePageProps = {
     auth?: string;
     account?: string;
     feedTrail?: string;
+    view?: string;
   }>;
 };
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const [users, session, sessionToken, filters] = await Promise.all([
-    getUserDirectory(),
+  const [session, sessionToken, filters] = await Promise.all([
     getSessionState(),
     getSessionToken(),
     searchParams ? searchParams : Promise.resolve(undefined),
@@ -42,80 +41,69 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const accountMessage = viewer ? getAccountMessage(filters?.account) : null;
   const feedTrail = parseCursorTrail(filters?.feedTrail);
   const homePath = buildPathWithSearch("/", filters);
+  const authView = filters?.view === "signup" ? "signup" : "signin";
+  const authRedirectPath = authView === "signup" ? "/?view=signup" : "/";
 
   if (!viewer || !sessionToken) {
-    const publicPreview = await getPublicFeed(4);
-
     return (
-      <main className="auth-shell">
-        <section className="auth-hero-grid">
-          <article className="auth-hero-copy">
-            <p className="eyebrow">Chirper</p>
-            <h1>Join the conversation without the scaffolding feel.</h1>
-            <p className="lede">
-              A cleaner front door for the app: simple access, a familiar timeline flow, and a layout
-              that keeps the conversation at the center.
-            </p>
-
-            <div className="credential-row">
-              {demoCredentials.map((credential) => (
-                <article className="credential-chip" key={credential.handle}>
-                  <strong>@{credential.handle}</strong>
-                  <span>{credential.password}</span>
-                </article>
-              ))}
+      <main className="landing-shell">
+        <section className="landing-grid">
+          <article className="landing-brand-panel">
+            <div className="landing-brand-lockup">
+              <span className="landing-brand-mark">C</span>
+              <span className="landing-brand-wordmark">Chirper</span>
             </div>
-
-            <div className="auth-feature-list">
-              <article className="feature-card">
-                <h2>Follow the main social loop</h2>
-                <p>Post, reply, like, repost, follow, and move through thread and profile views.</p>
-              </article>
-              <article className="feature-card">
-                <h2>Backed by real service boundaries</h2>
-                <p>Profiles, posts, follows, notifications, and media already power the full app loop.</p>
-              </article>
+            <div className="landing-copy-stack">
+              <h1>See what your network is talking about right now.</h1>
+              <p className="landing-lede">
+                A clean front door for a fast, social timeline. Sign in to post, follow, reply, and
+                keep up with the conversation as it moves.
+              </p>
             </div>
+            <ul className="landing-principles">
+              <li>One timeline at the center.</li>
+              <li>Simple entry, no dashboard clutter.</li>
+              <li>Posts, profiles, replies, and notifications in one flow.</li>
+            </ul>
           </article>
 
-          <div className="auth-card-stack">
+          <section className="landing-auth-panel">
+            <div className="landing-auth-header">
+              <p className="eyebrow">{authView === "signup" ? "Create account" : "Sign in"}</p>
+              <h2>{authView === "signup" ? "Join Chirper today" : "Welcome back"}</h2>
+              <p className="landing-auth-copy">
+                {authView === "signup"
+                  ? "Create your account and land directly in the product flow."
+                  : "Sign in to continue where the timeline left off."}
+              </p>
+            </div>
+
+            <div className="auth-mode-switch" role="tablist" aria-label="Authentication mode">
+              <Link
+                aria-selected={authView === "signin"}
+                className={`auth-mode-link ${authView === "signin" ? "active" : ""}`}
+                href="/"
+              >
+                Log in
+              </Link>
+              <Link
+                aria-selected={authView === "signup"}
+                className={`auth-mode-link ${authView === "signup" ? "active" : ""}`}
+                href="/?view=signup"
+              >
+                Sign up
+              </Link>
+            </div>
+
             {authMessage ? (
               <p className={`notice ${authMessage.tone === "error" ? "notice-error" : "notice-success"}`}>
                 {authMessage.text}
               </p>
             ) : null}
 
-            <article className="auth-card">
-              <div className="section-intro">
-                <p className="eyebrow">Sign in</p>
-                <h2>Welcome back</h2>
-              </div>
-              <form action={signInAction} className="stack-form">
-                <input name="redirectTo" type="hidden" value="/" />
-                <label className="field">
-                  <span>Handle</span>
-                  <input name="handle" placeholder="alana" required type="text" />
-                </label>
-                <label className="field">
-                  <span>Password</span>
-                  <input name="password" placeholder="chirper-alana" required type="password" />
-                </label>
-                <button className="primary-button wide-button" type="submit">
-                  Sign in
-                </button>
-              </form>
-              <Link className="inline-link" href="/reset">
-                Forgot your password?
-              </Link>
-            </article>
-
-            <article className="auth-card">
-              <div className="section-intro">
-                <p className="eyebrow">Create account</p>
-                <h2>Get started</h2>
-              </div>
-              <form action={registerAction} className="stack-form">
-                <input name="redirectTo" type="hidden" value="/" />
+            {authView === "signup" ? (
+              <form action={registerAction} className="stack-form landing-auth-form">
+                <input name="redirectTo" type="hidden" value={authRedirectPath} />
                 <label className="field">
                   <span>Handle</span>
                   <input name="handle" placeholder="new_handle" required type="text" />
@@ -128,63 +116,69 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   <span>Password</span>
                   <input name="password" placeholder="At least 8 characters" required type="password" />
                 </label>
-                <button className="secondary-button wide-button" type="submit">
+                <button className="primary-button wide-button landing-submit" type="submit">
                   Create account
                 </button>
               </form>
-            </article>
-
-            <article className="auth-card auth-card-soft">
-              <div className="section-intro">
-                <p className="eyebrow">Reset access</p>
-                <h2>Need a recovery token?</h2>
-              </div>
-              <form action={requestPasswordResetAction} className="stack-form">
+            ) : (
+              <form action={signInAction} className="stack-form landing-auth-form">
+                <input name="redirectTo" type="hidden" value={authRedirectPath} />
                 <label className="field">
                   <span>Handle</span>
                   <input name="handle" placeholder="alana" required type="text" />
                 </label>
-                <button className="secondary-button wide-button" type="submit">
-                  Open reset flow
+                <label className="field">
+                  <span>Password</span>
+                  <input name="password" placeholder="chirper-alana" required type="password" />
+                </label>
+                <button className="primary-button wide-button landing-submit" type="submit">
+                  Sign in
                 </button>
               </form>
-            </article>
-          </div>
+            )}
+
+            <div className="landing-auth-footer">
+              <p className="muted-copy">
+                {authView === "signup" ? "Already have an account?" : "Need to reset your password?"}
+              </p>
+              <div className="landing-footer-links">
+                {authView === "signup" ? (
+                  <Link className="inline-link" href="/">
+                    Log in instead
+                  </Link>
+                ) : (
+                  <Link className="inline-link" href="/reset">
+                    Open recovery flow
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div className="landing-demo-note">
+              <p className="landing-demo-title">Demo access for this environment</p>
+              <div className="landing-demo-list">
+                {demoCredentials.map((credential) => (
+                  <span className="landing-demo-chip" key={credential.handle}>
+                    @{credential.handle} / {credential.password}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
         </section>
 
-        <section className="auth-preview-grid">
-          <article className="panel auth-preview-panel">
-            <div className="section-intro">
-              <p className="eyebrow">Timeline preview</p>
-              <h2>Public posts</h2>
-            </div>
-            <FeedList
-              emptyBody="Create the first account to start the public conversation."
-              emptyTitle="No public posts yet"
-              items={publicPreview.items}
-              targetPath="/"
-            />
-          </article>
-
-          <article className="panel auth-preview-panel">
-            <div className="section-intro">
-              <p className="eyebrow">What you get</p>
-              <h2>Once you sign in</h2>
-            </div>
-            <ul className="auth-bullet-list">
-              <li>A left navigation rail with Home, Chat, Profile, and Notifications.</li>
-              <li>A centered timeline with a compose form pinned to the top of the flow.</li>
-              <li>Profile, thread, and notification surfaces aligned to the same app shell.</li>
-            </ul>
-            {users.length > 0 ? (
-              <p className="muted-copy">{users.length} seeded users are available in the current environment.</p>
-            ) : null}
-          </article>
-        </section>
+        <footer className="landing-footer">
+          <span>Chirper</span>
+          <span>Timeline-first social app</span>
+          <Link className="inline-link" href="/reset">
+            Reset password
+          </Link>
+        </footer>
       </main>
     );
   }
 
+  const users = await getUserDirectory();
   const [feedResult, followingUserIds, notifications] = await Promise.all([
     collectPaginatedPages({
       trail: feedTrail,

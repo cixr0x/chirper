@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-  [string]$ClusterName = "chirper-local"
+  [string]$ClusterName = "chirper-local",
+  [string[]]$Services = @()
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,7 +29,10 @@ $workspaces = @(
   @{ Name = "web"; Package = "@chirper/web"; Directory = "apps/web"; EnablePrisma = "false"; StartKind = "web" }
 )
 
-foreach ($workspace in $workspaces) {
+$selectedServices = @(Resolve-SelectedItems -Requested $Services -Available @($workspaces.Name) -Label "services")
+$selectedWorkspaces = @($workspaces | Where-Object { $_.Name -in $selectedServices })
+
+foreach ($workspace in $selectedWorkspaces) {
   $tag = "chirper/$($workspace.Name):dev"
   Write-Output "Building $tag"
 
@@ -55,7 +59,7 @@ foreach ($workspace in $workspaces) {
 }
 
 if ($clusterExists) {
-  Write-Output "Images loaded into kind cluster '$ClusterName'."
+  Write-Output "Images loaded into kind cluster '$ClusterName' for: $($selectedServices -join ', ')."
 } else {
-  Write-Output "Images built locally. Cluster '$ClusterName' was not found, so no images were loaded."
+  Write-Output "Images built locally for: $($selectedServices -join ', '). Cluster '$ClusterName' was not found, so no images were loaded."
 }

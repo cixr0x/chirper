@@ -103,3 +103,34 @@ function Test-KindCluster {
   $clusters = @(& cmd /c "kind get clusters 2>nul")
   return $clusters -contains $ClusterName
 }
+
+function Resolve-SelectedItems {
+  param(
+    [Parameter()]
+    [string[]]$Requested = @(),
+
+    [Parameter(Mandatory = $true)]
+    [string[]]$Available,
+
+    [Parameter()]
+    [string]$Label = "items"
+  )
+
+  if (-not $Requested -or $Requested.Count -eq 0) {
+    return @($Available)
+  }
+
+  $selected = @(
+    $Requested |
+      ForEach-Object { $_.Trim() } |
+      Where-Object { $_ } |
+      Select-Object -Unique
+  )
+
+  $unknown = @($selected | Where-Object { $_ -notin $Available })
+  if ($unknown.Count -gt 0) {
+    throw "Unknown ${Label}: $($unknown -join ', '). Available: $($Available -join ', ')"
+  }
+
+  return @($selected)
+}

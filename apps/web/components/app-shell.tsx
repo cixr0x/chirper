@@ -6,7 +6,7 @@ import { AvatarBadge } from "./avatar-badge";
 
 type AppShellProps = {
   viewer: UserSummary | null;
-  active?: "home" | "messages" | "profile" | "notifications";
+  active?: "home" | "messages" | "profile" | "notifications" | undefined;
   notificationCount?: number;
   eyebrow?: string;
   title: string;

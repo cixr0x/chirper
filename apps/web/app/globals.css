@@ -56,9 +56,9 @@ select {
 }
 
 .social-root {
-  height: 100dvh;
-  padding: 0;
-  overflow: hidden;
+  height: auto;
+  padding: 0 0 2rem;
+  overflow: visible;
 }
 
 .landing-shell {
@@ -77,7 +77,7 @@ select {
   gap: 1rem;
   align-items: stretch;
   width: min(1440px, calc(100% - 2rem));
-  height: 100%;
+  height: auto;
   margin: 0 auto;
   padding: 0 0 0.75rem;
 }
@@ -88,9 +88,14 @@ select {
 
 .social-sidebar-frame,
 .social-rail-frame {
+  position: sticky;
+  top: 0.75rem;
   display: grid;
   gap: 1rem;
   padding-top: 0.75rem;
+  max-height: calc(100dvh - 1.5rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .social-sidebar-frame {
@@ -216,13 +221,10 @@ select {
 
 .social-center {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
   min-width: 0;
   width: min(100%, 680px);
-  height: 100%;
   margin: 0 auto;
-  overflow-y: auto;
-  scrollbar-width: thin;
   border-left: 1px solid rgba(188, 203, 216, 0.7);
   border-right: 1px solid rgba(188, 203, 216, 0.7);
   background: rgba(255, 255, 255, 0.72);
@@ -279,7 +281,6 @@ select {
 }
 
 .column-body {
-  min-height: 0;
   padding-bottom: 2rem;
   overflow: visible;
 }

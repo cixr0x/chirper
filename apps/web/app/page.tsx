@@ -285,23 +285,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <div className="home-composer-main">
               <AvatarBadge avatarUrl={viewer.avatarUrl} displayName={viewer.displayName} size="small" />
               <div className="home-composer-field">
-                <textarea
+                <input
+                  aria-label="What is happening?"
                   className="home-composer-input"
                   maxLength={280}
                   name="body"
                   placeholder="What is happening?"
-                  rows={4}
+                  type="text"
                 />
                 <div className="home-composer-footer">
-                  <label className="home-composer-media" htmlFor="home-media-source">
-                    <span>Optional image URL</span>
-                    <input
-                      id="home-media-source"
-                      name="mediaSourceUrl"
-                      placeholder="Paste one image URL"
-                      type="url"
-                    />
-                  </label>
                   <button className="primary-button compact" type="submit">
                     Post
                   </button>

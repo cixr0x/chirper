@@ -882,14 +882,13 @@ select {
 
 .home-composer-input {
   width: 100%;
-  min-height: 7rem;
-  padding: 0.3rem 0;
+  min-height: 0;
+  padding: 0.2rem 0 0.45rem;
   border: none;
   background: transparent;
   color: var(--ink);
-  font-size: 1.25rem;
-  line-height: 1.6;
-  resize: vertical;
+  font-size: 1.18rem;
+  line-height: 1.35;
 }
 
 .home-composer-input::placeholder {
@@ -902,15 +901,14 @@ select {
 
 .home-composer-footer {
   display: flex;
-  align-items: end;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-end;
   gap: 1rem;
-  margin-top: 0.5rem;
+  margin-top: 0.15rem;
   padding-top: 0.8rem;
   border-top: 1px solid var(--line);
 }
 
-.home-composer-media,
 .reply-media-field {
   display: grid;
   gap: 0.4rem;
@@ -918,7 +916,6 @@ select {
   flex: 1;
 }
 
-.home-composer-media span,
 .reply-media-field span {
   color: var(--muted);
   font-size: 0.78rem;
@@ -927,7 +924,6 @@ select {
   text-transform: uppercase;
 }
 
-.home-composer-media input,
 .reply-media-field input {
   width: 100%;
   min-height: 2.7rem;

@@ -5,6 +5,18 @@ import { getCurrentSession, type SessionEnvelope } from "./bff";
 
 const sessionCookieName = "chirper_session";
 
+function useSecureSessionCookie() {
+  const explicit = process.env.SESSION_COOKIE_SECURE?.trim().toLowerCase();
+  if (explicit === "true") {
+    return true;
+  }
+  if (explicit === "false") {
+    return false;
+  }
+
+  return process.env.NODE_ENV === "production";
+}
+
 export async function getSessionToken() {
   const cookieStore = await cookies();
   return cookieStore.get(sessionCookieName)?.value ?? null;
@@ -17,7 +29,7 @@ export async function setSessionToken(sessionToken: string, expiresAt: string) {
     expires: new Date(expiresAt),
     path: "/",
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: useSecureSessionCookie(),
   });
 }
 

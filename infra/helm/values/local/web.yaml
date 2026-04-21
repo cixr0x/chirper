@@ -21,6 +21,8 @@ env:
     value: http://bff
   - name: NEXT_PUBLIC_BFF_URL
     value: http://api.chirper.localtest.me:8088
+  - name: SESSION_COOKIE_SECURE
+    value: "false"
 
 probes:
   liveness:

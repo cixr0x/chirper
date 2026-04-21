@@ -56,8 +56,8 @@ select {
 }
 
 .social-root {
-  height: 100vh;
-  padding: 1rem 0;
+  height: 100dvh;
+  padding: 0;
   overflow: hidden;
 }
 
@@ -76,7 +76,10 @@ select {
   grid-template-columns: 272px minmax(0, 1fr) 320px;
   gap: 1rem;
   align-items: stretch;
-  height: calc(100vh - 2rem);
+  width: min(1440px, calc(100% - 2rem));
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 0 0.75rem;
 }
 
 .social-shell-no-rail {
@@ -87,17 +90,11 @@ select {
 .social-rail-frame {
   display: grid;
   gap: 1rem;
-  height: 100%;
-  overflow-y: auto;
-  scrollbar-width: thin;
+  padding-top: 0.75rem;
 }
 
 .social-sidebar-frame {
-  padding: 1rem;
-  border: 1px solid var(--line);
-  border-radius: 30px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
+  padding-right: 0.75rem;
 }
 
 .brand-lockup {
@@ -196,8 +193,8 @@ select {
 .sidebar-callout {
   padding: 0.9rem;
   border-radius: 22px;
-  border: 1px solid var(--line);
-  background: var(--panel-soft);
+  border: 1px solid rgba(188, 203, 216, 0.6);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .sidebar-account-card {
@@ -224,21 +221,25 @@ select {
   width: min(100%, 680px);
   height: 100%;
   margin: 0 auto;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  border-left: 1px solid rgba(188, 203, 216, 0.7);
+  border-right: 1px solid rgba(188, 203, 216, 0.7);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .column-header {
   position: sticky;
-  top: 1rem;
+  top: 0;
   z-index: 4;
   display: flex;
   align-items: end;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem 1.15rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: rgba(245, 249, 253, 0.88);
+  padding: 0.9rem 1.15rem;
+  margin: 0;
+  border-bottom: 1px solid rgba(188, 203, 216, 0.7);
+  background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(18px);
 }
 
@@ -279,9 +280,8 @@ select {
 
 .column-body {
   min-height: 0;
-  padding-bottom: 1rem;
-  overflow-y: auto;
-  scrollbar-width: thin;
+  padding-bottom: 2rem;
+  overflow: visible;
 }
 
 .feed-stack {
@@ -311,6 +311,8 @@ select {
 
 .rail-card {
   border-radius: 26px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: none;
 }
 
 .section-intro {
@@ -836,13 +838,16 @@ select {
 
 .timeline-surface {
   padding: 0;
-  border-radius: 28px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   overflow: hidden;
 }
 
 .timeline-composer-block,
 .timeline-feed-block {
-  background: rgba(255, 255, 255, 0.92);
+  background: transparent;
 }
 
 .timeline-composer-block {

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import {
   createReplyAction,
   deletePostAction,
@@ -18,6 +21,14 @@ type FeedListProps = {
   deleteRedirectPath?: string | undefined;
   emptyTitle: string;
   emptyBody: string;
+  infinitePath?: string | undefined;
+  nextCursor?: string | undefined;
+  pageSize?: number | undefined;
+};
+
+type FeedPageResponse = {
+  items: FeedItem[];
+  nextCursor: string;
 };
 
 export function FeedList({
@@ -28,8 +39,83 @@ export function FeedList({
   deleteRedirectPath,
   emptyTitle,
   emptyBody,
+  infinitePath,
+  nextCursor,
+  pageSize = 10,
 }: FeedListProps) {
-  if (items.length === 0) {
+  const [feedItems, setFeedItems] = useState(items);
+  const [cursor, setCursor] = useState(nextCursor ?? "");
+  const [loadState, setLoadState] = useState<"idle" | "loading" | "error" | "complete">(
+    nextCursor ? "idle" : "complete",
+  );
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const loadingRef = useRef(false);
+
+  useEffect(() => {
+    setFeedItems(items);
+    setCursor(nextCursor ?? "");
+    setLoadState(nextCursor ? "idle" : "complete");
+    loadingRef.current = false;
+  }, [items, nextCursor]);
+
+  async function loadMore() {
+    if (!infinitePath || !cursor || loadingRef.current) {
+      return;
+    }
+
+    loadingRef.current = true;
+    setLoadState("loading");
+
+    try {
+      const url = new URL(infinitePath, window.location.origin);
+      url.searchParams.set("cursor", cursor);
+      url.searchParams.set("limit", String(pageSize));
+
+      const response = await fetch(url.toString(), {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load more feed items.");
+      }
+
+      const payload = (await response.json()) as FeedPageResponse;
+      setFeedItems((current) => [...current, ...payload.items]);
+      setCursor(payload.nextCursor);
+      setLoadState(payload.nextCursor ? "idle" : "complete");
+    } catch {
+      setLoadState("error");
+    } finally {
+      loadingRef.current = false;
+    }
+  }
+
+  useEffect(() => {
+    if (!infinitePath || !cursor) {
+      return;
+    }
+
+    const node = sentinelRef.current;
+    if (!node) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void loadMore();
+        }
+      },
+      {
+        rootMargin: "320px 0px",
+      },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [cursor, infinitePath]);
+
+  if (feedItems.length === 0) {
     return (
       <article className="empty-state">
         <h3>{emptyTitle}</h3>
@@ -40,7 +126,7 @@ export function FeedList({
 
   return (
     <div className="feed-stack">
-      {items.map((item) => {
+      {feedItems.map((item) => {
         const canDelete =
           Boolean(viewerUserId) &&
           item.activityType !== "repost" &&
@@ -78,18 +164,20 @@ export function FeedList({
 
               <div className="feed-main-copy">
                 <div className="feed-head">
-                  <div>
-                    <h3>{item.author?.displayName ?? "Unknown author"}</h3>
-                    <p className="handle">
-                      {item.author ? (
-                        <Link className="inline-link" href={`/u/${item.author.handle}`}>
-                          @{item.author.handle}
-                        </Link>
-                      ) : (
-                        "@unknown"
-                      )}{" "}
-                      | {formatPostTimestamp(item.createdAt)}
-                    </p>
+                  <div className="feed-author-block">
+                    <div className="feed-author-line">
+                      <h3>{item.author?.displayName ?? "Unknown author"}</h3>
+                      <span className="feed-author-handle">
+                        {item.author ? (
+                          <Link className="inline-link" href={`/u/${item.author.handle}`}>
+                            @{item.author.handle}
+                          </Link>
+                        ) : (
+                          "@unknown"
+                        )}
+                      </span>
+                      <span className="feed-timestamp">{formatPostTimestamp(item.createdAt)}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -126,14 +214,42 @@ export function FeedList({
                   <span>{item.metrics.replyCount} replies</span>
                   <span>{item.metrics.likeCount} likes</span>
                   <span>{item.metrics.repostCount} reposts</span>
-                  <Link className="inline-link" href={`/p/${item.postId}`}>
-                    Open thread
-                  </Link>
                 </div>
 
                 {viewerHandle ? (
                   <>
                     <div className="feed-actions-row">
+                      <details className="reply-disclosure">
+                        <summary className="action-button">Reply</summary>
+                        <form action={createReplyAction} className="reply-form">
+                          <input name="postId" type="hidden" value={item.postId} />
+                          <input name="targetPath" type="hidden" value={targetPath} />
+                          <label className="field reply-field">
+                            <span>Reply</span>
+                            <textarea
+                              maxLength={280}
+                              name="body"
+                              placeholder={`Reply to @${item.author?.handle ?? "unknown"}`}
+                              rows={3}
+                            />
+                          </label>
+                          <div className="reply-form-actions">
+                            <label className="reply-media-field" htmlFor={`${item.postId}-reply-media`}>
+                              <span>Optional image URL</span>
+                              <input
+                                id={`${item.postId}-reply-media`}
+                                name="mediaSourceUrl"
+                                placeholder="Paste one image URL"
+                                type="url"
+                              />
+                            </label>
+                            <button className="secondary-button compact" type="submit">
+                              Reply
+                            </button>
+                          </div>
+                        </form>
+                      </details>
+
                       <form action={item.metrics.likedByViewer ? unlikePostAction : likePostAction}>
                         <input name="postId" type="hidden" value={item.postId} />
                         <input name="targetPath" type="hidden" value={targetPath} />
@@ -150,6 +266,10 @@ export function FeedList({
                         </button>
                       </form>
 
+                      <Link className="action-button action-link" href={`/p/${item.postId}`}>
+                        Thread
+                      </Link>
+
                       {canDelete ? (
                         <form action={deletePostAction}>
                           <input name="postId" type="hidden" value={item.postId} />
@@ -161,42 +281,31 @@ export function FeedList({
                         </form>
                       ) : null}
                     </div>
-
-                    <form action={createReplyAction} className="reply-form">
-                      <input name="postId" type="hidden" value={item.postId} />
-                      <input name="targetPath" type="hidden" value={targetPath} />
-                      <label className="field">
-                        <span>Reply</span>
-                        <textarea
-                          maxLength={280}
-                          name="body"
-                          placeholder={`Reply to @${item.author?.handle ?? "unknown"}`}
-                          rows={2}
-                        />
-                      </label>
-                      <div className="compact-media-grid">
-                        {[1, 2].map((slot) => (
-                          <label className="field" key={`${item.postId}-reply-media-${slot}`}>
-                            <span>Image URL {slot}</span>
-                            <input
-                              name="mediaSourceUrl"
-                              placeholder={`https://images.example.com/reply-${slot}.jpg`}
-                              type="url"
-                            />
-                          </label>
-                        ))}
-                      </div>
-                      <button className="secondary-button compact" type="submit">
-                        Reply
-                      </button>
-                    </form>
                   </>
-                ) : null}
+                ) : (
+                  <div className="feed-actions-row">
+                    <Link className="action-button action-link" href={`/p/${item.postId}`}>
+                      Open thread
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </article>
         );
       })}
+
+      {infinitePath ? (
+        <div className="timeline-scroll-footer">
+          {cursor ? <div className="timeline-scroll-sentinel" ref={sentinelRef} /> : null}
+          {loadState === "loading" ? <p className="timeline-scroll-status">Loading more posts...</p> : null}
+          {loadState === "error" ? (
+            <button className="secondary-button compact" onClick={() => void loadMore()} type="button">
+              Retry loading posts
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

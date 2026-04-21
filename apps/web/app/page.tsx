@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { AppShell } from "../components/app-shell";
+import { AvatarBadge } from "../components/avatar-badge";
 import { FeedList } from "../components/feed-list";
 import { LiveNotificationEvents } from "../components/live-notification-events";
 import { NotificationList } from "../components/notification-list";
 import {
-  changePasswordAction,
   createPostAction,
+  markNotificationsReadAction,
   registerAction,
   signInAction,
-  markNotificationsReadAction,
 } from "./actions";
 import { getHomeFeed, getNotifications, getUserDirectory, getViewerFollowingUserIds } from "../lib/bff";
-import { appendCursorTrail, buildPathWithSearch, collectPaginatedPages, parseCursorTrail } from "../lib/pagination";
 import { getSessionState, getSessionToken } from "../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -39,8 +38,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const viewer = session?.viewer ?? null;
   const authMessage = !viewer ? getAuthMessage(filters?.auth) : null;
   const accountMessage = viewer ? getAccountMessage(filters?.account) : null;
-  const feedTrail = parseCursorTrail(filters?.feedTrail);
-  const homePath = buildPathWithSearch("/", filters);
   const authView = filters?.view === "signup" ? "signup" : "signin";
   const authRedirectPath = authView === "signup" ? "/?view=signup" : "/";
 
@@ -179,13 +176,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   }
 
   const users = await getUserDirectory();
-  const [feedResult, followingUserIds, notifications] = await Promise.all([
-    collectPaginatedPages({
-      trail: feedTrail,
-      loadPage: (cursor) => getHomeFeed(sessionToken, 8, cursor),
-      getItems: (page) => page.items,
-      getNextCursor: (page) => page.nextCursor,
-    }),
+  const [homeFeed, followingUserIds, notifications] = await Promise.all([
+    getHomeFeed(sessionToken, 10),
     getViewerFollowingUserIds(sessionToken),
     getNotifications(sessionToken, 4),
   ]);
@@ -285,89 +277,52 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </section>
       ) : null}
 
-      <section className="panel composer-panel">
-        <div className="section-intro">
-          <p className="eyebrow">Compose</p>
-          <h2>Post something</h2>
-        </div>
-        <form action={createPostAction} className="composer-form">
-          <input name="targetProfileHandle" type="hidden" value={viewer.handle} />
-          <label className="field">
-            <span>Post body</span>
-            <textarea
-              maxLength={280}
-              name="body"
-              placeholder={`What is happening, @${viewer.handle}?`}
-              rows={4}
-            />
-          </label>
-          <div className="compact-media-grid">
-            {[1, 2].map((slot) => (
-              <label className="field" key={`media-slot-${slot}`}>
-                <span>Image URL {slot}</span>
-                <input
-                  name="mediaSourceUrl"
-                  placeholder={`https://images.example.com/post-${slot}.jpg`}
-                  type="url"
+      <section className="panel timeline-surface">
+        <div className="timeline-composer-block">
+          <form action={createPostAction} className="home-composer">
+            <input name="targetProfileHandle" type="hidden" value={viewer.handle} />
+            <div className="home-composer-main">
+              <AvatarBadge avatarUrl={viewer.avatarUrl} displayName={viewer.displayName} size="small" />
+              <div className="home-composer-field">
+                <textarea
+                  className="home-composer-input"
+                  maxLength={280}
+                  name="body"
+                  placeholder="What is happening?"
+                  rows={4}
                 />
-              </label>
-            ))}
-          </div>
-          <div className="composer-actions">
-            <button className="primary-button" type="submit">
-              Post
-            </button>
-            <Link className="inline-link" href={`/u/${viewer.handle}`}>
-              Open profile
-            </Link>
-          </div>
-        </form>
-      </section>
-
-      <section className="panel timeline-panel">
-        <div className="section-intro">
-          <p className="eyebrow">For you</p>
-          <h2>Scrollable home timeline</h2>
+                <div className="home-composer-footer">
+                  <label className="home-composer-media" htmlFor="home-media-source">
+                    <span>Optional image URL</span>
+                    <input
+                      id="home-media-source"
+                      name="mediaSourceUrl"
+                      placeholder="Paste one image URL"
+                      type="url"
+                    />
+                  </label>
+                  <button className="primary-button compact" type="submit">
+                    Post
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
         </div>
-        <FeedList
-          emptyBody="Follow a few people or publish the first post to start shaping this home feed."
-          emptyTitle="Your timeline is empty"
-          items={feedResult.items}
-          targetPath={homePath}
-          viewerHandle={viewer.handle}
-          viewerUserId={viewer.userId}
-        />
-        {feedResult.nextCursor ? (
-          <div className="pagination-actions">
-            <Link
-              className="inline-link"
-              href={appendCursorTrail("/", filters, "feedTrail", feedResult.nextCursor)}
-            >
-              Load more posts
-            </Link>
-          </div>
-        ) : null}
-      </section>
 
-      <section className="panel security-panel">
-        <div className="section-intro">
-          <p className="eyebrow">Account</p>
-          <h2>Update your password</h2>
+        <div className="timeline-feed-block">
+          <FeedList
+            emptyBody="Follow a few people or publish the first post to start shaping this home feed."
+            emptyTitle="Your timeline is empty"
+            infinitePath="/api/feed"
+            items={homeFeed.items}
+            nextCursor={homeFeed.nextCursor}
+            pageSize={10}
+            targetPath="/"
+            viewerHandle={viewer.handle}
+            viewerUserId={viewer.userId}
+          />
         </div>
-        <form action={changePasswordAction} className="inline-form-grid">
-          <input name="redirectTo" type="hidden" value="/" />
-          <label className="field">
-            <span>Current password</span>
-            <input name="currentPassword" required type="password" />
-          </label>
-          <label className="field">
-            <span>New password</span>
-            <input name="nextPassword" required type="password" />
-          </label>
-          <button className="secondary-button" type="submit">
-            Update password
-          </button>
-        </form>
       </section>
     </AppShell>
   );

@@ -1013,18 +1013,75 @@ select {
   text-transform: uppercase;
 }
 
-.feed-meta-row {
+.feed-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   margin-top: 0.95rem;
   color: var(--muted);
-  font-size: 0.9rem;
 }
 
-.feed-actions-row {
-  margin-top: 0.85rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+.feed-action-trailing {
+  margin-left: auto;
+}
+
+.feed-card-clickable {
+  cursor: pointer;
+}
+
+.feed-card-clickable:focus-visible {
+  outline: 2px solid rgba(29, 155, 240, 0.55);
+  outline-offset: -2px;
+}
+
+.feed-action {
+  display: inline-flex;
   align-items: center;
+  gap: 0.4rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.55rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.feed-action:hover {
+  transform: translateY(-1px);
+}
+
+.feed-action svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.feed-action-reply:hover,
+.feed-action-reply.active {
+  color: #1d9bf0;
+  background: rgba(29, 155, 240, 0.12);
+}
+
+.feed-action-repost:hover,
+.feed-action-repost.active {
+  color: #00ba7c;
+  background: rgba(0, 186, 124, 0.12);
+}
+
+.feed-action-like:hover,
+.feed-action-like.active {
+  color: #f91880;
+  background: rgba(249, 24, 128, 0.12);
+}
+
+.feed-action-delete:hover {
+  color: var(--danger);
+  background: rgba(212, 69, 51, 0.12);
 }
 
 .reply-form {
@@ -1047,31 +1104,6 @@ select {
   gap: 0.75rem;
   align-items: end;
   margin-top: 0.85rem;
-}
-
-.reply-disclosure {
-  display: inline-flex;
-  flex-direction: column;
-}
-
-.reply-disclosure summary {
-  list-style: none;
-}
-
-.reply-disclosure summary::-webkit-details-marker {
-  display: none;
-}
-
-.reply-disclosure[open] {
-  width: min(100%, 100%);
-  padding: 0.85rem 1rem 0.95rem;
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: rgba(248, 251, 255, 0.94);
-}
-
-.reply-disclosure[open] summary {
-  margin-bottom: 0.85rem;
 }
 
 .timeline-scroll-footer {

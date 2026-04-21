@@ -11,6 +11,7 @@ type AppShellProps = {
   eyebrow?: string;
   title: string;
   description?: string;
+  showHeader?: boolean;
   children: ReactNode;
   rightRail?: ReactNode;
 };
@@ -22,6 +23,7 @@ export function AppShell({
   eyebrow,
   title,
   description,
+  showHeader = true,
   children,
   rightRail,
 }: AppShellProps) {
@@ -99,13 +101,15 @@ export function AppShell({
         </aside>
 
         <section className="social-center">
-          <header className="column-header">
-            <div>
-              {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
-              <h1>{title}</h1>
-            </div>
-            {description ? <p className="column-description">{description}</p> : null}
-          </header>
+          {showHeader ? (
+            <header className="column-header">
+              <div>
+                {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
+                <h1>{title}</h1>
+              </div>
+              {description ? <p className="column-description">{description}</p> : null}
+            </header>
+          ) : null}
           <div className="column-body">{children}</div>
         </section>
 

@@ -197,6 +197,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       description="Posts from the accounts you follow, your own activity, and quick access to what is happening around you."
       eyebrow="Timeline"
       notificationCount={notifications.unreadCount}
+      showHeader={false}
       title="Home"
       viewer={viewer}
       rightRail={

@@ -55,6 +55,12 @@ select {
   padding: 1rem 0 2rem;
 }
 
+.social-root {
+  height: 100vh;
+  padding: 1rem 0;
+  overflow: hidden;
+}
+
 .landing-shell {
   width: min(1280px, calc(100% - 2rem));
   margin: 0 auto;
@@ -69,7 +75,8 @@ select {
   display: grid;
   grid-template-columns: 272px minmax(0, 1fr) 320px;
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
+  height: calc(100vh - 2rem);
 }
 
 .social-shell-no-rail {
@@ -78,11 +85,9 @@ select {
 
 .social-sidebar-frame,
 .social-rail-frame {
-  position: sticky;
-  top: 1rem;
   display: grid;
   gap: 1rem;
-  max-height: calc(100vh - 2rem);
+  height: 100%;
   overflow-y: auto;
   scrollbar-width: thin;
 }
@@ -213,8 +218,11 @@ select {
 }
 
 .social-center {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
   width: min(100%, 680px);
+  height: 100%;
   margin: 0 auto;
 }
 
@@ -267,6 +275,13 @@ select {
 .conversation-list {
   display: grid;
   gap: 1rem;
+}
+
+.column-body {
+  min-height: 0;
+  padding-bottom: 1rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .feed-stack {
@@ -1381,18 +1396,26 @@ select {
     width: min(100% - 1rem, 1440px);
   }
 
+  .social-root {
+    height: auto;
+    padding: 1rem 0 2rem;
+    overflow: visible;
+  }
+
   .social-shell,
   .auth-hero-grid,
   .auth-preview-grid,
   .message-layout,
   .landing-grid {
     grid-template-columns: 1fr;
+    height: auto;
   }
 
   .social-sidebar-frame,
   .social-rail-frame,
   .column-header {
     position: static;
+    height: auto;
     max-height: none;
     overflow: visible;
   }
@@ -1428,6 +1451,12 @@ select {
   .reply-form-actions {
     display: grid;
     justify-items: stretch;
+  }
+
+  .social-center,
+  .column-body {
+    height: auto;
+    overflow: visible;
   }
 
   .column-header,

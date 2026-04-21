@@ -93,13 +93,18 @@ select {
   display: grid;
   gap: 1rem;
   padding-top: 0.75rem;
-  max-height: calc(100dvh - 1.5rem);
-  overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 .social-sidebar-frame {
+  max-height: calc(100dvh - 1.5rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
   padding-right: 0.75rem;
+}
+
+.social-rail-frame {
+  align-content: start;
+  overflow: visible;
 }
 
 .brand-lockup {

@@ -70,10 +70,43 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
       viewer={viewer}
       rightRail={
         <>
-          <section className="rail-card">
+          <section className="rail-card rail-card-accent">
             <div className="section-intro">
-              <p className="eyebrow">Participants</p>
-              <h2>{participants.length} people involved</h2>
+              <p className="eyebrow">Conversation</p>
+              <h2>Thread overview</h2>
+            </div>
+            <div className="rail-metric-strip">
+              <div className="rail-metric">
+                <span className="rail-metric-value">{thread.focus.metrics.replyCount}</span>
+                <span className="rail-metric-label">Replies</span>
+              </div>
+              <div className="rail-metric">
+                <span className="rail-metric-value">{thread.focus.metrics.likeCount}</span>
+                <span className="rail-metric-label">Likes</span>
+              </div>
+            </div>
+            <div className="rail-metric-strip">
+              <div className="rail-metric">
+                <span className="rail-metric-value">{thread.focus.metrics.repostCount}</span>
+                <span className="rail-metric-label">Reposts</span>
+              </div>
+              <div className="rail-metric">
+                <span className="rail-metric-value">{participants.length}</span>
+                <span className="rail-metric-label">People</span>
+              </div>
+            </div>
+            <p className="section-copy">
+              Started by @{thread.focus.author?.handle ?? "unknown"} {formatPostTimestamp(thread.focus.createdAt)}.
+            </p>
+          </section>
+
+          <section className="rail-card">
+            <div className="rail-heading-row">
+              <div className="section-intro">
+                <p className="eyebrow">Participants</p>
+                <h2>{participants.length} people involved</h2>
+              </div>
+              <span className="follow-chip viewer">Thread</span>
             </div>
             {participants.length === 0 ? (
               <p className="muted-copy">No participants recorded yet.</p>
@@ -96,7 +129,13 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
                         </p>
                       </div>
                     </div>
-                    <p className="engagement-copy">{participant.roles.join(" | ")}</p>
+                    <div className="engagement-role-row">
+                      {participant.roles.map((role) => (
+                        <span className="engagement-role-chip" key={`${participant.userId}-${role}`}>
+                          {role}
+                        </span>
+                      ))}
+                    </div>
                   </article>
                 ))}
               </div>
@@ -142,10 +181,13 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
       }
     >
       {thread.ancestors.length > 0 ? (
-        <section className="panel timeline-panel">
-          <div className="section-intro">
+        <section className="panel timeline-panel thread-stage thread-stage-muted">
+          <div className="section-intro thread-stage-head">
             <p className="eyebrow">Context</p>
             <h2>Posts leading into this conversation</h2>
+            <p className="thread-stage-copy">
+              Read upward from here if you want the setup before the focus post.
+            </p>
           </div>
           <FeedList
             emptyBody=""
@@ -158,10 +200,19 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
         </section>
       ) : null}
 
-      <section className="panel timeline-panel">
-        <div className="section-intro">
+      <section className="panel timeline-panel thread-stage thread-focus-stage">
+        <div className="section-intro thread-stage-head">
           <p className="eyebrow">Focus post</p>
-          <h2>Thread starter</h2>
+          <h2>Conversation root</h2>
+          <p className="thread-stage-copy">
+            This is the post everyone in this thread is reacting to.
+          </p>
+        </div>
+        <div className="thread-focus-summary">
+          <span className="thread-focus-tag">@{thread.focus.author?.handle ?? "unknown"}</span>
+          <span className="thread-focus-tag">{formatPostTimestamp(thread.focus.createdAt)}</span>
+          <span className="thread-focus-tag">{thread.focus.metrics.replyCount} replies</span>
+          <span className="thread-focus-tag">{thread.focus.metrics.likeCount} likes</span>
         </div>
         <FeedList
           deleteRedirectPath="/"
@@ -174,10 +225,13 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
         />
       </section>
 
-      <section className="panel timeline-panel">
-        <div className="section-intro">
+      <section className="panel timeline-panel thread-stage">
+        <div className="section-intro thread-stage-head">
           <p className="eyebrow">Replies</p>
           <h2>Direct responses</h2>
+          <p className="thread-stage-copy">
+            Direct replies stay here so the thread remains readable without nested branching.
+          </p>
         </div>
         <FeedList
           emptyBody="No direct replies yet. Use the reply composer on the focus post to start the conversation."

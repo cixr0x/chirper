@@ -979,6 +979,55 @@ select {
   overflow: hidden;
 }
 
+.thread-stage {
+  padding: 0;
+}
+
+.thread-stage-muted {
+  opacity: 0.94;
+}
+
+.thread-stage-head {
+  padding: 1rem 1.15rem 0.8rem;
+  margin: 0;
+  border-bottom: 1px solid rgba(188, 203, 216, 0.58);
+}
+
+.thread-stage-copy {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.thread-focus-stage {
+  background:
+    radial-gradient(circle at top right, rgba(22, 119, 255, 0.05), transparent 36%),
+    rgba(255, 255, 255, 0.34);
+}
+
+.thread-focus-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding: 0.85rem 1.15rem;
+  border-bottom: 1px solid rgba(188, 203, 216, 0.58);
+}
+
+.thread-focus-tag,
+.engagement-role-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.32rem 0.66rem;
+  border-radius: 999px;
+  background: rgba(98, 117, 139, 0.1);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .timeline-composer-block,
 .timeline-feed-block {
   background: transparent;
@@ -1406,6 +1455,13 @@ select {
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
+}
+
+.engagement-role-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
 }
 
 .notification-kind {

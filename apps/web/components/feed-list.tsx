@@ -212,13 +212,13 @@ export function FeedList({
                       <h3 className="feed-author-name">{item.author?.displayName ?? "Unknown author"}</h3>
                       <p className="feed-author-meta">
                         <span className="feed-author-handle">
-                        {item.author ? (
-                          <Link className="inline-link" href={`/u/${item.author.handle}`}>
-                            @{item.author.handle}
-                          </Link>
-                        ) : (
-                          "@unknown"
-                        )}
+                          {item.author ? (
+                            <Link className="inline-link" href={`/u/${item.author.handle}`}>
+                              @{item.author.handle}
+                            </Link>
+                          ) : (
+                            "@unknown"
+                          )}
                         </span>
                         <span className="feed-author-separator" aria-hidden="true">
                           ·

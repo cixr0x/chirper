@@ -22,24 +22,32 @@ export function NotificationList({ items, emptyTitle, emptyBody }: NotificationL
     <div className="notification-list">
       {items.map((notification) => (
         <article className="notification-card" key={notification.notificationId}>
-          <div className="feed-head">
-            <AvatarBadge
-              avatarUrl={notification.actor?.avatarUrl}
-              displayName={notification.actor?.displayName ?? "Unknown actor"}
-              size="small"
-            />
-            <div>
-              <h3>{notification.actor?.displayName ?? "Unknown actor"}</h3>
-              <p className="handle">
-                {notification.actor ? (
-                  <Link className="inline-link" href={`/u/${notification.actor.handle}`}>
-                    @{notification.actor.handle}
-                  </Link>
-                ) : (
-                  "system"
-                )}{" "}
-                | {formatPostTimestamp(notification.createdAt)}
-              </p>
+          <div className="notification-card-head">
+            <div className="feed-head">
+              <AvatarBadge
+                avatarUrl={notification.actor?.avatarUrl}
+                displayName={notification.actor?.displayName ?? "Unknown actor"}
+                size="small"
+              />
+              <div>
+                <h3>{notification.actor?.displayName ?? "Unknown actor"}</h3>
+                <p className="handle">
+                  {notification.actor ? (
+                    <Link className="inline-link" href={`/u/${notification.actor.handle}`}>
+                      @{notification.actor.handle}
+                    </Link>
+                  ) : (
+                    "system"
+                  )}{" "}
+                  | {formatPostTimestamp(notification.createdAt)}
+                </p>
+              </div>
+            </div>
+            <div className="notification-state">
+              {!notification.isRead ? <span className="notification-unread-dot" aria-hidden="true" /> : null}
+              <span className={`notification-kind ${notification.isRead ? "" : "unread"}`.trim()}>
+                {formatNotificationType(notification.type)}
+              </span>
             </div>
           </div>
           <p className="notification-copy">{notification.summary}</p>
@@ -47,4 +55,21 @@ export function NotificationList({ items, emptyTitle, emptyBody }: NotificationL
       ))}
     </div>
   );
+}
+
+function formatNotificationType(type: string) {
+  switch (type) {
+    case "new_post":
+      return "Post";
+    case "follow":
+      return "Follow";
+    case "reply":
+      return "Reply";
+    case "like":
+      return "Like";
+    case "repost":
+      return "Repost";
+    default:
+      return type.replace(/_/g, " ");
+  }
 }

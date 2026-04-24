@@ -46,10 +46,25 @@ export default async function NotificationsPage({ searchParams }: NotificationsP
       rightRail={
         <>
           <section className="rail-card">
-            <p className="eyebrow">Status</p>
-            <h2>{notificationsResult.lastPage.unreadCount} unread</h2>
+            <div className="rail-heading-row">
+              <div className="section-intro">
+                <p className="eyebrow">Status</p>
+                <h2>{notificationsResult.lastPage.unreadCount} unread</h2>
+              </div>
+              <span className="follow-chip viewer">Live</span>
+            </div>
+            <div className="rail-metric-strip">
+              <div className="rail-metric">
+                <span className="rail-metric-value">{notificationsResult.lastPage.unreadCount}</span>
+                <span className="rail-metric-label">Unread</span>
+              </div>
+              <div className="rail-metric">
+                <span className="rail-metric-value">{notificationsResult.items.length}</span>
+                <span className="rail-metric-label">Loaded now</span>
+              </div>
+            </div>
             <p className="muted-copy">
-              Follow, like, repost, reply, and new-post activity all lands here.
+              Follow, like, repost, reply, and new-post activity lands here in reverse order.
             </p>
             <form action={markNotificationsReadAction}>
               <input name="targetPath" type="hidden" value="/notifications" />

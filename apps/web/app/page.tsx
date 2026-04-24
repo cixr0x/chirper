@@ -278,7 +278,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </section>
       ) : null}
 
-      <section className="panel timeline-surface">
+      <section className="panel timeline-surface" id="composer">
         <div className="timeline-composer-block">
           <form action={createPostAction} className="home-composer">
             <input name="targetProfileHandle" type="hidden" value={viewer.handle} />

@@ -74,6 +74,16 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               <p className="eyebrow">Overview</p>
               <h2>{user.displayName}</h2>
             </div>
+            <div className="rail-metric-strip">
+              <Link className="rail-metric" href={`${profilePath}/followers`}>
+                <span className="rail-metric-value">{followers.totalCount}</span>
+                <span className="rail-metric-label">Followers</span>
+              </Link>
+              <Link className="rail-metric" href={`${profilePath}/following`}>
+                <span className="rail-metric-value">{following.totalCount}</span>
+                <span className="rail-metric-label">Following</span>
+              </Link>
+            </div>
             <p className="muted-copy">{user.bio || "This profile has not added a bio yet."}</p>
             <div className="profile-meta">
               <span>{user.location || "Location pending"}</span>
@@ -84,6 +94,13 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
                 {following.totalCount} following
               </Link>
             </div>
+            <p className="profile-rail-note">
+              {isViewer
+                ? "You are looking at your public profile."
+                : isFollowing
+                  ? `You are following @${user.handle}.`
+                  : `You are not following @${user.handle} yet.`}
+            </p>
           </section>
 
           <section className="rail-card">

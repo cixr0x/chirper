@@ -139,12 +139,13 @@ select {
 .brand-copy span {
   color: var(--muted);
   font-size: 0.82rem;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .primary-nav {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.2rem;
   margin-top: 1.25rem;
 }
 
@@ -153,25 +154,47 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.9rem 1rem;
-  border-radius: 18px;
+  padding: 0.95rem 0.9rem;
+  border-radius: 14px;
   color: var(--ink);
   text-decoration: none;
-  font-weight: 600;
+  font-size: 1.02rem;
+  font-weight: 700;
   transition:
     background 140ms ease,
-    color 140ms ease,
-    transform 140ms ease;
+    color 140ms ease;
+}
+
+.nav-link-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.nav-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.92);
-  transform: translateX(2px);
+  background: rgba(16, 27, 43, 0.05);
 }
 
 .nav-link.active {
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: #fff;
+  background: rgba(22, 119, 255, 0.12);
+  color: var(--accent-strong);
 }
 
 .nav-link-disabled {
@@ -187,8 +210,13 @@ select {
   height: 1.8rem;
   padding: 0 0.5rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(98, 117, 139, 0.16);
   font-size: 0.8rem;
+}
+
+.nav-link.active .nav-count {
+  background: var(--accent-strong);
+  color: #fff;
 }
 
 .sidebar-account,
@@ -210,6 +238,37 @@ select {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+}
+
+.sidebar-compose-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.2rem;
+  padding: 0.8rem 1.15rem;
+  border-radius: 999px;
+  background: #101b2b;
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.sidebar-account-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0 0;
+  border-top: 1px solid rgba(188, 203, 216, 0.72);
+}
+
+.sidebar-signout {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .sidebar-account-name,
@@ -342,6 +401,16 @@ select {
   margin-bottom: 1rem;
 }
 
+.rail-heading-row,
+.message-list-head,
+.notification-card-head,
+.conversation-meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .eyebrow {
   margin: 0;
   color: var(--muted);
@@ -354,6 +423,37 @@ select {
 .lede {
   margin-top: 1rem;
   font-size: 1.05rem;
+}
+
+.rail-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.rail-metric {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(188, 203, 216, 0.82);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.68);
+  text-decoration: none;
+}
+
+.rail-metric-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.rail-metric-label {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .auth-hero-grid,
@@ -1240,6 +1340,39 @@ select {
   gap: 0.5rem;
 }
 
+.notification-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.notification-kind {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(98, 117, 139, 0.12);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.notification-kind.unread {
+  background: rgba(22, 119, 255, 0.12);
+  color: var(--accent-strong);
+}
+
+.notification-unread-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
 .notification-list > :first-child,
 .engagement-stack > :first-child,
 .mini-profile-list > :first-child,
@@ -1358,6 +1491,12 @@ select {
   color: var(--accent-strong);
 }
 
+.profile-rail-note {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .preview-stack {
   display: grid;
   justify-items: start;
@@ -1413,10 +1552,64 @@ select {
 
 .message-layout {
   grid-template-columns: minmax(280px, 0.7fr) minmax(0, 1.3fr);
+  gap: 0;
+  border: 1px solid rgba(188, 203, 216, 0.78);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .message-placeholder {
   min-height: 340px;
+}
+
+.message-layout > .panel {
+  border-bottom: none;
+}
+
+.message-layout > .panel + .panel {
+  border-left: 1px solid rgba(188, 203, 216, 0.78);
+}
+
+.conversation-list-panel,
+.message-placeholder {
+  padding: 1.25rem;
+}
+
+.message-list-head {
+  padding-bottom: 0.95rem;
+  border-bottom: 1px solid rgba(188, 203, 216, 0.72);
+}
+
+.conversation-card.active {
+  background: rgba(22, 119, 255, 0.05);
+}
+
+.conversation-row {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.conversation-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-placeholder-copy {
+  display: grid;
+  gap: 1rem;
+  max-width: 34rem;
+}
+
+.message-placeholder-list {
+  display: grid;
+  gap: 0.7rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(188, 203, 216, 0.72);
+}
+
+.message-placeholder-list p {
+  margin: 0;
+  font-weight: 700;
 }
 
 .empty-state {
@@ -1528,6 +1721,16 @@ select {
     overflow: visible;
   }
 
+  .message-layout {
+    gap: 1rem;
+    border: none;
+    background: transparent;
+  }
+
+  .message-layout > .panel + .panel {
+    border-left: none;
+  }
+
   .column-header,
   .inline-banner,
   .profile-summary-head,
@@ -1553,6 +1756,14 @@ select {
 
   .primary-nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nav-link {
+    font-size: 0.95rem;
+  }
+
+  .rail-metric-strip {
+    grid-template-columns: 1fr;
   }
 
   .panel,

@@ -135,7 +135,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
           <div className="profile-summary-head">
             <div className="profile-summary-copy">
               <AvatarBadge avatarUrl={user.avatarUrl} displayName={user.displayName} size="profile" />
-              <div>
+              <div className="profile-summary-identity">
                 <div className="identity-row">
                   <h2>{user.displayName}</h2>
                   <span className={`status-pill ${user.status}`}>{user.status}</span>
@@ -170,6 +170,20 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
           </div>
 
           <p className="bio large">{user.bio || "This profile is ready for its next post."}</p>
+          <div className="profile-stat-strip">
+            <Link className="profile-stat" href={`${profilePath}/followers`}>
+              <strong>{followers.totalCount}</strong>
+              <span>Followers</span>
+            </Link>
+            <Link className="profile-stat" href={`${profilePath}/following`}>
+              <strong>{following.totalCount}</strong>
+              <span>Following</span>
+            </Link>
+            <div className="profile-stat">
+              <strong>{user.location || "Pending"}</strong>
+              <span>Location</span>
+            </div>
+          </div>
           <div className="profile-meta">
             <span>{user.location || "Location pending"}</span>
             <Link className="inline-link" href={`${profilePath}/followers`}>

@@ -209,8 +209,9 @@ export function FeedList({
                 <div className="feed-head">
                   <div className="feed-author-block">
                     <div className="feed-author-line">
-                      <h3>{item.author?.displayName ?? "Unknown author"}</h3>
-                      <span className="feed-author-handle">
+                      <h3 className="feed-author-name">{item.author?.displayName ?? "Unknown author"}</h3>
+                      <p className="feed-author-meta">
+                        <span className="feed-author-handle">
                         {item.author ? (
                           <Link className="inline-link" href={`/u/${item.author.handle}`}>
                             @{item.author.handle}
@@ -218,8 +219,12 @@ export function FeedList({
                         ) : (
                           "@unknown"
                         )}
-                      </span>
-                      <span className="feed-timestamp">{formatPostTimestamp(item.createdAt)}</span>
+                        </span>
+                        <span className="feed-author-separator" aria-hidden="true">
+                          ·
+                        </span>
+                        <span className="feed-timestamp">{formatPostTimestamp(item.createdAt)}</span>
+                      </p>
                     </div>
                   </div>
                 </div>

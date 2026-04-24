@@ -20,6 +20,21 @@ const demoCredentials = [
   { handle: "omar", password: "chirper-omar" },
 ];
 
+const landingPreviewPosts = [
+  {
+    author: "Alana Pierce",
+    handle: "@alana",
+    body: "Shipping the next UI pass. The goal is one calm, readable surface instead of a dashboard of boxes.",
+    meta: "12 replies · 48 likes",
+  },
+  {
+    author: "Omar Chavez",
+    handle: "@omar",
+    body: "The local Kubernetes deploy loop is finally fast enough to keep polishing the product without waiting on every service.",
+    meta: "5 reposts · 19 likes",
+  },
+];
+
 type HomePageProps = {
   searchParams?: Promise<{
     auth?: string;
@@ -62,6 +77,18 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <li>Simple entry, no dashboard clutter.</li>
               <li>Posts, profiles, replies, and notifications in one flow.</li>
             </ul>
+            <div className="landing-preview-stack" aria-hidden="true">
+              {landingPreviewPosts.map((post) => (
+                <article className="landing-preview-card" key={post.handle}>
+                  <div className="landing-preview-head">
+                    <strong>{post.author}</strong>
+                    <span>{post.handle}</span>
+                  </div>
+                  <p>{post.body}</p>
+                  <span>{post.meta}</span>
+                </article>
+              ))}
+            </div>
           </article>
 
           <section className="landing-auth-panel">
@@ -148,6 +175,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     Open recovery flow
                   </Link>
                 )}
+              </div>
+            </div>
+
+            <div className="landing-auth-support">
+              <div>
+                <p className="eyebrow">Fast start</p>
+                <p className="section-copy">Create an account or use the seeded demo credentials below.</p>
+              </div>
+              <div>
+                <p className="eyebrow">Recovery</p>
+                <p className="section-copy">Password reset lives in the same product flow if you need it.</p>
               </div>
             </div>
 

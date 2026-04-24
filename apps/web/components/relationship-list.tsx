@@ -34,22 +34,17 @@ export function RelationshipList({
           <div className="feed-main-row">
             <AvatarBadge avatarUrl={user.avatarUrl} displayName={user.displayName} size="small" />
             <div className="feed-main-copy">
-              <div className="identity-row">
-                <div>
+              <div className="relationship-identity-row">
+                <div className="relationship-identity-copy">
                   <h3>{user.displayName}</h3>
                   <p className="handle">@{user.handle}</p>
                 </div>
                 <span className={`status-pill ${user.status}`}>{user.status}</span>
               </div>
               <p className="bio">{user.bio || "Profile is ready for the next update."}</p>
-              <div className="feed-meta-row">
-                <span>{user.location || "Location pending"}</span>
-                <span>{user.links.length} links</span>
-                <Link className="inline-link" href={`/u/${user.handle}`}>
-                  Open profile
-                </Link>
-              </div>
-              <div className="relationship-action-row">
+              <div className="relationship-trail">
+                <span className="thread-focus-tag">{user.location || "Location pending"}</span>
+                <span className="thread-focus-tag">{user.links.length} links</span>
                 <span
                   className={`follow-chip ${user.isViewer ? "viewer" : user.isFollowedByViewer ? "following" : ""}`}
                 >
@@ -61,6 +56,11 @@ export function RelationshipList({
                         : "Not followed"
                     : "Signed out"}
                 </span>
+                <Link className="inline-link" href={`/u/${user.handle}`}>
+                  Open profile
+                </Link>
+              </div>
+              <div className="relationship-action-row">
                 {viewerUserId && !user.isViewer ? (
                   <form action={user.isFollowedByViewer ? unfollowUserAction : followUserAction}>
                     <input name="followeeUserId" type="hidden" value={user.userId} />

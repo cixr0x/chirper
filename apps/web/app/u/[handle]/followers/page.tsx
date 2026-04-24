@@ -50,22 +50,38 @@ export default async function FollowersPage({ params, searchParams }: PageProps)
       title={`People following @${user.handle}`}
       viewer={viewer}
       rightRail={
-        <section className="rail-card">
-          <div className="section-intro">
-            <p className="eyebrow">Overview</p>
-            <h2>{followers.lastPage.totalCount} total</h2>
-          </div>
-          <p className="muted-copy">
-            This list is read from the graph service and enriched through the BFF with identity and
-            profile summaries.
-          </p>
-          <Link className="inline-link" href={`/u/${user.handle}`}>
-            Back to @{user.handle}
-          </Link>
-        </section>
+        <>
+          <section className="rail-card rail-card-accent">
+            <div className="section-intro">
+              <p className="eyebrow">Overview</p>
+              <h2>{followers.lastPage.totalCount} followers</h2>
+            </div>
+            <div className="rail-metric-strip">
+              <div className="rail-metric">
+                <span className="rail-metric-value">{followers.items.length}</span>
+                <span className="rail-metric-label">Loaded</span>
+              </div>
+              <div className="rail-metric">
+                <span className="rail-metric-value">{followers.lastPage.totalCount}</span>
+                <span className="rail-metric-label">Total</span>
+              </div>
+            </div>
+            <p className="section-copy">Read from the graph service and enriched with profile summaries through the BFF.</p>
+          </section>
+          <section className="rail-card">
+            <Link className="inline-link" href={`/u/${user.handle}`}>
+              Back to @{user.handle}
+            </Link>
+          </section>
+        </>
       }
     >
       <section className="panel timeline-panel">
+        <div className="section-intro thread-stage-head">
+          <p className="eyebrow">Followers</p>
+          <h2>People following @{user.handle}</h2>
+          <p className="thread-stage-copy">Open profiles or follow people back without leaving the relationship view.</p>
+        </div>
         <RelationshipList
           emptyBody={`@${user.handle} does not have any followers yet.`}
           emptyTitle="No followers yet"

@@ -33,6 +33,14 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
     !viewer.avatarUrl &&
     !viewer.bannerUrl;
   const linkRows = buildEditableLinkRows(viewer.links);
+  const completionItems = [
+    Boolean(viewer.bio),
+    Boolean(viewer.location),
+    Boolean(viewer.avatarAssetId || viewer.avatarUrl),
+    Boolean(viewer.bannerAssetId || viewer.bannerUrl),
+    viewer.links.length > 0,
+  ];
+  const completedCount = completionItems.filter(Boolean).length;
 
   return (
     <AppShell
@@ -42,17 +50,37 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
       title="Profile setup"
       viewer={viewer}
       rightRail={
-        <section className="rail-card">
-          <div className="section-intro">
-            <p className="eyebrow">Preview</p>
-            <h2>{viewer.displayName}</h2>
-          </div>
-          <div className="preview-stack">
-            <AvatarBadge avatarUrl={viewer.avatarUrl} displayName={viewer.displayName} size="profile" />
-            <p className="handle">@{viewer.handle}</p>
-            <p className="muted-copy">{viewer.bio || "No bio yet. Add one in the form to give the account a voice."}</p>
-          </div>
-        </section>
+        <>
+          <section className="rail-card rail-card-accent">
+            <div className="section-intro">
+              <p className="eyebrow">Progress</p>
+              <h2>{completedCount}/5 complete</h2>
+            </div>
+            <div className="rail-metric-strip">
+              <div className="rail-metric">
+                <span className="rail-metric-value">{completedCount}</span>
+                <span className="rail-metric-label">Completed</span>
+              </div>
+              <div className="rail-metric">
+                <span className="rail-metric-value">{5 - completedCount}</span>
+                <span className="rail-metric-label">Remaining</span>
+              </div>
+            </div>
+            <p className="section-copy">Fill the basics so the account looks deliberate the first time someone opens it.</p>
+          </section>
+
+          <section className="rail-card">
+            <div className="section-intro">
+              <p className="eyebrow">Preview</p>
+              <h2>{viewer.displayName}</h2>
+            </div>
+            <div className="preview-stack">
+              <AvatarBadge avatarUrl={viewer.avatarUrl} displayName={viewer.displayName} size="profile" />
+              <p className="handle">@{viewer.handle}</p>
+              <p className="muted-copy">{viewer.bio || "No bio yet. Add one in the form to give the account a voice."}</p>
+            </div>
+          </section>
+        </>
       }
     >
       <section className="panel editor-panel">

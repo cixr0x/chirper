@@ -30,6 +30,11 @@ export default async function ResetPage({ searchParams }: ResetPageProps) {
             Identity owns token issuance and consumption. The web app only renders the request and
             confirm steps and stores the fresh session after a successful reset.
           </p>
+          <ul className="auth-bullet-list">
+            <li>Request a temporary reset token from identity.</li>
+            <li>Confirm the token with a new password.</li>
+            <li>Return to the timeline with a fresh session.</li>
+          </ul>
           <Link className="inline-link" href="/">
             Back to login
           </Link>
@@ -97,6 +102,17 @@ export default async function ResetPage({ searchParams }: ResetPageProps) {
               walk the full recovery flow.
             </p>
             {expiresAt ? <p className="muted-copy">Expires at {expiresAt}.</p> : null}
+          </article>
+          <article className="panel auth-preview-panel auth-card-soft">
+            <div className="section-intro">
+              <p className="eyebrow">Flow</p>
+              <h2>Recovery steps</h2>
+            </div>
+            <div className="message-placeholder-list">
+              <p>1. Request a token for the handle.</p>
+              <p>2. Paste the token into the confirm form.</p>
+              <p>3. Set a new password and continue signed in.</p>
+            </div>
           </article>
         </section>
       ) : null}

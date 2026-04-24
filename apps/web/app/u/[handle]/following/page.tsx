@@ -50,22 +50,38 @@ export default async function FollowingPage({ params, searchParams }: PageProps)
       title={`People @${user.handle} follows`}
       viewer={viewer}
       rightRail={
-        <section className="rail-card">
-          <div className="section-intro">
-            <p className="eyebrow">Overview</p>
-            <h2>{following.lastPage.totalCount} total</h2>
-          </div>
-          <p className="muted-copy">
-            These cards are composed through the BFF on top of graph edges rather than by reading
-            foreign tables directly.
-          </p>
-          <Link className="inline-link" href={`/u/${user.handle}`}>
-            Back to @{user.handle}
-          </Link>
-        </section>
+        <>
+          <section className="rail-card rail-card-accent">
+            <div className="section-intro">
+              <p className="eyebrow">Overview</p>
+              <h2>{following.lastPage.totalCount} following</h2>
+            </div>
+            <div className="rail-metric-strip">
+              <div className="rail-metric">
+                <span className="rail-metric-value">{following.items.length}</span>
+                <span className="rail-metric-label">Loaded</span>
+              </div>
+              <div className="rail-metric">
+                <span className="rail-metric-value">{following.lastPage.totalCount}</span>
+                <span className="rail-metric-label">Total</span>
+              </div>
+            </div>
+            <p className="section-copy">These relationships are composed through the BFF on top of graph edges rather than by reading foreign tables directly.</p>
+          </section>
+          <section className="rail-card">
+            <Link className="inline-link" href={`/u/${user.handle}`}>
+              Back to @{user.handle}
+            </Link>
+          </section>
+        </>
       }
     >
       <section className="panel timeline-panel">
+        <div className="section-intro thread-stage-head">
+          <p className="eyebrow">Following</p>
+          <h2>People @{user.handle} follows</h2>
+          <p className="thread-stage-copy">Use this surface to browse the account graph and jump back into profile detail.</p>
+        </div>
         <RelationshipList
           emptyBody={`@${user.handle} is not following anyone yet.`}
           emptyTitle="No followed accounts yet"

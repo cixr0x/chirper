@@ -59,8 +59,13 @@ export function LiveNotificationEvents() {
 
   return (
     <div className="live-events">
-      <p className="eyebrow">Live activity</p>
-      <h3>Latest notifications</h3>
+      <div className="live-events-head">
+        <div>
+          <p className="eyebrow">Live activity</p>
+          <h3>Fresh notifications</h3>
+        </div>
+        <span className="live-status-pill">Live</span>
+      </div>
       <p className="section-copy">{status}</p>
       {events.length === 0 ? null : (
         <div className="live-event-stack">

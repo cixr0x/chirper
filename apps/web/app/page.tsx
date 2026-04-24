@@ -202,12 +202,36 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       viewer={viewer}
       rightRail={
         <>
-          <section className="rail-card" id="notifications">
+          <section className="rail-card rail-card-accent">
             <div className="section-intro">
-            <p className="eyebrow">Notifications</p>
-            <h2>{notifications.unreadCount} unread</h2>
-          </div>
-          <NotificationList
+              <p className="eyebrow">For you</p>
+              <h2>@{viewer.handle}</h2>
+            </div>
+            <p className="section-copy">
+              Your home feed is pulling from the accounts you follow, your own posts, and the latest
+              activity around your profile.
+            </p>
+            <div className="rail-metric-strip">
+              <div className="rail-metric">
+                <span className="rail-metric-value">{followingUserIds.length}</span>
+                <span className="rail-metric-label">Following</span>
+              </div>
+              <div className="rail-metric">
+                <span className="rail-metric-value">{notifications.unreadCount}</span>
+                <span className="rail-metric-label">Unread</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="rail-card" id="notifications">
+            <div className="rail-heading-row">
+              <div className="section-intro">
+                <p className="eyebrow">Notifications</p>
+                <h2>Inbox snapshot</h2>
+              </div>
+              <span className="follow-chip viewer">{notifications.unreadCount} unread</span>
+            </div>
+            <NotificationList
               emptyBody="Once people follow or interact with your posts, alerts will land here."
               emptyTitle="Nothing new yet"
               items={notifications.notifications}
@@ -228,7 +252,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <section className="rail-card">
             <div className="section-intro">
               <p className="eyebrow">People</p>
-              <h2>Keep the feed moving</h2>
+              <h2>Suggested profiles</h2>
             </div>
             <div className="mini-profile-list">
               {suggestedUsers.length === 0 ? (
@@ -282,6 +306,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <div className="timeline-composer-block">
           <form action={createPostAction} className="home-composer">
             <input name="targetProfileHandle" type="hidden" value={viewer.handle} />
+            <div className="home-composer-intro">
+              <div>
+                <p className="eyebrow">Post</p>
+                <h2>Share something with your timeline</h2>
+              </div>
+              <span className="composer-limit">280 characters</span>
+            </div>
             <div className="home-composer-main">
               <AvatarBadge avatarUrl={viewer.avatarUrl} displayName={viewer.displayName} size="small" />
               <div className="home-composer-field">
@@ -294,6 +325,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   type="text"
                 />
                 <div className="home-composer-footer">
+                  <p className="section-copy">This goes straight into your public timeline.</p>
                   <button className="primary-button compact" type="submit">
                     Post
                   </button>

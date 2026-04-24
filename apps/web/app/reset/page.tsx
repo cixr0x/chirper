@@ -27,11 +27,11 @@ export default async function ResetPage({ searchParams }: ResetPageProps) {
           <p className="eyebrow">Reset password</p>
           <h1>Recover access without leaving the product flow.</h1>
           <p className="lede">
-            Identity owns token issuance and consumption. The web app only renders the request and
-            confirm steps and stores the fresh session after a successful reset.
+            Request a temporary reset token, choose a new password, and return to the timeline with
+            a fresh session.
           </p>
           <ul className="auth-bullet-list">
-            <li>Request a temporary reset token from identity.</li>
+            <li>Request a temporary reset token for your handle.</li>
             <li>Confirm the token with a new password.</li>
             <li>Return to the timeline with a fresh session.</li>
           </ul>
@@ -44,7 +44,7 @@ export default async function ResetPage({ searchParams }: ResetPageProps) {
           <article className="auth-card">
             <div className="section-intro">
               <p className="eyebrow">Request token</p>
-              <h2>Issue reset token</h2>
+              <h2>Send reset token</h2>
             </div>
             {requestState ? (
               <p className={`notice ${requestState.tone === "error" ? "notice-error" : "notice-success"}`}>

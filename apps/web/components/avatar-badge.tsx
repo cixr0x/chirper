@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { getInitials } from "../lib/bff";
 
 type AvatarBadgeProps = {
@@ -7,6 +10,7 @@ type AvatarBadgeProps = {
 };
 
 export function AvatarBadge({ avatarUrl, displayName, size = "default" }: AvatarBadgeProps) {
+  const [imageFailed, setImageFailed] = useState(false);
   const className =
     size === "profile"
       ? "profile-avatar"
@@ -14,9 +18,20 @@ export function AvatarBadge({ avatarUrl, displayName, size = "default" }: Avatar
         ? "avatar-badge small"
         : "avatar-badge";
 
-  if (avatarUrl) {
-    return <img alt={`${displayName} avatar`} className={`${className} avatar-image`} src={avatarUrl} />;
+  if (avatarUrl && !imageFailed) {
+    return (
+      <img
+        alt={`${displayName} avatar`}
+        className={`${className} avatar-image`}
+        onError={() => setImageFailed(true)}
+        src={avatarUrl}
+      />
+    );
   }
 
-  return <div className={className}>{getInitials(displayName)}</div>;
+  return (
+    <div aria-label={`${displayName} avatar`} className={className}>
+      {getInitials(displayName)}
+    </div>
+  );
 }

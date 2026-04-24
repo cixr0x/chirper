@@ -59,6 +59,11 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
   const isFollowing = viewer ? followingUserIds.includes(user.userId) : false;
   const accountMessage = getProfileMessage(filters?.account);
   const linkRows = buildEditableLinkRows(user.links);
+  const bannerStyle = user.bannerUrl
+    ? {
+        backgroundImage: `radial-gradient(circle at 100% 0, rgba(255, 255, 255, 0.28), transparent 24%), linear-gradient(135deg, #0c5ed0 0%, #2d7dff 44%, #10b981 100%), url(${JSON.stringify(user.bannerUrl)})`,
+      }
+    : undefined;
 
   return (
     <AppShell
@@ -129,7 +134,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
       <section className="panel profile-hero-card">
         <div
           className={`banner-panel ${user.bannerUrl ? "banner-panel-image" : ""}`}
-          style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : undefined}
+          style={bannerStyle}
         />
         <div className="profile-summary">
           <div className="profile-summary-head">

@@ -12,6 +12,7 @@ type AppShellProps = {
   title: string;
   description?: string;
   showHeader?: boolean;
+  wideCenter?: boolean;
   children: ReactNode;
   rightRail?: ReactNode;
 };
@@ -24,6 +25,7 @@ export function AppShell({
   title,
   description,
   showHeader = true,
+  wideCenter = false,
   children,
   rightRail,
 }: AppShellProps) {
@@ -120,7 +122,7 @@ export function AppShell({
           </div>
         </aside>
 
-        <section className="social-center">
+        <section className={`social-center ${wideCenter ? "social-center-wide" : ""}`.trim()}>
           {showHeader ? (
             <header className="column-header">
               <div>

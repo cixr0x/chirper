@@ -66,7 +66,7 @@ export default async function FollowersPage({ params, searchParams }: PageProps)
                 <span className="rail-metric-label">Total</span>
               </div>
             </div>
-            <p className="section-copy">Read from the graph service and enriched with profile summaries through the BFF.</p>
+            <p className="section-copy">Browse the audience around this profile and open any account for more context.</p>
           </section>
           <section className="rail-card">
             <Link className="inline-link" href={`/u/${user.handle}`}>

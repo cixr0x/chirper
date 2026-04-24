@@ -89,8 +89,8 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
           <h2>{isBlankProfile ? "Complete the basics" : "Refine your public profile"}</h2>
         </div>
         <p className="muted-copy">
-          This writes only to profile-owned tables. Identity and session data stay unchanged while you
-          shape the account presentation.
+          Add the details people see first: a short bio, location, image references, and any public links
+          that help the profile feel complete.
         </p>
         {accountMessage ? (
           <p className={`notice ${accountMessage.tone === "error" ? "notice-error" : "notice-success"}`}>

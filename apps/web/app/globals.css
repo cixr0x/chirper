@@ -293,6 +293,10 @@ select {
   background: rgba(255, 255, 255, 0.72);
 }
 
+.social-center-wide {
+  width: min(100%, 860px);
+}
+
 .column-header {
   position: sticky;
   top: 0;
@@ -1435,6 +1439,8 @@ select {
   border: 1px solid var(--line);
   border-radius: 22px;
   background: var(--bg-strong);
+  color: inherit;
+  text-decoration: none;
 }
 
 .feed-media-image {

@@ -66,7 +66,7 @@ export default async function FollowingPage({ params, searchParams }: PageProps)
                 <span className="rail-metric-label">Total</span>
               </div>
             </div>
-            <p className="section-copy">These relationships are composed through the BFF on top of graph edges rather than by reading foreign tables directly.</p>
+            <p className="section-copy">Browse the accounts this profile follows and jump into any public profile.</p>
           </section>
           <section className="rail-card">
             <Link className="inline-link" href={`/u/${user.handle}`}>
@@ -80,7 +80,7 @@ export default async function FollowingPage({ params, searchParams }: PageProps)
         <div className="section-intro thread-stage-head">
           <p className="eyebrow">Following</p>
           <h2>People @{user.handle} follows</h2>
-          <p className="thread-stage-copy">Use this surface to browse the account graph and jump back into profile detail.</p>
+          <p className="thread-stage-copy">Use this surface to browse the network and jump back into profile detail.</p>
         </div>
         <RelationshipList
           emptyBody={`@${user.handle} is not following anyone yet.`}

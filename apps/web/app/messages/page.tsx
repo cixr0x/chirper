@@ -11,14 +11,14 @@ export default async function MessagesPage() {
     {
       name: "Product design",
       handle: "design",
-      summary: "The chat module is next in line after the main timeline pass.",
+      summary: "Shared a compact layout direction for direct conversations.",
       time: "Now",
       active: true,
     },
     {
-      name: "Infra notes",
-      handle: "ops",
-      summary: "Kafka and Kubernetes work are already in place behind the UI.",
+      name: "Alana Pierce",
+      handle: "alana",
+      summary: "Last message preview will appear here once conversations are active.",
       time: "2h",
       active: false,
     },
@@ -31,9 +31,10 @@ export default async function MessagesPage() {
   return (
     <AppShell
       active="messages"
-      description="A placeholder for the next major product surface."
+      description="Private conversations in a focused inbox."
       title="Messages"
       viewer={session.viewer}
+      wideCenter
     >
       <section className="message-layout">
         <article className="panel conversation-list-panel">
@@ -42,7 +43,7 @@ export default async function MessagesPage() {
               <p className="eyebrow">Inbox</p>
               <h2>Direct conversations</h2>
             </div>
-            <span className="follow-chip viewer">Soon</span>
+            <span className="follow-chip viewer">Preview</span>
           </div>
           <div className="conversation-list">
             {conversations.map((conversation) => (
@@ -66,18 +67,14 @@ export default async function MessagesPage() {
         <article className="panel message-placeholder">
           <div className="section-intro">
             <p className="eyebrow">Compose</p>
-            <h2>Messaging is the next product surface</h2>
+            <h2>Select a conversation</h2>
           </div>
           <div className="message-placeholder-copy">
-            <p>
-              This route is holding the place for real threads, delivery state, and a focused
-              conversation view. The shell is here so the app already behaves like a complete
-              product.
-            </p>
+            <p>Choose an inbox item to open a private thread. New conversations will start from this panel.</p>
             <div className="message-placeholder-list">
-              <p>1. Conversation list on the left.</p>
-              <p>2. Focused thread on the right.</p>
-              <p>3. Composer anchored to the bottom of the thread.</p>
+              <p>Recent conversations stay pinned to the left.</p>
+              <p>Messages, reactions, and delivery status appear in the thread.</p>
+              <p>The composer stays anchored near the bottom of the conversation.</p>
             </div>
           </div>
         </article>

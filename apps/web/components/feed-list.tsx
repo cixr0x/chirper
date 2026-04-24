@@ -220,9 +220,7 @@ export function FeedList({
                             "@unknown"
                           )}
                         </span>
-                        <span className="feed-author-separator" aria-hidden="true">
-                          ·
-                        </span>
+                        <span className="feed-author-separator" aria-hidden="true">/</span>
                         <span className="feed-timestamp">{formatPostTimestamp(item.createdAt)}</span>
                       </p>
                     </div>
@@ -234,26 +232,12 @@ export function FeedList({
                 {item.media.length > 0 ? (
                   <div className={`feed-media-grid feed-media-grid-${Math.min(item.media.length, 4)}`}>
                     {item.media.map((media, index) => (
-                      <a
-                        className="feed-media-card"
-                        href={media.url}
+                      <FeedMediaCard
+                        index={index}
                         key={`${item.postId}-${media.assetId}`}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        {media.mimeType.startsWith("image/") ? (
-                          <img
-                            alt={`Attachment ${index + 1} on post ${item.postId}`}
-                            className="feed-media-image"
-                            src={media.url}
-                          />
-                        ) : (
-                          <div className="feed-media-fallback">
-                            <strong>Open attachment</strong>
-                            <span>{media.mimeType || media.purpose}</span>
-                          </div>
-                        )}
-                      </a>
+                        media={media}
+                        postId={item.postId}
+                      />
                     ))}
                   </div>
                 ) : null}
@@ -390,6 +374,37 @@ function formatCompactCount(value: number) {
 
 function trimTrailingZero(value: string) {
   return value.endsWith(".0") ? value.slice(0, -2) : value;
+}
+
+function FeedMediaCard({
+  index,
+  media,
+  postId,
+}: {
+  index: number;
+  media: FeedItem["media"][number];
+  postId: string;
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const canRenderImage = media.mimeType.startsWith("image/") && !imageFailed;
+
+  return (
+    <a className="feed-media-card" href={media.url} rel="noreferrer" target="_blank">
+      {canRenderImage ? (
+        <img
+          alt={`Attachment ${index + 1} on post ${postId}`}
+          className="feed-media-image"
+          onError={() => setImageFailed(true)}
+          src={media.url}
+        />
+      ) : (
+        <div className="feed-media-fallback">
+          <strong>{imageFailed ? "Attachment unavailable" : "Open attachment"}</strong>
+          <span>{media.mimeType || media.purpose}</span>
+        </div>
+      )}
+    </a>
+  );
 }
 
 function ReplyIcon() {

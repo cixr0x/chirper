@@ -6,6 +6,7 @@ import { FeedList } from "../../../components/feed-list";
 import { formatPostTimestamp, getPostLikes, getPostReposts, getPostThread } from "../../../lib/bff";
 import { appendCursorTrail, buildPathWithSearch, collectPaginatedPages, parseCursorTrail } from "../../../lib/pagination";
 import { getSessionState, getSessionToken } from "../../../lib/session";
+import { formatParticipantHeading, formatThreadOverviewTimestamp } from "../../../lib/thread-detail-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -61,11 +62,13 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
   const threadPath = `/p/${thread.focus.postId}`;
   const threadTargetPath = buildPathWithSearch(threadPath, filters);
   const participants = buildParticipantRows(thread, likesResult.items, repostsResult.items);
+  const overviewTimestamp = formatThreadOverviewTimestamp(formatPostTimestamp(thread.focus.createdAt));
 
   return (
     <AppShell
       description="Follow the parent context, the focus post, and the reply chain in a single reading flow."
       eyebrow="Thread"
+      rightRailClassName="thread-detail-rail"
       title="Conversation"
       viewer={viewer}
       rightRail={
@@ -95,8 +98,16 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
                 <span className="rail-metric-label">People</span>
               </div>
             </div>
-            <p className="section-copy">
-              Started by @{thread.focus.author?.handle ?? "unknown"} {formatPostTimestamp(thread.focus.createdAt)}.
+            <p className="section-copy thread-overview-meta">
+              <span>Started by @{thread.focus.author?.handle ?? "unknown"}</span>
+              <span aria-hidden="true">|</span>
+              <span>{overviewTimestamp.date}</span>
+              {overviewTimestamp.time ? (
+                <>
+                  <span aria-hidden="true">|</span>
+                  <span className="thread-overview-time">{overviewTimestamp.time}</span>
+                </>
+              ) : null}
             </p>
           </section>
 
@@ -104,7 +115,7 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
             <div className="rail-heading-row">
               <div className="section-intro">
                 <p className="eyebrow">Participants</p>
-                <h2>{participants.length} people involved</h2>
+                <h2>{formatParticipantHeading(participants.length)}</h2>
               </div>
               <span className="follow-chip viewer">Thread</span>
             </div>
@@ -220,6 +231,7 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
           emptyTitle=""
           items={[thread.focus]}
           targetPath={threadTargetPath}
+          currentPostId={thread.focus.postId}
           viewerHandle={viewer?.handle}
           viewerUserId={viewer?.userId}
         />
@@ -234,7 +246,7 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
           </p>
         </div>
         <FeedList
-          emptyBody="No direct replies yet. Use the reply composer on the focus post to start the conversation."
+          emptyBody="No direct replies yet. Reply to the focus post to start the conversation."
           emptyTitle="No replies yet"
           items={threadResult.items}
           targetPath={threadTargetPath}

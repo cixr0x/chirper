@@ -18,6 +18,7 @@ type AppShellProps = {
   wideCenter?: boolean;
   children: ReactNode;
   rightRail?: ReactNode;
+  rightRailClassName?: string | undefined;
 };
 
 export async function AppShell({
@@ -32,6 +33,7 @@ export async function AppShell({
   wideCenter = false,
   children,
   rightRail,
+  rightRailClassName,
 }: AppShellProps) {
   const shellNotificationCount =
     viewer && notificationCount === undefined ? await getShellNotificationCount() : (notificationCount ?? 0);
@@ -126,7 +128,7 @@ export async function AppShell({
 
         {rightRail ? (
           <aside className="social-rail">
-            <div className="social-rail-frame">{rightRail}</div>
+            <div className={`social-rail-frame ${rightRailClassName ?? ""}`.trim()}>{rightRail}</div>
           </aside>
         ) : null}
       </div>

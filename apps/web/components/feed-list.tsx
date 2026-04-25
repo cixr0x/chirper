@@ -25,6 +25,7 @@ type FeedListProps = {
   infinitePath?: string | undefined;
   nextCursor?: string | undefined;
   pageSize?: number | undefined;
+  currentPostId?: string | undefined;
 };
 
 type FeedPageResponse = {
@@ -43,6 +44,7 @@ export function FeedList({
   infinitePath,
   nextCursor,
   pageSize = 10,
+  currentPostId,
 }: FeedListProps) {
   const router = useRouter();
   const [feedItems, setFeedItems] = useState(items);
@@ -145,6 +147,7 @@ export function FeedList({
         const replyLabel = buildActionLabel("Reply", item.metrics.replyCount, "reply", "replies");
         const repostLabel = buildActionLabel("Repost", item.metrics.repostCount, "repost", "reposts");
         const likeLabel = buildActionLabel("Like", item.metrics.likeCount, "like", "likes");
+        const isCurrentPost = item.postId === currentPostId;
 
         return (
           <article
@@ -194,10 +197,14 @@ export function FeedList({
                         </span>
                         <span className="feed-author-separator" aria-hidden="true">/</span>
                         <span className="feed-timestamp">{formatPostTimestamp(item.createdAt)}</span>
-                        <span className="feed-author-separator" aria-hidden="true">/</span>
-                        <Link className="inline-link feed-open-link" href={`/p/${item.postId}`}>
-                          Open post
-                        </Link>
+                        {isCurrentPost ? null : (
+                          <>
+                            <span className="feed-author-separator" aria-hidden="true">/</span>
+                            <Link className="inline-link feed-open-link" href={`/p/${item.postId}`}>
+                              Open post
+                            </Link>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>

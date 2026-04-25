@@ -1,24 +1,32 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 
 export function RouteAnnouncerGuard() {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const normalizeEmptyAlerts = () => {
-      for (const element of Array.from(document.querySelectorAll<HTMLElement>('[role="alert"]'))) {
+      const alerts = document.querySelectorAll<HTMLElement>('[role="alert"], [data-chirper-empty-live-region="true"]');
+
+      for (const element of Array.from(alerts)) {
         if (element.textContent?.trim()) {
+          if (element.dataset.chirperEmptyLiveRegion) {
+            element.setAttribute("role", "alert");
+            element.removeAttribute("aria-hidden");
+            delete element.dataset.chirperEmptyLiveRegion;
+          }
           continue;
         }
 
         element.removeAttribute("role");
         element.setAttribute("aria-live", "polite");
+        element.setAttribute("aria-hidden", "true");
         element.dataset.chirperEmptyLiveRegion = "true";
       }
     };
 
     normalizeEmptyAlerts();
     const observer = new MutationObserver(normalizeEmptyAlerts);
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { characterData: true, childList: true, subtree: true });
 
     return () => observer.disconnect();
   }, []);

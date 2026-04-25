@@ -11,27 +11,38 @@ type AvatarBadgeProps = {
 
 export function AvatarBadge({ avatarUrl, displayName, size = "default" }: AvatarBadgeProps) {
   const [imageFailed, setImageFailed] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const className =
     size === "profile"
       ? "profile-avatar"
       : size === "small"
         ? "avatar-badge small"
         : "avatar-badge";
+  const initials = getInitials(displayName);
 
   if (avatarUrl && !imageFailed) {
     return (
-      <img
-        alt={`${displayName} avatar`}
-        className={`${className} avatar-image`}
-        onError={() => setImageFailed(true)}
-        src={avatarUrl}
-      />
+      <span aria-label={`${displayName} avatar`} className={className}>
+        <span aria-hidden="true" className="avatar-fallback-initials">
+          {initials}
+        </span>
+        <img
+          alt=""
+          aria-hidden="true"
+          className="avatar-image avatar-image-layer"
+          draggable={false}
+          onError={() => setImageFailed(true)}
+          onLoad={() => setImageLoaded(true)}
+          src={avatarUrl}
+          style={{ opacity: imageLoaded ? 1 : 0 }}
+        />
+      </span>
     );
   }
 
   return (
     <div aria-label={`${displayName} avatar`} className={className}>
-      {getInitials(displayName)}
+      {initials}
     </div>
   );
 }

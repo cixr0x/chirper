@@ -506,6 +506,7 @@ export function formatPostTimestamp(value: string) {
   const date = new Date(value);
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
+    timeZone: "UTC",
     timeStyle: "short",
   }).format(date);
 }

@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { markNotificationsReadAction } from "../actions";
 import { AppShell } from "../../components/app-shell";
 import { LiveNotificationEvents } from "../../components/live-notification-events";
 import { NotificationList } from "../../components/notification-list";
+import { SignedOutGate } from "../../components/signed-out-gate";
 import { getNotifications } from "../../lib/bff";
 import { appendCursorTrail, collectPaginatedPages, parseCursorTrail } from "../../lib/pagination";
 import { getSessionState, getSessionToken } from "../../lib/session";
@@ -24,7 +24,14 @@ export default async function NotificationsPage({ searchParams }: NotificationsP
   ]);
 
   if (!session || !sessionToken) {
-    redirect("/");
+    return (
+      <SignedOutGate
+        active="notifications"
+        copy="Sign in to view notifications for follows, replies, likes, reposts, and new activity."
+        returnTo="/notifications"
+        title="Sign in to view notifications"
+      />
+    );
   }
 
   const notificationTrail = parseCursorTrail(filters?.trail);

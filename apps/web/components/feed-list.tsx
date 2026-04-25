@@ -32,8 +32,6 @@ type FeedPageResponse = {
   nextCursor: string;
 };
 
-const interactiveSelector = "a,button,input,textarea,select,label,summary,form";
-
 export function FeedList({
   items,
   targetPath,
@@ -126,14 +124,6 @@ export function FeedList({
     return () => observer.disconnect();
   }, [cursor, infinitePath]);
 
-  function shouldIgnoreCardNavigation(target: EventTarget | null) {
-    return target instanceof HTMLElement && Boolean(target.closest(interactiveSelector));
-  }
-
-  function openThread(postId: string) {
-    router.push(`/p/${postId}`);
-  }
-
   if (feedItems.length === 0) {
     return (
       <article className="empty-state">
@@ -152,32 +142,14 @@ export function FeedList({
           item.author?.userId === viewerUserId;
         const canInteract = Boolean(viewerHandle);
         const isReplyComposerOpen = replyComposerPostId === item.postId;
+        const replyLabel = buildActionLabel("Reply", item.metrics.replyCount, "reply", "replies");
+        const repostLabel = buildActionLabel("Repost", item.metrics.repostCount, "repost", "reposts");
+        const likeLabel = buildActionLabel("Like", item.metrics.likeCount, "like", "likes");
 
         return (
           <article
-            className="feed-card feed-card-clickable"
+            className="feed-card"
             key={`${item.activityType}-${item.postId}-${item.projectedAt ?? item.createdAt}`}
-            onClick={(event) => {
-              if (shouldIgnoreCardNavigation(event.target)) {
-                return;
-              }
-
-              openThread(item.postId);
-            }}
-            onKeyDown={(event) => {
-              if (event.key !== "Enter" && event.key !== " ") {
-                return;
-              }
-
-              if (shouldIgnoreCardNavigation(event.target)) {
-                return;
-              }
-
-              event.preventDefault();
-              openThread(item.postId);
-            }}
-            role="link"
-            tabIndex={0}
           >
             {item.activityType === "repost" && item.actor ? (
               <p className="activity-kicker">
@@ -222,6 +194,10 @@ export function FeedList({
                         </span>
                         <span className="feed-author-separator" aria-hidden="true">/</span>
                         <span className="feed-timestamp">{formatPostTimestamp(item.createdAt)}</span>
+                        <span className="feed-author-separator" aria-hidden="true">/</span>
+                        <Link className="inline-link feed-open-link" href={`/p/${item.postId}`}>
+                          Open post
+                        </Link>
                       </p>
                     </div>
                   </div>
@@ -246,11 +222,13 @@ export function FeedList({
                   {canInteract ? (
                     <>
                       <button
+                        aria-label={replyLabel}
                         aria-expanded={isReplyComposerOpen}
                         className={`feed-action feed-action-reply ${isReplyComposerOpen ? "active" : ""}`}
                         onClick={() =>
                           setReplyComposerPostId((current) => (current === item.postId ? null : item.postId))
                         }
+                        title={replyLabel}
                         type="button"
                       >
                         <ReplyIcon />
@@ -261,7 +239,9 @@ export function FeedList({
                         <input name="postId" type="hidden" value={item.postId} />
                         <input name="targetPath" type="hidden" value={targetPath} />
                         <button
+                          aria-label={repostLabel}
                           className={`feed-action feed-action-repost ${item.metrics.repostedByViewer ? "active" : ""}`}
+                          title={repostLabel}
                           type="submit"
                         >
                           <RepostIcon />
@@ -273,7 +253,9 @@ export function FeedList({
                         <input name="postId" type="hidden" value={item.postId} />
                         <input name="targetPath" type="hidden" value={targetPath} />
                         <button
+                          aria-label={likeLabel}
                           className={`feed-action feed-action-like ${item.metrics.likedByViewer ? "active" : ""}`}
+                          title={likeLabel}
                           type="submit"
                         >
                           <LikeIcon />
@@ -286,7 +268,12 @@ export function FeedList({
                           <input name="postId" type="hidden" value={item.postId} />
                           <input name="targetPath" type="hidden" value={targetPath} />
                           <input name="redirectPath" type="hidden" value={deleteRedirectPath ?? targetPath} />
-                          <button className="feed-action feed-action-delete" type="submit">
+                          <button
+                            aria-label="Delete post"
+                            className="feed-action feed-action-delete"
+                            title="Delete post"
+                            type="submit"
+                          >
                             <DeleteIcon />
                           </button>
                         </form>
@@ -294,15 +281,33 @@ export function FeedList({
                     </>
                   ) : (
                     <>
-                      <button className="feed-action feed-action-reply" onClick={() => router.push("/")} type="button">
+                      <button
+                        aria-label={replyLabel}
+                        className="feed-action feed-action-reply"
+                        onClick={() => router.push("/")}
+                        title={replyLabel}
+                        type="button"
+                      >
                         <ReplyIcon />
                         <span>{formatCompactCount(item.metrics.replyCount)}</span>
                       </button>
-                      <button className="feed-action feed-action-repost" onClick={() => router.push("/")} type="button">
+                      <button
+                        aria-label={repostLabel}
+                        className="feed-action feed-action-repost"
+                        onClick={() => router.push("/")}
+                        title={repostLabel}
+                        type="button"
+                      >
                         <RepostIcon />
                         <span>{formatCompactCount(item.metrics.repostCount)}</span>
                       </button>
-                      <button className="feed-action feed-action-like" onClick={() => router.push("/")} type="button">
+                      <button
+                        aria-label={likeLabel}
+                        className="feed-action feed-action-like"
+                        onClick={() => router.push("/")}
+                        title={likeLabel}
+                        type="button"
+                      >
                         <LikeIcon />
                         <span>{formatCompactCount(item.metrics.likeCount)}</span>
                       </button>
@@ -376,6 +381,10 @@ function trimTrailingZero(value: string) {
   return value.endsWith(".0") ? value.slice(0, -2) : value;
 }
 
+function buildActionLabel(action: string, value: number, singular: string, plural: string) {
+  return `${action}, ${value} ${value === 1 ? singular : plural}`;
+}
+
 function FeedMediaCard({
   index,
   media,
@@ -386,16 +395,17 @@ function FeedMediaCard({
   postId: string;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const canRenderImage = media.mimeType.startsWith("image/") && !imageFailed;
+  const managedImageUrl = `/api/media/assets/${encodeURIComponent(media.assetId)}/redirect`;
+  const canRenderImage = media.status === "ready" && media.mimeType.startsWith("image/") && !imageFailed;
 
   return (
-    <a className="feed-media-card" href={media.url} rel="noreferrer" target="_blank">
+    <a className="feed-media-card" href={managedImageUrl} rel="noreferrer" target="_blank">
       {canRenderImage ? (
         <img
           alt={`Attachment ${index + 1} on post ${postId}`}
           className="feed-media-image"
           onError={() => setImageFailed(true)}
-          src={media.url}
+          src={managedImageUrl}
         />
       ) : (
         <div className="feed-media-fallback">

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { AppShell } from "../components/app-shell";
-import { AvatarBadge } from "../components/avatar-badge";
 import { FeedList } from "../components/feed-list";
+import { HomeComposer } from "../components/home-composer";
 import { LiveNotificationEvents } from "../components/live-notification-events";
 import { NotificationList } from "../components/notification-list";
+import { PasswordField } from "../components/password-field";
+import { SignInForm } from "../components/sign-in-form";
 import {
   createPostAction,
   markNotificationsReadAction,
@@ -40,6 +42,7 @@ type HomePageProps = {
     auth?: string;
     account?: string;
     feedTrail?: string;
+    redirectTo?: string;
     view?: string;
   }>;
 };
@@ -54,7 +57,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const authMessage = !viewer ? getAuthMessage(filters?.auth) : null;
   const accountMessage = viewer ? getAccountMessage(filters?.account) : null;
   const authView = filters?.view === "signup" ? "signup" : "signin";
-  const authRedirectPath = authView === "signup" ? "/?view=signup" : "/";
+  const returnTo = getSafeRedirectPath(filters?.redirectTo);
+  const authErrorId = authMessage?.tone === "error" ? "auth-form-error" : undefined;
+  const authRedirectPath = authView === "signup" ? "/?view=signup" : returnTo;
+  const signInHref = returnTo === "/" ? "/" : `/?redirectTo=${encodeURIComponent(returnTo)}`;
+  const signUpHref = returnTo === "/" ? "/?view=signup" : `/?view=signup&redirectTo=${encodeURIComponent(returnTo)}`;
 
   if (!viewer || !sessionToken) {
     return (
@@ -71,6 +78,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 A clean front door for a fast, social timeline. Sign in to post, follow, reply, and
                 keep up with the conversation as it moves.
               </p>
+              <Link className="primary-link-button landing-mobile-auth-cta" href="#landing-auth">
+                Go to login form
+              </Link>
             </div>
             <ul className="landing-principles">
               <li>One timeline at the center.</li>
@@ -91,7 +101,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
           </article>
 
-          <section className="landing-auth-panel">
+          <section className="landing-auth-panel" id="landing-auth">
             <div className="landing-auth-header">
               <p className="eyebrow">{authView === "signup" ? "Create account" : "Sign in"}</p>
               <h2>{authView === "signup" ? "Join Chirper today" : "Welcome back"}</h2>
@@ -104,23 +114,31 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
             <div className="auth-mode-switch" role="tablist" aria-label="Authentication mode">
               <Link
+                aria-current={authView === "signin" ? "page" : undefined}
                 aria-selected={authView === "signin"}
                 className={`auth-mode-link ${authView === "signin" ? "active" : ""}`}
-                href="/"
+                href={signInHref}
+                role="tab"
               >
                 Log in
               </Link>
               <Link
+                aria-current={authView === "signup" ? "page" : undefined}
                 aria-selected={authView === "signup"}
                 className={`auth-mode-link ${authView === "signup" ? "active" : ""}`}
-                href="/?view=signup"
+                href={signUpHref}
+                role="tab"
               >
                 Sign up
               </Link>
             </div>
 
             {authMessage ? (
-              <p className={`notice ${authMessage.tone === "error" ? "notice-error" : "notice-success"}`}>
+              <p
+                id={authErrorId}
+                className={`notice ${authMessage.tone === "error" ? "notice-error" : "notice-success"}`}
+                role="alert"
+              >
                 {authMessage.text}
               </p>
             ) : null}
@@ -128,37 +146,42 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {authView === "signup" ? (
               <form action={registerAction} className="stack-form landing-auth-form">
                 <input name="redirectTo" type="hidden" value={authRedirectPath} />
-                <label className="field">
-                  <span>Handle</span>
-                  <input name="handle" placeholder="new_handle" required type="text" />
-                </label>
-                <label className="field">
-                  <span>Display name</span>
-                  <input name="displayName" placeholder="Dana Torres" required type="text" />
-                </label>
-                <label className="field">
-                  <span>Password</span>
-                  <input name="password" placeholder="At least 8 characters" required type="password" />
-                </label>
+                <div className="field">
+                  <label htmlFor="register-handle">Handle</label>
+                  <input
+                    autoComplete="username"
+                    id="register-handle"
+                    name="handle"
+                    placeholder="Choose a handle"
+                    required
+                    type="text"
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="register-display-name">Display name</label>
+                  <input id="register-display-name" name="displayName" placeholder="Display name" required type="text" />
+                </div>
+                <div className="field">
+                  <label htmlFor="register-password">Password</label>
+                  <PasswordField
+                    autoComplete="new-password"
+                    id="register-password"
+                    name="password"
+                    placeholder="At least 8 characters"
+                    required
+                  />
+                </div>
                 <button className="primary-button wide-button landing-submit" type="submit">
                   Create account
                 </button>
               </form>
             ) : (
-              <form action={signInAction} className="stack-form landing-auth-form">
-                <input name="redirectTo" type="hidden" value={authRedirectPath} />
-                <label className="field">
-                  <span>Handle</span>
-                  <input name="handle" placeholder="alana" required type="text" />
-                </label>
-                <label className="field">
-                  <span>Password</span>
-                  <input name="password" placeholder="chirper-alana" required type="password" />
-                </label>
-                <button className="primary-button wide-button landing-submit" type="submit">
-                  Sign in
-                </button>
-              </form>
+              <SignInForm
+                action={signInAction}
+                authErrorId={authErrorId}
+                demoCredentials={demoCredentials}
+                redirectTo={authRedirectPath}
+              />
             )}
 
             <div className="landing-auth-footer">
@@ -186,17 +209,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <div>
                 <p className="eyebrow">Recovery</p>
                 <p className="section-copy">Password reset lives in the same product flow if you need it.</p>
-              </div>
-            </div>
-
-            <div className="landing-demo-note">
-              <p className="landing-demo-title">Demo access for this environment</p>
-              <div className="landing-demo-list">
-                {demoCredentials.map((credential) => (
-                  <span className="landing-demo-chip" key={credential.handle}>
-                    @{credential.handle} / {credential.password}
-                  </span>
-                ))}
               </div>
             </div>
           </section>
@@ -323,7 +335,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       }
     >
       {accountMessage ? (
-        <p className={`notice ${accountMessage.tone === "error" ? "notice-error" : "notice-success"}`}>
+        <p className={`notice ${accountMessage.tone === "error" ? "notice-error" : "notice-success"}`} role="alert">
           {accountMessage.text}
         </p>
       ) : null}
@@ -342,35 +354,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       <section className="panel timeline-surface" id="composer">
         <div className="timeline-composer-block">
-          <form action={createPostAction} className="home-composer">
-            <input name="targetProfileHandle" type="hidden" value={viewer.handle} />
-            <div className="home-composer-intro">
-              <div>
-                <p className="eyebrow">Post</p>
-                <h2>Share something with your timeline</h2>
-              </div>
-              <span className="composer-limit">280 characters</span>
-            </div>
-            <div className="home-composer-main">
-              <AvatarBadge avatarUrl={viewer.avatarUrl} displayName={viewer.displayName} size="small" />
-              <div className="home-composer-field">
-                <input
-                  aria-label="What is happening?"
-                  className="home-composer-input"
-                  maxLength={280}
-                  name="body"
-                  placeholder="What is happening?"
-                  type="text"
-                />
-                <div className="home-composer-footer">
-                  <p className="section-copy">This goes straight into your public timeline.</p>
-                  <button className="primary-button compact" type="submit">
-                    Post
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
+          <HomeComposer action={createPostAction} viewer={viewer} />
         </div>
 
         <div className="timeline-feed-block">
@@ -430,4 +414,12 @@ function getAccountMessage(status?: string) {
     default:
       return null;
   }
+}
+
+function getSafeRedirectPath(value?: string) {
+  if (!value?.startsWith("/") || value.startsWith("//")) {
+    return "/";
+  }
+
+  return value;
 }

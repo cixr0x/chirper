@@ -67,14 +67,15 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
 
   return (
     <AppShell
-      active={isViewer ? "profile" : undefined}
+      active="profile"
       description={isViewer ? "Manage your profile and track your public activity." : `See what @${user.handle} is posting and how their graph is evolving.`}
       eyebrow="Profile"
+      profileHrefOverride={profilePath}
       title={isViewer ? "Your profile" : `@${user.handle}`}
       viewer={viewer}
       rightRail={
         <>
-          <section className="rail-card">
+          <section className="rail-card profile-overview-rail">
             <div className="section-intro">
               <p className="eyebrow">Overview</p>
               <h2>{user.displayName}</h2>
@@ -191,12 +192,6 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
           </div>
           <div className="profile-meta">
             <span>{user.location || "Location pending"}</span>
-            <Link className="inline-link" href={`${profilePath}/followers`}>
-              {followers.totalCount} followers
-            </Link>
-            <Link className="inline-link" href={`${profilePath}/following`}>
-              {following.totalCount} following
-            </Link>
             {viewer ? <span>Viewing as @{viewer.handle}</span> : null}
           </div>
         </div>
@@ -230,7 +225,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               />
             </label>
 
-            <div className="inline-form-grid">
+            <div className="inline-form-grid profile-media-url-grid">
               <label className="field">
                 <span>Location</span>
                 <input
@@ -241,7 +236,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
                   type="text"
                 />
               </label>
-              <label className="field">
+              <label className="field profile-media-url-field">
                 <span>Avatar URL</span>
                 <input
                   name="avatarSourceUrl"
@@ -249,7 +244,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
                   type="url"
                 />
               </label>
-              <label className="field">
+              <label className="field profile-media-url-field">
                 <span>Banner URL</span>
                 <input
                   name="bannerSourceUrl"

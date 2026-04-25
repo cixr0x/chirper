@@ -1,12 +1,24 @@
-import { redirect } from "next/navigation";
 import { AppShell } from "../../components/app-shell";
 import { AvatarBadge } from "../../components/avatar-badge";
+import { SignedOutGate } from "../../components/signed-out-gate";
 import { getSessionState } from "../../lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function MessagesPage() {
   const session = await getSessionState();
+
+  if (!session) {
+    return (
+      <SignedOutGate
+        active="messages"
+        copy="Sign in to view chat, open private conversations, and return directly to your inbox."
+        returnTo="/messages"
+        title="Sign in to view chat"
+      />
+    );
+  }
+
   const conversations = [
     {
       name: "Product design",
@@ -14,6 +26,7 @@ export default async function MessagesPage() {
       summary: "Shared a compact layout direction for direct conversations.",
       time: "Now",
       active: true,
+      unread: 2,
     },
     {
       name: "Alana Pierce",
@@ -21,12 +34,33 @@ export default async function MessagesPage() {
       summary: "Last message preview will appear here once conversations are active.",
       time: "2h",
       active: false,
+      unread: 0,
     },
   ];
-
-  if (!session) {
-    redirect("/");
-  }
+  const selectedConversation = conversations.find((conversation) => conversation.active) ?? conversations[0]!;
+  const threadMessages = [
+    {
+      id: "thread-1",
+      author: selectedConversation.name,
+      body: "The inbox needs to stay separate from the public timeline, with the thread taking over the main column.",
+      time: "9:31 AM",
+      mine: false,
+    },
+    {
+      id: "thread-2",
+      author: session.viewer.displayName,
+      body: "Agreed. I am keeping the composer in the message surface and leaving timeline posting on Home.",
+      time: "9:34 AM",
+      mine: true,
+    },
+    {
+      id: "thread-3",
+      author: selectedConversation.name,
+      body: "That gives people a clear place to read and reply without crossing public and private actions.",
+      time: "9:38 AM",
+      mine: false,
+    },
+  ];
 
   return (
     <AppShell
@@ -37,17 +71,22 @@ export default async function MessagesPage() {
       wideCenter
     >
       <section className="message-layout">
-        <article className="panel conversation-list-panel">
+        <aside className="panel conversation-list-panel" aria-label="Conversations">
           <div className="message-list-head">
             <div className="section-intro">
               <p className="eyebrow">Inbox</p>
               <h2>Direct conversations</h2>
             </div>
-            <span className="follow-chip viewer">Preview</span>
+            <span className="follow-chip viewer">{conversations.length}</span>
           </div>
           <div className="conversation-list">
             {conversations.map((conversation) => (
-              <article className={`conversation-card ${conversation.active ? "active" : ""}`} key={conversation.name}>
+              <button
+                aria-current={conversation.active ? "true" : undefined}
+                className={`conversation-card ${conversation.active ? "active" : ""}`}
+                key={conversation.name}
+                type="button"
+              >
                 <div className="conversation-row">
                   <AvatarBadge avatarUrl="" displayName={conversation.name} size="small" />
                   <div className="conversation-copy">
@@ -58,26 +97,51 @@ export default async function MessagesPage() {
                     <p className="handle">@{conversation.handle}</p>
                     <p>{conversation.summary}</p>
                   </div>
+                  {conversation.unread > 0 ? <span className="conversation-unread">{conversation.unread}</span> : null}
                 </div>
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <section className="panel message-thread-panel" aria-label={`Thread with ${selectedConversation.name}`}>
+          <div className="message-thread-head">
+            <div className="feed-head">
+              <AvatarBadge avatarUrl="" displayName={selectedConversation.name} size="small" />
+              <div>
+                <p className="eyebrow">Thread</p>
+                <h2>{selectedConversation.name}</h2>
+                <p className="handle">@{selectedConversation.handle}</p>
+              </div>
+            </div>
+            <span className="follow-chip viewer">Online</span>
+          </div>
+
+          <div className="message-thread" role="log" aria-label="Messages">
+            {threadMessages.map((message) => (
+              <article className={`message-bubble ${message.mine ? "mine" : ""}`} key={message.id}>
+                <p className="message-bubble-meta">
+                  <span>{message.author}</span>
+                  <span>{message.time}</span>
+                </p>
+                <p>{message.body}</p>
               </article>
             ))}
           </div>
-        </article>
 
-        <article className="panel message-placeholder">
-          <div className="section-intro">
-            <p className="eyebrow">Compose</p>
-            <h2>Select a conversation</h2>
-          </div>
-          <div className="message-placeholder-copy">
-            <p>Choose an inbox item to open a private thread. New conversations will start from this panel.</p>
-            <div className="message-placeholder-list">
-              <p>Recent conversations stay pinned to the left.</p>
-              <p>Messages, reactions, and delivery status appear in the thread.</p>
-              <p>The composer stays anchored near the bottom of the conversation.</p>
+          <form className="message-composer">
+            <label className="field message-composer-field">
+              <span>Message</span>
+              <textarea name="message" placeholder={`Message @${selectedConversation.handle}`} rows={3} />
+            </label>
+            <div className="message-composer-actions">
+              <p className="section-copy">Private reply preview.</p>
+              <button className="primary-button compact" type="button">
+                Send
+              </button>
             </div>
-          </div>
-        </article>
+          </form>
+        </section>
       </section>
     </AppShell>
   );

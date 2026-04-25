@@ -23,13 +23,13 @@ export function NotificationList({ items, emptyTitle, emptyBody }: NotificationL
       {items.map((notification) => (
         <article className="notification-card" key={notification.notificationId}>
           <div className="notification-card-head">
-            <div className="feed-head">
+            <div className="notification-actor">
               <AvatarBadge
                 avatarUrl={notification.actor?.avatarUrl}
                 displayName={notification.actor?.displayName ?? "Unknown actor"}
                 size="small"
               />
-              <div>
+              <div className="notification-actor-copy">
                 <h3>{notification.actor?.displayName ?? "Unknown actor"}</h3>
                 <p className="handle">
                   {notification.actor ? (

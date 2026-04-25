@@ -134,7 +134,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
     >
       <section className="panel profile-hero-card">
         <div
-          className={`banner-panel ${user.bannerUrl ? "banner-panel-image" : ""}`}
+          className={`banner-panel ${user.bannerUrl ? "banner-panel-image" : "banner-panel-default"}`}
           style={bannerStyle}
         />
         <div className="profile-summary">
@@ -152,8 +152,8 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
 
             <div className="profile-cta-row">
               {!viewer ? (
-                <Link className="primary-link-button" href="/">
-                  Sign in to interact
+                <Link className="primary-link-button" href={`/?redirectTo=${encodeURIComponent(profileTargetPath)}`}>
+                  Sign in to follow
                 </Link>
               ) : isViewer ? (
                 <>
@@ -190,10 +190,11 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               <span>Location</span>
             </div>
           </div>
-          <div className="profile-meta">
-            <span>{user.location || "Location pending"}</span>
-            {viewer ? <span>Viewing as @{viewer.handle}</span> : null}
-          </div>
+          {viewer ? (
+            <div className="profile-meta">
+              <span>Viewing as @{viewer.handle}</span>
+            </div>
+          ) : null}
         </div>
       </section>
 

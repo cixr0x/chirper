@@ -102,9 +102,9 @@ export async function AppShell({
               </div>
             ) : (
               <div className="sidebar-callout">
-                <p className="sidebar-callout-title">Sign in to post, follow, and see your inbox.</p>
-                <Link className="primary-link-button" href="/">
-                  Open login
+                <p className="sidebar-callout-title">Signed out</p>
+                <Link className="secondary-button compact sidebar-login-link" href="/">
+                  Sign in
                 </Link>
               </div>
             )}

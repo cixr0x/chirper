@@ -26,13 +26,13 @@ const landingPreviewPosts = [
   {
     author: "Alana Pierce",
     handle: "@alana",
-    body: "Shipping the next UI pass. The goal is one calm, readable surface instead of a dashboard of boxes.",
+    body: "Shipping a calmer, easier timeline surface.",
     meta: "12 replies / 48 likes",
   },
   {
     author: "Omar Chavez",
     handle: "@omar",
-    body: "The posting flow feels quick enough to keep the conversation moving while the product keeps getting sharper.",
+    body: "The posting flow stays quick while the product gets sharper.",
     meta: "5 reposts / 19 likes",
   },
 ];

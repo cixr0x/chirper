@@ -18,9 +18,11 @@ export function NotificationList({ items, emptyTitle, emptyBody }: NotificationL
     );
   }
 
+  const groupedItems = groupNotifications(items);
+
   return (
     <div className="notification-list">
-      {items.map((notification) => (
+      {groupedItems.map(({ count, notification }) => (
         <article className="notification-card" key={notification.notificationId}>
           <div className="notification-card-head">
             <div className="notification-actor">
@@ -44,17 +46,49 @@ export function NotificationList({ items, emptyTitle, emptyBody }: NotificationL
               </div>
             </div>
             <div className="notification-state">
-              {!notification.isRead ? <span className="notification-unread-dot" aria-hidden="true" /> : null}
               <span className={`notification-kind ${notification.isRead ? "" : "unread"}`.trim()}>
                 {formatNotificationType(notification.type)}
+                {count > 1 ? ` x${count}` : ""}
               </span>
             </div>
           </div>
-          <p className="notification-copy">{notification.summary}</p>
+          <p className="notification-copy">
+            {notification.summary}
+            {count > 1 ? ` ${count} similar updates grouped.` : ""}
+          </p>
         </article>
       ))}
     </div>
   );
+}
+
+function groupNotifications(items: NotificationItem[]) {
+  const groups: { count: number; notification: NotificationItem }[] = [];
+  const seen = new Map<string, { count: number; notification: NotificationItem }>();
+
+  for (const notification of items) {
+    const key = [
+      notification.actor?.userId ?? notification.actor?.handle ?? "system",
+      notification.type,
+      notification.summary,
+    ].join(":");
+    const group = seen.get(key);
+
+    if (group) {
+      group.count += 1;
+      group.notification = {
+        ...group.notification,
+        isRead: group.notification.isRead && notification.isRead,
+      };
+      continue;
+    }
+
+    const nextGroup = { count: 1, notification };
+    seen.set(key, nextGroup);
+    groups.push(nextGroup);
+  }
+
+  return groups;
 }
 
 function formatNotificationType(type: string) {

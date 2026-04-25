@@ -14,12 +14,10 @@ export function SignedOutGate({ active, copy, eyebrow = "Sign in required", retu
   const href = `/?redirectTo=${encodeURIComponent(returnTo)}`;
 
   return (
-    <AppShell active={active} description={copy} eyebrow={eyebrow} title={title} viewer={null}>
+    <AppShell active={active} showHeader={false} title={title} viewer={null} wideCenter>
       <section className="panel signed-out-gate">
-        <div className="section-intro">
-          <p className="eyebrow">{eyebrow}</p>
-          <h2>{title}</h2>
-        </div>
+        <p className="eyebrow">{eyebrow}</p>
+        <h1>{title}</h1>
         <p className="section-copy">{copy}</p>
         <div className="gate-actions">
           <Link className="primary-link-button" href={href}>

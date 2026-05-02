@@ -31,7 +31,12 @@ selected_services() {
 }
 
 cd "$ROOT"
-for service in $(selected_services); do
+SELECTED_SERVICES=($(selected_services))
+for service in "${SELECTED_SERVICES[@]}"; do
+  workspace_package "$service" >/dev/null
+done
+
+for service in "${SELECTED_SERVICES[@]}"; do
   read -r package dir enable_prisma start_kind <<<"$(workspace_package "$service")"
   tag="chirper/${service}:dev"
   echo "Building ${tag}"
@@ -44,5 +49,5 @@ for service in $(selected_services); do
     --build-arg "START_KIND=$start_kind" \
     "$ROOT"
   echo "Importing ${tag} into k3s"
-  docker save "$tag" | sudo /usr/local/bin/k3s ctr images import -
+  docker save "$tag" | sudo -n /usr/local/bin/k3s ctr --namespace k8s.io images import -
 done

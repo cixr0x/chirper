@@ -27,7 +27,7 @@ if id jenkins >/dev/null 2>&1; then
   chown jenkins:jenkins /var/lib/jenkins/.kube/config
   chmod 600 /var/lib/jenkins/.kube/config
   cat >/etc/sudoers.d/chirper-jenkins <<'SUDOERS'
-jenkins ALL=(root) NOPASSWD: /usr/local/bin/k3s ctr images import *
+jenkins ALL=(root) NOPASSWD: /usr/local/bin/k3s ctr --namespace k8s.io images import *
 jenkins ALL=(root) NOPASSWD: /usr/local/bin/k3s kubectl *
 SUDOERS
   chmod 440 /etc/sudoers.d/chirper-jenkins

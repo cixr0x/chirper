@@ -19,9 +19,9 @@ pipeline {
       steps {
         sh '''#!/usr/bin/env bash
           set -euo pipefail
-          export SERVICES="${SERVICES}"
-          export SKIP_MIGRATIONS="${SKIP_MIGRATIONS}"
-          export GIT_BRANCH="${GIT_BRANCH}"
+          export SERVICES="${SERVICES:-}"
+          export SKIP_MIGRATIONS="${SKIP_MIGRATIONS:-true}"
+          export GIT_BRANCH="${GIT_BRANCH:-main}"
           export DEPLOY_DIR="${DEPLOY_DIR}"
           export REPO_URL="${REPO_URL}"
           export TOKEN_FILE="${TOKEN_FILE}"

@@ -32,6 +32,11 @@ selected_services() {
 
 cd "$ROOT"
 SELECTED_SERVICES=($(selected_services))
+if [ "${#SELECTED_SERVICES[@]}" -eq 0 ]; then
+  echo "No services selected from input: ${SERVICES}" >&2
+  exit 1
+fi
+
 for service in "${SELECTED_SERVICES[@]}"; do
   workspace_package "$service" >/dev/null
 done

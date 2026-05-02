@@ -58,7 +58,6 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
   const isViewer = viewer?.userId === user.userId;
   const isFollowing = viewer ? followingUserIds.includes(user.userId) : false;
   const accountMessage = getProfileMessage(filters?.account);
-  const linkRows = buildEditableLinkRows(user.links);
   const bannerStyle = user.bannerUrl
     ? {
         backgroundImage: `radial-gradient(circle at 100% 0, rgba(255, 255, 255, 0.28), transparent 24%), linear-gradient(135deg, #0c5ed0 0%, #2d7dff 44%, #10b981 100%), url(${JSON.stringify(user.bannerUrl)})`,
@@ -266,25 +265,6 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               </label>
             </div>
 
-            <div className="link-editor">
-              <div className="section-intro">
-                <p className="eyebrow">Profile links</p>
-                <h2>Outbound references</h2>
-              </div>
-              {linkRows.map((link, index) => (
-                <div className="link-row" key={`profile-link-${index}`}>
-                  <label className="field">
-                    <span>Label {index + 1}</span>
-                    <input defaultValue={link.label} maxLength={32} name="linkLabel" placeholder="GitHub" type="text" />
-                  </label>
-                  <label className="field">
-                    <span>URL {index + 1}</span>
-                    <input defaultValue={link.url} name="linkUrl" placeholder="https://github.com/you" type="url" />
-                  </label>
-                </div>
-              ))}
-            </div>
-
             <div className="composer-actions">
               <button className="primary-button" type="submit">
                 Save profile
@@ -342,13 +322,4 @@ function getProfileMessage(status?: string) {
     default:
       return null;
   }
-}
-
-function buildEditableLinkRows(links: { label: string; url: string }[]) {
-  const rows = [...links];
-  while (rows.length < 3) {
-    rows.push({ label: "", url: "" });
-  }
-
-  return rows.slice(0, 4);
 }

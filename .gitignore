@@ -4,6 +4,7 @@ dist/
 coverage/
 .turbo/
 generated/
+.superpowers/
 .env
 .env.local
 .env.*.local

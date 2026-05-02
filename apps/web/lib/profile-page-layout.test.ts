@@ -15,3 +15,14 @@ test("profile editor does not expose outbound profile link controls", () => {
     assert.equal(profilePageSource.includes(removedControl), false, `Unexpected removed control: ${removedControl}`);
   }
 });
+
+test("profile editor prefills existing avatar and banner URLs", () => {
+  assert.match(
+    profilePageSource,
+    /defaultValue=\{user\.avatarUrl\}\s+name="avatarSourceUrl"/,
+  );
+  assert.match(
+    profilePageSource,
+    /defaultValue=\{user\.bannerUrl\}\s+name="bannerSourceUrl"/,
+  );
+});

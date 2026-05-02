@@ -239,6 +239,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               <label className="field profile-media-url-field">
                 <span>Avatar URL</span>
                 <input
+                  defaultValue={user.avatarUrl}
                   name="avatarSourceUrl"
                   placeholder="https://images.example.com/avatar.png"
                   type="url"
@@ -247,6 +248,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               <label className="field profile-media-url-field">
                 <span>Banner URL</span>
                 <input
+                  defaultValue={user.bannerUrl}
                   name="bannerSourceUrl"
                   placeholder="https://images.example.com/banner.jpg"
                   type="url"

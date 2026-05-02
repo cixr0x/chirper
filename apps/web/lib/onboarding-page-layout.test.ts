@@ -21,3 +21,14 @@ test("profile setup progress only counts remaining profile fields", () => {
   assert.match(onboardingPageSource, /<h2>\{completedCount\}\/4 complete<\/h2>/);
   assert.match(onboardingPageSource, /\{4 - completedCount\}/);
 });
+
+test("profile setup prefills existing avatar and banner URLs", () => {
+  assert.match(
+    onboardingPageSource,
+    /defaultValue=\{viewer\.avatarUrl\}\s+name="avatarSourceUrl"/,
+  );
+  assert.match(
+    onboardingPageSource,
+    /defaultValue=\{viewer\.bannerUrl\}\s+name="bannerSourceUrl"/,
+  );
+});

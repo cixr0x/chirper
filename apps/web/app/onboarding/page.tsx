@@ -124,6 +124,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
             <label className="field">
               <span>Avatar URL</span>
               <input
+                defaultValue={viewer.avatarUrl}
                 name="avatarSourceUrl"
                 placeholder="https://images.example.com/avatar.png"
                 type="url"
@@ -132,6 +133,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
             <label className="field">
               <span>Banner URL</span>
               <input
+                defaultValue={viewer.bannerUrl}
                 name="bannerSourceUrl"
                 placeholder="https://images.example.com/banner.jpg"
                 type="url"

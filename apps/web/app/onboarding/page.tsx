@@ -32,13 +32,11 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
     !viewer.bannerAssetId &&
     !viewer.avatarUrl &&
     !viewer.bannerUrl;
-  const linkRows = buildEditableLinkRows(viewer.links);
   const completionItems = [
     Boolean(viewer.bio),
     Boolean(viewer.location),
     Boolean(viewer.avatarAssetId || viewer.avatarUrl),
     Boolean(viewer.bannerAssetId || viewer.bannerUrl),
-    viewer.links.length > 0,
   ];
   const completedCount = completionItems.filter(Boolean).length;
 
@@ -54,7 +52,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
           <section className="rail-card rail-card-accent">
             <div className="section-intro">
               <p className="eyebrow">Progress</p>
-              <h2>{completedCount}/5 complete</h2>
+              <h2>{completedCount}/4 complete</h2>
             </div>
             <div className="rail-metric-strip">
               <div className="rail-metric">
@@ -62,7 +60,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
                 <span className="rail-metric-label">Completed</span>
               </div>
               <div className="rail-metric">
-                <span className="rail-metric-value">{5 - completedCount}</span>
+                <span className="rail-metric-value">{4 - completedCount}</span>
                 <span className="rail-metric-label">Remaining</span>
               </div>
             </div>
@@ -89,8 +87,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
           <h2>{isBlankProfile ? "Complete the basics" : "Refine your public profile"}</h2>
         </div>
         <p className="muted-copy">
-          Add the details people see first: a short bio, location, image references, and any public links
-          that help the profile feel complete.
+          Add the details people see first: a short bio, location, and image references that help the profile feel complete.
         </p>
         {accountMessage ? (
           <p className={`notice ${accountMessage.tone === "error" ? "notice-error" : "notice-success"}`}>
@@ -153,25 +150,6 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
             </label>
           </div>
 
-          <div className="link-editor">
-            <div className="section-intro">
-              <p className="eyebrow">Public links</p>
-              <h2>Optional outbound references</h2>
-            </div>
-            {linkRows.map((link, index) => (
-              <div className="link-row" key={`onboarding-link-${index}`}>
-                <label className="field">
-                  <span>Label {index + 1}</span>
-                  <input defaultValue={link.label} maxLength={32} name="linkLabel" placeholder="GitHub" type="text" />
-                </label>
-                <label className="field">
-                  <span>URL {index + 1}</span>
-                  <input defaultValue={link.url} name="linkUrl" placeholder="https://github.com/you" type="url" />
-                </label>
-              </div>
-            ))}
-          </div>
-
           <div className="composer-actions">
             <button className="primary-button" type="submit">
               Save profile
@@ -184,15 +162,6 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
       </section>
     </AppShell>
   );
-}
-
-function buildEditableLinkRows(links: { label: string; url: string }[]) {
-  const rows = [...links];
-  while (rows.length < 3) {
-    rows.push({ label: "", url: "" });
-  }
-
-  return rows.slice(0, 4);
 }
 
 function getOnboardingMessage(status?: string) {

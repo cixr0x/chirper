@@ -11,3 +11,4 @@ generated/
 !services/*/.env
 *.log
 *.tsbuildinfo
+.worktrees/

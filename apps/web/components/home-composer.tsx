@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { UserSummary } from "../lib/bff";
 import { AvatarBadge } from "./avatar-badge";
@@ -12,10 +13,17 @@ type HomeComposerProps = {
 const postLimit = 280;
 
 export function HomeComposer({ action, viewer }: HomeComposerProps) {
+  const router = useRouter();
   const [body, setBody] = useState("");
 
+  async function handleSubmit(formData: FormData) {
+    await action(formData);
+    setBody("");
+    router.refresh();
+  }
+
   return (
-    <form action={action} className="home-composer">
+    <form action={handleSubmit} className="home-composer">
       <input name="targetProfileHandle" type="hidden" value={viewer.handle} />
       <div className="home-composer-intro">
         <div>

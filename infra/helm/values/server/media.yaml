@@ -1,0 +1,28 @@
+nameOverride: media
+fullnameOverride: media
+
+image:
+  repository: chirper/media
+  tag: dev
+
+service:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4008
+      containerPort: 4008
+    - name: grpc
+      port: 50058
+      targetPort: 50058
+      containerPort: 50058
+
+env:
+  - name: NODE_ENV
+    value: production
+  - name: PORT
+    value: "4008"
+  - name: GRPC_BIND_URL
+    value: 0.0.0.0:50058
+
+envFromSecrets:
+  - chirper-database

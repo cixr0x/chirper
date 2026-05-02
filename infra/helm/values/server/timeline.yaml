@@ -1,0 +1,44 @@
+nameOverride: timeline
+fullnameOverride: timeline
+
+image:
+  repository: chirper/timeline
+  tag: dev
+
+service:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4005
+      containerPort: 4005
+    - name: grpc
+      port: 50055
+      targetPort: 50055
+      containerPort: 50055
+
+env:
+  - name: NODE_ENV
+    value: production
+  - name: PORT
+    value: "4005"
+  - name: GRPC_BIND_URL
+    value: 0.0.0.0:50055
+  - name: IDENTITY_GRPC_URL
+    value: identity:50051
+  - name: GRAPH_GRPC_URL
+    value: graph:50054
+  - name: POSTS_GRPC_URL
+    value: posts:50053
+  - name: KAFKA_BROKERS
+    value: kafka:9092
+  - name: KAFKA_CLIENT_ID
+    value: chirper-timeline
+  - name: KAFKA_CONSUMER_GROUP
+    value: chirper-timeline-service
+  - name: KAFKA_POSTS_TOPIC
+    value: chirper.posts.events.v1
+  - name: KAFKA_GRAPH_TOPIC
+    value: chirper.graph.events.v1
+
+envFromSecrets:
+  - chirper-database

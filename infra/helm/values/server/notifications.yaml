@@ -1,0 +1,44 @@
+nameOverride: notifications
+fullnameOverride: notifications
+
+image:
+  repository: chirper/notifications
+  tag: dev
+
+service:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4006
+      containerPort: 4006
+    - name: grpc
+      port: 50056
+      targetPort: 50056
+      containerPort: 50056
+
+env:
+  - name: NODE_ENV
+    value: production
+  - name: PORT
+    value: "4006"
+  - name: GRPC_BIND_URL
+    value: 0.0.0.0:50056
+  - name: IDENTITY_GRPC_URL
+    value: identity:50051
+  - name: GRAPH_GRPC_URL
+    value: graph:50054
+  - name: REALTIME_GRPC_URL
+    value: realtime:50057
+  - name: KAFKA_BROKERS
+    value: kafka:9092
+  - name: KAFKA_CLIENT_ID
+    value: chirper-notifications
+  - name: KAFKA_CONSUMER_GROUP
+    value: chirper-notifications-service
+  - name: KAFKA_POSTS_TOPIC
+    value: chirper.posts.events.v1
+  - name: KAFKA_GRAPH_TOPIC
+    value: chirper.graph.events.v1
+
+envFromSecrets:
+  - chirper-database

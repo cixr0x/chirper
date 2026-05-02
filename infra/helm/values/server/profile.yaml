@@ -1,0 +1,28 @@
+nameOverride: profile
+fullnameOverride: profile
+
+image:
+  repository: chirper/profile
+  tag: dev
+
+service:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4002
+      containerPort: 4002
+    - name: grpc
+      port: 50052
+      targetPort: 50052
+      containerPort: 50052
+
+env:
+  - name: NODE_ENV
+    value: production
+  - name: PORT
+    value: "4002"
+  - name: GRPC_BIND_URL
+    value: 0.0.0.0:50052
+
+envFromSecrets:
+  - chirper-database

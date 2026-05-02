@@ -4,6 +4,7 @@ import { Observable, lastValueFrom } from "rxjs";
 
 type GetUserByIdRequest = { userId: string };
 type GetUserByHandleRequest = { handle: string };
+type SearchUsersRequest = { query: string; limit: number };
 type CreateSessionRequest = { userId: string; userAgent?: string };
 type CreatePasswordSessionRequest = { handle: string; password: string; userAgent?: string };
 type RegisterPasswordUserRequest = {
@@ -34,6 +35,9 @@ type IdentitySession = {
 type ListUsersResponse = {
   users: IdentityUser[];
 };
+type SearchUsersResponse = {
+  users: IdentityUser[];
+};
 type CreateSessionResponse = {
   sessionToken: string;
   session: IdentitySession;
@@ -46,6 +50,7 @@ type IdentityGrpcService = {
   getUserById(request: GetUserByIdRequest): Observable<IdentityUser>;
   getUserByHandle(request: GetUserByHandleRequest): Observable<IdentityUser>;
   listUsers(request: Record<string, never>): Observable<ListUsersResponse>;
+  searchUsers(request: SearchUsersRequest): Observable<SearchUsersResponse>;
   createSession(request: CreateSessionRequest): Observable<CreateSessionResponse>;
   createPasswordSession(request: CreatePasswordSessionRequest): Observable<CreateSessionResponse>;
   registerPasswordUser(request: RegisterPasswordUserRequest): Observable<CreateSessionResponse>;
@@ -76,6 +81,11 @@ export class IdentityClientService implements OnModuleInit {
 
   async listUsers() {
     const response = await lastValueFrom(this.service.listUsers({}));
+    return response.users;
+  }
+
+  async searchUsers(query: string, limit: number) {
+    const response = await lastValueFrom(this.service.searchUsers({ query, limit }));
     return response.users;
   }
 

@@ -15,6 +15,11 @@ export class UserSummaryService {
     return Promise.all(identities.map((identity) => this.buildSummary(identity)));
   }
 
+  async searchUsers(query: string, limit: number) {
+    const identities = await this.identityClient.searchUsers(query, limit);
+    return Promise.all(identities.map((identity) => this.buildSummary(identity)));
+  }
+
   async getUserSummaryById(userId: string) {
     const identity = await this.identityClient.getUserById(userId);
     return this.buildSummary(identity);

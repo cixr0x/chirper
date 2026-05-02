@@ -1830,6 +1830,61 @@ button:focus-visible {
   gap: 0;
 }
 
+.user-search-card {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.user-search-form {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.user-search-label {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.user-search-input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(188, 203, 216, 0.92);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  outline: none;
+}
+
+.user-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.user-search-results {
+  display: grid;
+  gap: 0;
+  min-height: 2rem;
+}
+
+.user-search-result {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-top: 1px solid rgba(188, 203, 216, 0.72);
+}
+
+.user-search-result:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.user-search-result-copy {
+  min-width: 0;
+}
+
 .notification-card,
 .engagement-card,
 .mini-profile-card,

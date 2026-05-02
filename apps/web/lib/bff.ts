@@ -176,6 +176,26 @@ export async function getUserDirectory(): Promise<UserSummary[]> {
   }
 }
 
+export async function searchUsers(query: string, limit = 5): Promise<UserSummary[]> {
+  const params = new URLSearchParams();
+  params.set("q", query);
+  params.set("limit", String(limit));
+
+  try {
+    const response = await fetch(`${bffBaseUrl}/api/users/search?${params.toString()}`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return (await response.json()) as UserSummary[];
+  } catch {
+    return [];
+  }
+}
+
 export async function getUserByHandle(handle: string): Promise<UserSummary | null> {
   try {
     const response = await fetch(

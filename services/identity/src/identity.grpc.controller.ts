@@ -48,6 +48,12 @@ export class IdentityGrpcController {
     return { users };
   }
 
+  @GrpcMethod("IdentityService", "SearchUsers")
+  async searchUsers(data: { query: string; limit: number }) {
+    const users = await this.directory.searchUsers(data.query, data.limit);
+    return { users };
+  }
+
   @GrpcMethod("IdentityService", "CreateSession")
   async createSession(data: { userId: string; userAgent?: string }) {
     try {

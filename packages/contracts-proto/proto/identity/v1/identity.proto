@@ -6,6 +6,7 @@ service IdentityService {
   rpc GetUserById (GetUserByIdRequest) returns (IdentityUser);
   rpc GetUserByHandle (GetUserByHandleRequest) returns (IdentityUser);
   rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
+  rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse);
   rpc CreateSession (CreateSessionRequest) returns (CreateSessionResponse);
   rpc CreatePasswordSession (CreatePasswordSessionRequest) returns (CreateSessionResponse);
   rpc RegisterPasswordUser (RegisterPasswordUserRequest) returns (CreateSessionResponse);
@@ -26,6 +27,11 @@ message GetUserByHandleRequest {
 
 message ListUsersRequest {}
 
+message SearchUsersRequest {
+  string query = 1;
+  int32 limit = 2;
+}
+
 message IdentityUser {
   string userId = 1;
   string handle = 2;
@@ -34,6 +40,10 @@ message IdentityUser {
 }
 
 message ListUsersResponse {
+  repeated IdentityUser users = 1;
+}
+
+message SearchUsersResponse {
   repeated IdentityUser users = 1;
 }
 

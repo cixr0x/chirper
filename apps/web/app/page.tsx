@@ -5,6 +5,7 @@ import { LiveNotificationEvents } from "../components/live-notification-events";
 import { NotificationList } from "../components/notification-list";
 import { PasswordField } from "../components/password-field";
 import { SignInForm } from "../components/sign-in-form";
+import { UserSearchCard } from "../components/user-search-card";
 import {
   createPostAction,
   markNotificationsReadAction,
@@ -251,6 +252,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       viewer={viewer}
       rightRail={
         <>
+          <UserSearchCard />
+
           <section className="rail-card rail-card-accent">
             <div className="section-intro">
               <p className="eyebrow">For you</p>

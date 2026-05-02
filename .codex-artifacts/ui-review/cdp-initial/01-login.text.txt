@@ -1,0 +1,56 @@
+C
+Chirper
+See what your network is talking about right now.
+
+A clean front door for a fast, social timeline. Sign in to post, follow, reply, and keep up with the conversation as it moves.
+
+Go to login form
+One timeline at the center.
+Simple entry, no dashboard clutter.
+Posts, profiles, replies, and notifications in one flow.
+Alana Pierce
+@alana
+
+Shipping the next UI pass. The goal is one calm, readable surface instead of a dashboard of boxes.
+
+12 replies / 48 likes
+Omar Chavez
+@omar
+
+The posting flow feels quick enough to keep the conversation moving while the product keeps getting sharper.
+
+5 reposts / 19 likes
+
+SIGN IN
+
+Welcome back
+
+Sign in to continue where the timeline left off.
+
+Log in
+Sign up
+HANDLE
+PASSWORD
+Show
+Sign in
+
+Demo access for this environment
+
+@alana / chirper-alana
+@omar / chirper-omar
+
+Need to reset your password?
+
+Open recovery flow
+
+FAST START
+
+Create an account or use the seeded demo credentials below.
+
+RECOVERY
+
+Password reset lives in the same product flow if you need it.
+
+Chirper
+Timeline-first social app
+Reset password

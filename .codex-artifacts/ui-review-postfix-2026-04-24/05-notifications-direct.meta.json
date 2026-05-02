@@ -1,0 +1,11 @@
+{
+  "name": "05-notifications-direct",
+  "requestedUrl": "http://chirper.localtest.me:8088/notifications",
+  "url": "http://chirper.localtest.me:8088/notifications",
+  "title": "Chirper",
+  "consoleErrors": [],
+  "startedAt": "2026-04-25T01:56:02.967Z",
+  "loginState": {
+    "signedInAlready": true
+  }
+}

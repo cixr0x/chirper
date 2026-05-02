@@ -1,0 +1,71 @@
+C
+Chirper
+MICROBLOGGING LAB
+Home
+Chat
+Profile
+Notifications
+Post
+AP
+
+Alana Pierce
+
+@alana
+
+View profile
+Sign out
+Messages
+
+Private conversations in a focused inbox.
+
+INBOX
+
+Direct conversations
+2
+PD
+Product design
+Now
+
+@design
+
+Shared a compact layout direction for direct conversations.
+
+2
+AP
+Alana Pierce
+2h
+
+@alana
+
+Last message preview will appear here once conversations are active.
+
+PD
+
+THREAD
+
+Product design
+
+@design
+
+ONLINE
+
+Product design
+9:31 AM
+
+The inbox needs to stay separate from the public timeline, with the thread taking over the main column.
+
+Alana Pierce
+9:34 AM
+
+Agreed. I am keeping the composer in the message surface and leaving timeline posting on Home.
+
+Product design
+9:38 AM
+
+That gives people a clear place to read and reply without crossing public and private actions.
+
+MESSAGE
+
+Private reply preview.
+
+Send

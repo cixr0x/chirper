@@ -1,0 +1,8 @@
+{
+  "name": "03-chat",
+  "url": "http://chirper.localtest.me:8088/messages",
+  "title": "Chirper",
+  "width": 1517,
+  "height": 917,
+  "consoleErrors": []
+}

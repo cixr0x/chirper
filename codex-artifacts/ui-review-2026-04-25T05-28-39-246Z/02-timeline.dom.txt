@@ -1,0 +1,258 @@
+- main:
+  - complementary:
+    - link "C Chirper microblogging lab":
+      - /url: /
+      - generic: C
+      - strong: Chirper
+      - generic: microblogging lab
+    - navigation "Primary":
+      - link "Home":
+        - /url: /
+        - generic: Home
+      - link "Chat":
+        - /url: /messages
+        - generic: Chat
+      - link "Profile":
+        - /url: /u/alana
+        - generic: Profile
+      - link "Notifications 4":
+        - /url: /notifications
+        - generic: Notifications
+        - generic: "4"
+    - link "Post":
+      - /url: /#composer
+    - generic "Alana Pierce avatar": AP
+    - paragraph: Alana Pierce
+    - paragraph: "@alana"
+    - link "View profile":
+      - /url: /u/alana
+    - button "Sign out"
+  - paragraph: Post
+  - heading "Share something with your timeline" [level=2]
+  - generic: 0/280
+  - generic "Alana Pierce avatar": AP
+  - textbox "What is happening?"
+  - paragraph: This goes straight into your public timeline.
+  - button "Post"
+  - article:
+    - generic "Omar Reed avatar": OR
+    - heading "Omar Reed" [level=3]
+    - paragraph:
+      - link "@omar":
+        - /url: /u/omar
+      - generic: /
+      - generic: Apr 24, 2026, 7:59 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_aaff982d394c49bda71a31705e96d796
+    - paragraph: Hi everybody! Im Omar!
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+  - article:
+    - generic "Alana Pierce avatar": AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 8:17 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_2953f17d227c4049a3e399bbdf5b3975
+    - paragraph: This is a post with an image for testing! I love Stardew Valley!
+    - link "Attachment 1 on post post_2953f17d227c4049a3e399bbdf5b3975":
+      - /url: /api/media/assets/asset_cc6d1df42dff8ebbae953ef4644b85f5/redirect
+      - img "Attachment 1 on post post_2953f17d227c4049a3e399bbdf5b3975"
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+    - button "Delete post":
+  - article:
+    - generic "Alana Pierce avatar": AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 8:03 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_32cefab1e54a47d8966fbf4bc37bb7da
+    - paragraph: We need more posts to test the timeline!
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+    - button "Delete post":
+  - article:
+    - generic "Alana Pierce avatar": AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 7:07 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_97d388de3dd347a3b4a405800101b0f8
+    - paragraph: Whats happening? Nothing... nothing is happening
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+    - button "Delete post":
+  - article:
+    - generic "Alana Pierce avatar": AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 6:59 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_e6008c85ff5b469cb1c3591177fbda66
+    - paragraph: Oh no! It seems like the timeline is not refreshing when I post something!
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+    - button "Delete post":
+  - article:
+    - generic "Alana Pierce avatar": AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 6:58 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_f9105a318ace403fb113796244e677bd
+    - paragraph: This is a test post
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+    - button "Delete post":
+  - article:
+    - generic "Omar Reed avatar": OR
+    - heading "Omar Reed" [level=3]
+    - paragraph:
+      - link "@omar":
+        - /url: /u/omar
+      - generic: /
+      - generic: Apr 16, 2026, 4:11 AM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_demo_omar_001
+    - paragraph: "Next milestone: posts service, compose flow, and the first public timeline."
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+  - article:
+    - generic "Alana Pierce avatar": AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 16, 2026, 4:11 AM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_demo_alana_001
+    - paragraph: Chirper now has real profile pages backed by service-owned tables.
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+    - button "Delete post":
+  - complementary:
+    - paragraph: For you
+    - heading "@alana" [level=2]
+    - paragraph: Your home feed is pulling from the accounts you follow, your own posts, and the latest activity around your profile.
+    - generic: "1"
+    - generic: Following
+    - generic: "4"
+    - generic: Unread
+    - paragraph: Notifications
+    - heading "Inbox snapshot" [level=2]
+    - generic: 4 unread
+    - article:
+      - generic "Omar Reed avatar": OR
+      - heading "Omar Reed" [level=3]
+      - paragraph:
+        - link "@omar":
+          - /url: /u/omar
+        - text: "| Apr 24, 2026, 8:00 PM"
+      - generic: Post
+      - paragraph: Omar Reed published a new post.
+    - article:
+      - generic "Omar Reed avatar": OR
+      - heading "Omar Reed" [level=3]
+      - paragraph:
+        - link "@omar":
+          - /url: /u/omar
+        - text: "| Apr 17, 2026, 2:02 AM"
+      - generic: Follow
+      - paragraph: Omar Reed followed you.
+    - article:
+      - generic "Omar Reed avatar": OR
+      - heading "Omar Reed" [level=3]
+      - paragraph:
+        - link "@omar":
+          - /url: /u/omar
+        - text: "| Apr 17, 2026, 2:02 AM"
+      - generic: Follow
+      - paragraph: Omar Reed followed you.
+    - article:
+      - generic "Omar Reed avatar": OR
+      - heading "Omar Reed" [level=3]
+      - paragraph:
+        - link "@omar":
+          - /url: /u/omar
+        - text: "| Apr 17, 2026, 2:01 AM"
+      - generic: Follow
+      - paragraph: Omar Reed followed you.
+    - link "Open inbox":
+      - /url: /notifications
+    - button "Mark read"
+    - paragraph: People
+    - heading "Suggested profiles" [level=2]
+    - article:
+      - paragraph: Bobby Crimson
+      - paragraph: "@bobby_crimson"
+      - generic: Explore
+      - link "View":
+        - /url: /u/bobby_crimson
+    - article:
+      - paragraph: Omar Reed
+      - paragraph: "@omar"
+      - generic: Following
+      - link "View":
+        - /url: /u/omar
+    - paragraph: Live activity
+    - heading "Fresh notifications" [level=3]
+    - generic: Live
+    - paragraph: No live activity yet.
+- alert

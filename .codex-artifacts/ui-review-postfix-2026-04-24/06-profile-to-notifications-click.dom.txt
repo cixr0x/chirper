@@ -1,0 +1,83 @@
+- alert
+- main:
+  - complementary:
+    - link "C Chirper microblogging lab":
+      - /url: /
+      - generic: C
+      - strong: Chirper
+      - generic: microblogging lab
+    - navigation "Primary":
+      - link "Home":
+        - /url: /
+        - generic: Home
+      - link "Chat":
+        - /url: /messages
+        - generic: Chat
+      - link "Profile":
+        - /url: /u/alana
+        - generic: Profile
+      - link "Notifications 4":
+        - /url: /notifications
+        - generic: Notifications
+        - generic: "4"
+    - link "Post":
+      - /url: /#composer
+    - generic "Alana Pierce avatar": AP
+    - paragraph: Alana Pierce
+    - paragraph: "@alana"
+    - link "View profile":
+      - /url: /u/alana
+    - button "Sign out"
+  - paragraph: Inbox
+  - heading "Notifications" [level=1]
+  - paragraph: Everything people are doing around your posts and profile, in one focused view.
+  - article:
+    - generic "Omar Reed avatar": OR
+    - heading "Omar Reed" [level=3]
+    - paragraph:
+      - link "@omar":
+        - /url: /u/omar
+      - text: "| Apr 24, 2026, 8:00 PM"
+    - generic: Post
+    - paragraph: Omar Reed published a new post.
+  - article:
+    - generic "Omar Reed avatar": OR
+    - heading "Omar Reed" [level=3]
+    - paragraph:
+      - link "@omar":
+        - /url: /u/omar
+      - text: "| Apr 17, 2026, 2:02 AM"
+    - generic: Follow
+    - paragraph: Omar Reed followed you.
+  - article:
+    - generic "Omar Reed avatar": OR
+    - heading "Omar Reed" [level=3]
+    - paragraph:
+      - link "@omar":
+        - /url: /u/omar
+      - text: "| Apr 17, 2026, 2:02 AM"
+    - generic: Follow
+    - paragraph: Omar Reed followed you.
+  - article:
+    - generic "Omar Reed avatar": OR
+    - heading "Omar Reed" [level=3]
+    - paragraph:
+      - link "@omar":
+        - /url: /u/omar
+      - text: "| Apr 17, 2026, 2:01 AM"
+    - generic: Follow
+    - paragraph: Omar Reed followed you.
+  - complementary:
+    - paragraph: Status
+    - heading "4 unread" [level=2]
+    - generic: Live
+    - generic: "4"
+    - generic: Unread
+    - generic: "4"
+    - generic: Loaded now
+    - paragraph: Follow, like, repost, reply, and new-post activity lands here in reverse order.
+    - button "Mark all as read"
+    - paragraph: Live activity
+    - heading "Fresh notifications" [level=3]
+    - generic: Live
+    - paragraph: No live activity yet.

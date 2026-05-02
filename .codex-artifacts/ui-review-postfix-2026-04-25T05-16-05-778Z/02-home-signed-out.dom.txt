@@ -1,0 +1,29 @@
+- main:
+  - complementary:
+    - link "C Chirper microblogging lab":
+      - /url: /
+      - generic: C
+      - strong: Chirper
+      - generic: microblogging lab
+    - navigation "Primary":
+      - link "Home":
+        - /url: /
+        - generic: Home
+      - link "Chat":
+        - /url: /messages
+        - generic: Chat
+      - link "Notifications":
+        - /url: /notifications
+        - generic: Notifications
+    - paragraph: Sign in to post, follow, and see your inbox.
+    - link "Open login":
+      - /url: /
+  - paragraph: Sign in required
+  - heading "Sign in to view your timeline" [level=1]
+  - paragraph: Sign in to view your timeline, post updates, and keep following the accounts you care about.
+  - paragraph: Sign in required
+  - heading "Sign in to view your timeline" [level=2]
+  - paragraph: Sign in to view your timeline, post updates, and keep following the accounts you care about.
+  - link "Sign in":
+    - /url: /?redirectTo=%2Fhome
+- alert

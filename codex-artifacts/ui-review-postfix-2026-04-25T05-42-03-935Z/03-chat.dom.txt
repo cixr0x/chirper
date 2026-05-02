@@ -1,0 +1,77 @@
+- main:
+  - complementary:
+    - link "C Chirper microblogging lab":
+      - /url: /
+      - generic: C
+      - strong: Chirper
+      - generic: microblogging lab
+    - navigation "Primary":
+      - link "Home":
+        - /url: /
+        - generic: Home
+      - link "Chat":
+        - /url: /messages
+        - generic: Chat
+      - link "Profile":
+        - /url: /u/alana
+        - generic: Profile
+      - link "Notifications 4":
+        - /url: /notifications
+        - generic: Notifications
+        - generic: "4"
+    - link "Post":
+      - /url: /#composer
+    - generic "Alana Pierce avatar":
+      - generic: AP
+    - paragraph: Alana Pierce
+    - paragraph: "@alana"
+    - link "View profile":
+      - /url: /u/alana
+    - button "Sign out"
+  - heading "Messages" [level=1]
+  - paragraph: Private conversations in a focused inbox.
+  - complementary "Conversations":
+    - paragraph: Inbox
+    - heading "Direct conversations" [level=2]
+    - generic: "2"
+    - button "Product design avatar Product design Now @design Shared a compact layout direction for direct conversations. 2":
+      - generic "Product design avatar": PD
+      - heading "Product design" [level=3]
+      - generic: Now
+      - paragraph: "@design"
+      - paragraph: Shared a compact layout direction for direct conversations.
+      - generic: "2"
+    - button "Alana Pierce avatar Alana Pierce 2h @alana Last message preview will appear here once conversations are active.":
+      - generic "Alana Pierce avatar": AP
+      - heading "Alana Pierce" [level=3]
+      - generic: 2h
+      - paragraph: "@alana"
+      - paragraph: Last message preview will appear here once conversations are active.
+  - region "Thread with Product design":
+    - generic "Product design avatar": PD
+    - paragraph: Thread
+    - heading "Product design" [level=2]
+    - paragraph: "@design"
+    - generic: Online
+    - log "Messages":
+      - article:
+        - paragraph:
+          - generic: Product design
+          - generic: 9:31 AM
+        - paragraph: The inbox needs to stay separate from the public timeline, with the thread taking over the main column.
+      - article:
+        - paragraph:
+          - generic: Alana Pierce
+          - generic: 9:34 AM
+        - paragraph: Agreed. I am keeping the composer in the message surface and leaving timeline posting on Home.
+      - article:
+        - paragraph:
+          - generic: Product design
+          - generic: 9:38 AM
+        - paragraph: That gives people a clear place to read and reply without crossing public and private actions.
+    - generic: Message
+    - textbox "Message":
+      - /placeholder: Message @design
+    - paragraph: Private reply preview.
+    - button "Send"
+- alert

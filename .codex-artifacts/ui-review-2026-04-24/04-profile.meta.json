@@ -1,0 +1,13 @@
+{
+  "name": "04-profile",
+  "url": "http://chirper.localtest.me:8088/u/alana",
+  "title": "Chirper",
+  "consoleErrors": [
+    {
+      "level": "error",
+      "message": "Error: Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.\n    at rX (http://chirper.localtest.me:8088/_next/static/chunks/0mstyq17cbf8-.js:1:47213)\n    at rY (http://chirper.localtest.me:8088/_next/static/chunks/0mstyq17cbf8-.js:1:48246)\n    at http://chirper.localtest.me:8088/_next/static/chunks/0mstyq17cbf8-.js:1:142594\n    at sh (http://chirper.localtest.me:8088/_next/static/chunks/0mstyq17cbf8-.js:1:147755)\n    at sd (http://chirper.localtest.me:8088/_next/static/chunks/0mstyq17cbf8-.js:1:139005)\n    at http://chirper.localtest.me:8088/_next/static/chunks/0mstyq17cbf8-.js:1:133830\n    at se (http://chirper.localtest.me:8088/_next/static/chunks/0mstyq17cbf8-.js:1:133931)\n    at s$ (http://chirper.localtest.me:8088/_next/static/chunks/0mstyq17cbf8-.js:1:160495)\n    at MessagePort.O (http://chirper.localtest.me:8088/_next/static/chunks/0mstyq17cbf8-.js:1:8660)",
+      "timestamp": "2026-04-25T01:43:46.251Z",
+      "url": "http://chirper.localtest.me:8088/_next/static/chunks/0mstyq17cbf8-.js"
+    }
+  ]
+}

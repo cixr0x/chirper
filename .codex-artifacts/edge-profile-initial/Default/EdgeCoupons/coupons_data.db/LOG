@@ -1,0 +1,5 @@
+2026/04/24-20:56:55.392 68ac Creating DB C:\PROJECTS\chirper\.codex-artifacts\edge-profile-initial\Default\EdgeCoupons/coupons_data.db since it was missing.
+2026/04/24-20:56:55.397 68ac Reusing MANIFEST C:\PROJECTS\chirper\.codex-artifacts\edge-profile-initial\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/04/24-20:56:55.650 71b0 Level-0 table #5: started
+2026/04/24-20:56:55.652 71b0 Level-0 table #5: 682132 bytes OK
+2026/04/24-20:56:55.652 71b0 Delete type=0 #3

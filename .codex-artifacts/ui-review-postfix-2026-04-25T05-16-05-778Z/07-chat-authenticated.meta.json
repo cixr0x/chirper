@@ -1,0 +1,6 @@
+{
+  "name": "07-chat-authenticated",
+  "url": "http://chirper.localtest.me:8088/messages",
+  "title": "Chirper",
+  "consoleErrors": []
+}

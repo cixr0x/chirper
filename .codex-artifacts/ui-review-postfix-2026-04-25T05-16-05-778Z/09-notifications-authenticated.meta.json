@@ -1,0 +1,6 @@
+{
+  "name": "09-notifications-authenticated",
+  "url": "http://chirper.localtest.me:8088/notifications",
+  "title": "Chirper",
+  "consoleErrors": []
+}

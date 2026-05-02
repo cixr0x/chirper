@@ -1,0 +1,11 @@
+{
+  "name": "04-profile",
+  "requestedUrl": "http://chirper.localtest.me:8088/u/alana",
+  "url": "http://chirper.localtest.me:8088/u/alana",
+  "title": "Chirper",
+  "consoleErrors": [],
+  "startedAt": "2026-04-25T01:56:01.166Z",
+  "loginState": {
+    "signedInAlready": true
+  }
+}

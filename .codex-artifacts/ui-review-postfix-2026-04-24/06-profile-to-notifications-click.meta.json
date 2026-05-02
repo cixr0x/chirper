@@ -1,0 +1,9 @@
+{
+  "name": "06-profile-to-notifications-click",
+  "beforeUrl": "http://chirper.localtest.me:8088/u/alana",
+  "url": "http://chirper.localtest.me:8088/notifications",
+  "title": "Chirper",
+  "consoleErrors": [],
+  "startedAt": "2026-04-25T01:56:26.092Z",
+  "notificationLinkCount": 1
+}

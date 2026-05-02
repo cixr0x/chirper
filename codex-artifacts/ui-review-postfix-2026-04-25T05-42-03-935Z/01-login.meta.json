@@ -1,0 +1,9 @@
+{
+  "name": "01-login",
+  "url": "http://chirper.localtest.me:8088/",
+  "title": "Chirper",
+  "width": 1502,
+  "height": 917,
+  "screenshot": "01-login.jpg",
+  "consoleErrors": []
+}

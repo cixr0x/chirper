@@ -1,0 +1,11 @@
+{
+  "name": "03-chat",
+  "requestedUrl": "http://chirper.localtest.me:8088/messages",
+  "url": "http://chirper.localtest.me:8088/messages",
+  "title": "Chirper",
+  "consoleErrors": [],
+  "startedAt": "2026-04-25T01:56:00.543Z",
+  "loginState": {
+    "signedInAlready": true
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "00-viewport-test",
+  "url": "http://chirper.localtest.me:8088/",
+  "title": "Chirper",
+  "width": 1502,
+  "height": 917,
+  "screenshot": "00-viewport-test.jpg",
+  "consoleErrors": []
+}

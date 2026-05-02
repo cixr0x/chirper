@@ -1,0 +1,92 @@
+- alert
+- main:
+  - complementary:
+    - link "C Chirper microblogging lab":
+      - /url: /
+      - generic: C
+      - strong: Chirper
+      - generic: microblogging lab
+    - navigation "Primary":
+      - link "Home":
+        - /url: /
+        - generic: Home
+      - link "Chat":
+        - /url: /messages
+        - generic: Chat
+      - link "Profile":
+        - /url: /u/alana
+        - generic: Profile
+      - link "Notifications 4":
+        - /url: /notifications
+        - generic: Notifications
+        - generic: "4"
+    - link "Post":
+      - /url: /#composer
+    - generic "Alana Pierce avatar": AP
+    - paragraph: Alana Pierce
+    - paragraph: "@alana"
+    - link "View profile":
+      - /url: /u/alana
+    - button "Sign out"
+  - paragraph: Thread
+  - heading "Conversation" [level=1]
+  - paragraph: Follow the parent context, the focus post, and the reply chain in a single reading flow.
+  - paragraph: Focus post
+  - heading "Conversation root" [level=2]
+  - paragraph: This is the post everyone in this thread is reacting to.
+  - generic: "@omar"
+  - generic: Apr 24, 2026, 7:59 PM
+  - generic: 0 replies
+  - generic: 0 likes
+  - article:
+    - generic "Omar Reed avatar": OR
+    - heading "Omar Reed" [level=3]
+    - paragraph:
+      - link "@omar":
+        - /url: /u/omar
+      - generic: /
+      - generic: Apr 24, 2026, 7:59 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_aaff982d394c49bda71a31705e96d796
+    - paragraph: Hi everybody! Im Omar!
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+  - paragraph: Replies
+  - heading "Direct responses" [level=2]
+  - paragraph: Direct replies stay here so the thread remains readable without nested branching.
+  - article:
+    - heading "No replies yet" [level=3]
+    - paragraph: No direct replies yet. Use the reply composer on the focus post to start the conversation.
+  - complementary:
+    - paragraph: Conversation
+    - heading "Thread overview" [level=2]
+    - generic: "0"
+    - generic: Replies
+    - generic: "0"
+    - generic: Likes
+    - generic: "0"
+    - generic: Reposts
+    - generic: "1"
+    - generic: People
+    - paragraph: Started by @omar Apr 24, 2026, 7:59 PM.
+    - paragraph: Participants
+    - heading "1 people involved" [level=2]
+    - generic: Thread
+    - article:
+      - generic "Omar Reed avatar": OR
+      - heading "Omar Reed" [level=3]
+      - paragraph:
+        - link "@omar":
+          - /url: /u/omar
+      - generic: Author
+    - paragraph: Likes
+    - heading "0 total" [level=2]
+    - paragraph: No likes yet.
+    - paragraph: Reposts
+    - heading "0 total" [level=2]
+    - paragraph: No reposts yet.

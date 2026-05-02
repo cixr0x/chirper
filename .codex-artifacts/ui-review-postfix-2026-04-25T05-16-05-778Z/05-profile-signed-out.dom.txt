@@ -1,0 +1,177 @@
+- main:
+  - complementary:
+    - link "C Chirper microblogging lab":
+      - /url: /
+      - generic: C
+      - strong: Chirper
+      - generic: microblogging lab
+    - navigation "Primary":
+      - link "Home":
+        - /url: /
+        - generic: Home
+      - link "Chat":
+        - /url: /messages
+        - generic: Chat
+      - link "Profile":
+        - /url: /u/alana
+        - generic: Profile
+      - link "Notifications":
+        - /url: /notifications
+        - generic: Notifications
+    - paragraph: Sign in to post, follow, and see your inbox.
+    - link "Open login":
+      - /url: /
+  - paragraph: Profile
+  - heading "@alana" [level=1]
+  - paragraph: See what @alana is posting and how their graph is evolving.
+  - generic "Alana Pierce avatar":
+    - generic: AP
+  - heading "Alana Pierce" [level=2]
+  - generic: active
+  - paragraph: "@alana"
+  - link "Sign in to interact":
+    - /url: /
+  - paragraph: Building Chirper as a distributed systems exercise.
+  - link "0 Followers":
+    - /url: /u/alana/followers
+    - strong: "0"
+    - generic: Followers
+  - link "1 Following":
+    - /url: /u/alana/following
+    - strong: "1"
+    - generic: Following
+  - strong: Monterrey
+  - generic: Location
+  - generic: Monterrey
+  - paragraph: Activity
+  - heading "Recent activity from @alana" [level=2]
+  - article:
+    - generic "Alana Pierce avatar":
+      - generic: AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 8:17 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_2953f17d227c4049a3e399bbdf5b3975
+    - paragraph: This is a post with an image for testing! I love Stardew Valley!
+    - link "Attachment 1 on post post_2953f17d227c4049a3e399bbdf5b3975":
+      - /url: /api/media/assets/asset_cc6d1df42dff8ebbae953ef4644b85f5/redirect
+      - img "Attachment 1 on post post_2953f17d227c4049a3e399bbdf5b3975"
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+  - article:
+    - generic "Alana Pierce avatar":
+      - generic: AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 8:03 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_32cefab1e54a47d8966fbf4bc37bb7da
+    - paragraph: We need more posts to test the timeline!
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+  - article:
+    - generic "Alana Pierce avatar":
+      - generic: AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 7:07 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_97d388de3dd347a3b4a405800101b0f8
+    - paragraph: Whats happening? Nothing... nothing is happening
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+  - article:
+    - generic "Alana Pierce avatar":
+      - generic: AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 6:59 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_e6008c85ff5b469cb1c3591177fbda66
+    - paragraph: Oh no! It seems like the timeline is not refreshing when I post something!
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+  - article:
+    - generic "Alana Pierce avatar":
+      - generic: AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 6:58 PM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_f9105a318ace403fb113796244e677bd
+    - paragraph: This is a test post
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+  - article:
+    - generic "Alana Pierce avatar":
+      - generic: AP
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 16, 2026, 4:11 AM
+      - generic: /
+      - link "Open post":
+        - /url: /p/post_demo_alana_001
+    - paragraph: Chirper now has real profile pages backed by service-owned tables.
+    - button "Reply, 0 replies":
+      - generic: "0"
+    - button "Repost, 0 reposts":
+      - generic: "0"
+    - button "Like, 0 likes":
+      - generic: "0"
+  - complementary:
+    - paragraph: Overview
+    - heading "Alana Pierce" [level=2]
+    - paragraph: Building Chirper as a distributed systems exercise.
+    - generic: Monterrey
+    - paragraph: You are not following @alana yet.
+    - paragraph: Links
+    - heading "Public references" [level=2]
+    - list:
+      - text: GitHub
+      - link "https://github.com/alana":
+        - /url: https://github.com/alana
+- alert

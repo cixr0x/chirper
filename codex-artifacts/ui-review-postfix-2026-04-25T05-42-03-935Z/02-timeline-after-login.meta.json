@@ -1,0 +1,9 @@
+{
+  "name": "02-timeline-after-login",
+  "url": "http://chirper.localtest.me:8088/",
+  "title": "Chirper",
+  "width": 1502,
+  "height": 917,
+  "screenshot": "02-timeline-after-login.jpg",
+  "consoleErrors": []
+}

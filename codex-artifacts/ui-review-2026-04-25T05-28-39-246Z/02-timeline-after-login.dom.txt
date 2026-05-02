@@ -1,0 +1,57 @@
+- main:
+  - article:
+    - generic: C
+    - generic: Chirper
+    - heading "See what your network is talking about right now." [level=1]
+    - paragraph: A clean front door for a fast, social timeline. Sign in to post, follow, reply, and keep up with the conversation as it moves.
+    - link "Go to login form":
+      - /url: "#landing-auth"
+    - list:
+      - listitem: One timeline at the center.
+      - listitem: Simple entry, no dashboard clutter.
+      - listitem: Posts, profiles, replies, and notifications in one flow.
+    - article:
+      - strong: Alana Pierce
+      - generic: "@alana"
+      - paragraph: Shipping the next UI pass. The goal is one calm, readable surface instead of a dashboard of boxes.
+      - generic: 12 replies / 48 likes
+    - article:
+      - strong: Omar Chavez
+      - generic: "@omar"
+      - paragraph: The posting flow feels quick enough to keep the conversation moving while the product keeps getting sharper.
+      - generic: 5 reposts / 19 likes
+  - paragraph: Sign in
+  - heading "Welcome back" [level=2]
+  - paragraph: Sign in to continue where the timeline left off.
+  - tablist "Authentication mode":
+    - tab "Log in" [selected]
+    - tab "Sign up"
+  - generic: Handle
+  - textbox "Handle":
+    - /placeholder: Your handle
+    - text: alana
+  - generic: Password
+  - textbox "Password":
+    - /placeholder: Your password
+    - text: chirper-alana
+  - button "Show password": Show
+  - button "Sign in" [active]
+  - paragraph: Demo access for this environment
+  - button "Use @alana demo account chirper-alana":
+    - text: Use @alana demo account
+    - generic: chirper-alana
+  - button "Use @omar demo account chirper-omar":
+    - text: Use @omar demo account
+    - generic: chirper-omar
+  - paragraph: Need to reset your password?
+  - link "Open recovery flow":
+    - /url: /reset
+  - paragraph: Fast start
+  - paragraph: Create an account or use the seeded demo credentials below.
+  - paragraph: Recovery
+  - paragraph: Password reset lives in the same product flow if you need it.
+  - generic: Chirper
+  - generic: Timeline-first social app
+  - link "Reset password":
+    - /url: /reset
+- alert

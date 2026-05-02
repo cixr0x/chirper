@@ -1,0 +1,11 @@
+{
+  "url": "http://chirper.localtest.me:8088/p/post_aaff982d394c49bda71a31705e96d796",
+  "title": "Chirper",
+  "screenshot": "C:/PROJECTS/chirper/.codex-artifacts/ui-review/20-post-after.png",
+  "dom": "C:/PROJECTS/chirper/.codex-artifacts/ui-review/20-post-after-dom.txt",
+  "consoleErrors": [],
+  "dims": {
+    "width": 1502,
+    "height": 917
+  }
+}

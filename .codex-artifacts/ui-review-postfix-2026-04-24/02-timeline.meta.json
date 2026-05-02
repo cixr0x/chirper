@@ -1,0 +1,11 @@
+{
+  "name": "02-timeline",
+  "requestedUrl": "http://chirper.localtest.me:8088/",
+  "url": "http://chirper.localtest.me:8088/",
+  "title": "Chirper",
+  "consoleErrors": [],
+  "startedAt": "2026-04-25T01:55:58.189Z",
+  "loginState": {
+    "signedInAlready": true
+  }
+}

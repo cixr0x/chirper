@@ -1,0 +1,6 @@
+{
+  "name": "04-notifications-signed-out",
+  "url": "http://chirper.localtest.me:8088/notifications",
+  "title": "Chirper",
+  "consoleErrors": []
+}

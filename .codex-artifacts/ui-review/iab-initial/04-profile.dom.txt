@@ -1,0 +1,226 @@
+- main:
+  - complementary:
+    - link "C Chirper microblogging lab":
+      - /url: /
+      - generic: C
+      - strong: Chirper
+      - generic: microblogging lab
+    - navigation "Primary":
+      - link "Home":
+        - /url: /
+        - generic: Home
+      - link "Chat":
+        - /url: /messages
+        - generic: Chat
+      - link "Profile":
+        - /url: /u/alana
+        - generic: Profile
+      - link "Notifications":
+        - /url: /notifications
+        - generic: Notifications
+    - link "Post":
+      - /url: /#composer
+    - img "Alana Pierce avatar"
+    - paragraph: Alana Pierce
+    - paragraph: "@alana"
+    - link "View profile":
+      - /url: /u/alana
+    - button "Sign out"
+  - paragraph: Profile
+  - heading "Your profile" [level=1]
+  - paragraph: Manage your profile and track your public activity.
+  - img "Alana Pierce avatar"
+  - heading "Alana Pierce" [level=2]
+  - generic: active
+  - paragraph: "@alana"
+  - link "Edit onboarding":
+    - /url: /onboarding
+  - generic: Your account
+  - paragraph: Building Chirper as a distributed systems exercise.
+  - link "0 Followers":
+    - /url: /u/alana/followers
+    - strong: "0"
+    - generic: Followers
+  - link "1 Following":
+    - /url: /u/alana/following
+    - strong: "1"
+    - generic: Following
+  - strong: Monterrey
+  - generic: Location
+  - generic: Monterrey
+  - link "0 followers":
+    - /url: /u/alana/followers
+  - link "1 following":
+    - /url: /u/alana/following
+  - generic: Viewing as @alana
+  - paragraph: Edit profile
+  - heading "Refine how this account appears across the app" [level=2]
+  - generic: Bio
+  - textbox "Bio":
+    - /placeholder: Tell people what this account is about.
+    - text: Building Chirper as a distributed systems exercise.
+  - generic: Location
+  - textbox "Location":
+    - /placeholder: Monterrey
+    - text: Monterrey
+  - generic: Avatar URL
+  - textbox "Avatar URL":
+    - /placeholder: https://images.example.com/avatar.png
+  - generic: Banner URL
+  - textbox "Banner URL":
+    - /placeholder: https://images.example.com/banner.jpg
+  - checkbox "Clear current avatar"
+  - generic: Clear current avatar
+  - checkbox "Clear current banner"
+  - generic: Clear current banner
+  - paragraph: Profile links
+  - heading "Outbound references" [level=2]
+  - generic: Label 1
+  - textbox "Label 1":
+    - /placeholder: GitHub
+    - text: GitHub
+  - generic: URL 1
+  - textbox "URL 1":
+    - /placeholder: https://github.com/you
+    - text: https://github.com/alana
+  - generic: Label 2
+  - textbox "Label 2":
+    - /placeholder: GitHub
+  - generic: URL 2
+  - textbox "URL 2":
+    - /placeholder: https://github.com/you
+  - generic: Label 3
+  - textbox "Label 3":
+    - /placeholder: GitHub
+  - generic: URL 3
+  - textbox "URL 3":
+    - /placeholder: https://github.com/you
+  - button "Save profile"
+  - link "Open onboarding":
+    - /url: /onboarding
+  - paragraph: Activity
+  - heading "Your posts, replies, and reposts" [level=2]
+  - link "Alana Pierce avatar Alana Pierce @alana Apr 21, 2026, 8:17 PM This is a post with an image for testing! I love Stardew Valley! Attachment 1 on post post_2953f17d227c4049a3e399bbdf5b3975 0 0 0":
+    - img "Alana Pierce avatar"
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 8:17 PM
+    - paragraph: This is a post with an image for testing! I love Stardew Valley!
+    - link "Attachment 1 on post post_2953f17d227c4049a3e399bbdf5b3975":
+      - /url: http://api.chirper.localtest.me:8088/api/media/assets/asset_cc6d1df42dff8ebbae953ef4644b85f5/redirect
+      - img "Attachment 1 on post post_2953f17d227c4049a3e399bbdf5b3975"
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button:
+  - link "Alana Pierce avatar Alana Pierce @alana Apr 21, 2026, 8:03 PM We need more posts to test the timeline! 0 0 0":
+    - img "Alana Pierce avatar"
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 8:03 PM
+    - paragraph: We need more posts to test the timeline!
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button:
+  - link "Alana Pierce avatar Alana Pierce @alana Apr 21, 2026, 7:07 PM Whats happening? Nothing... nothing is happening 0 0 0":
+    - img "Alana Pierce avatar"
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 7:07 PM
+    - paragraph: Whats happening? Nothing... nothing is happening
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button:
+  - link "Alana Pierce avatar Alana Pierce @alana Apr 21, 2026, 6:59 PM Oh no! It seems like the timeline is not refreshing when I post something! 0 0 0":
+    - img "Alana Pierce avatar"
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 6:59 PM
+    - paragraph: Oh no! It seems like the timeline is not refreshing when I post something!
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button:
+  - link "Alana Pierce avatar Alana Pierce @alana Apr 21, 2026, 6:58 PM This is a test post 0 0 0":
+    - img "Alana Pierce avatar"
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 21, 2026, 6:58 PM
+    - paragraph: This is a test post
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button:
+  - link "Alana Pierce avatar Alana Pierce @alana Apr 16, 2026, 4:11 AM Chirper now has real profile pages backed by service-owned tables. 0 0 0":
+    - img "Alana Pierce avatar"
+    - heading "Alana Pierce" [level=3]
+    - paragraph:
+      - link "@alana":
+        - /url: /u/alana
+      - generic: /
+      - generic: Apr 16, 2026, 4:11 AM
+    - paragraph: Chirper now has real profile pages backed by service-owned tables.
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button "0":
+      - generic: "0"
+    - button:
+  - complementary:
+    - paragraph: Overview
+    - heading "Alana Pierce" [level=2]
+    - link "0 Followers":
+      - /url: /u/alana/followers
+      - generic: "0"
+      - generic: Followers
+    - link "1 Following":
+      - /url: /u/alana/following
+      - generic: "1"
+      - generic: Following
+    - paragraph: Building Chirper as a distributed systems exercise.
+    - generic: Monterrey
+    - link "0 followers":
+      - /url: /u/alana/followers
+    - link "1 following":
+      - /url: /u/alana/following
+    - paragraph: You are looking at your public profile.
+    - paragraph: Links
+    - heading "Public references" [level=2]
+    - list:
+      - text: GitHub
+      - link "https://github.com/alana":
+        - /url: https://github.com/alana
+- alert

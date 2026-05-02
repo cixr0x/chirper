@@ -290,7 +290,7 @@ kubectl create secret generic chirper-database \
   --namespace "$NAMESPACE" \
   --from-env-file="$SECRET_ENV_FILE" \
   --dry-run=client \
-  -o yaml | kubectl apply -f -
+  -o yaml | kubectl apply --server-side --field-manager=chirper-deploy -f -
 rm -f "$SECRET_ENV_FILE"
 SECRET_ENV_FILE=""
 

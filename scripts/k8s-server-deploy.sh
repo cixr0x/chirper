@@ -8,6 +8,7 @@ TOKEN_FILE="${TOKEN_FILE:-/home/mcp13/git_token}"
 NAMESPACE="${NAMESPACE:-chirper}"
 SERVICES="${SERVICES:-}"
 SKIP_MIGRATIONS="${SKIP_MIGRATIONS:-true}"
+ALL_SERVICES=(identity profile media realtime posts graph timeline notifications bff web)
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -78,6 +79,56 @@ read_database_url() {
   exit 1
 }
 
+selected_services() {
+  if [ -z "${SERVICES// }" ]; then
+    printf '%s\n' "${ALL_SERVICES[@]}"
+    return
+  fi
+  tr ',' ' ' <<<"$SERVICES" | xargs -n1
+}
+
+is_known_service() {
+  local service="$1"
+  local known
+
+  for known in "${ALL_SERVICES[@]}"; do
+    if [ "$service" = "$known" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+is_full_deployment() {
+  local service selected_service
+  local selected_services_list=()
+
+  while IFS= read -r selected_service; do
+    [ -n "$selected_service" ] || continue
+    selected_services_list+=("$selected_service")
+  done < <(selected_services)
+
+  [ "${#selected_services_list[@]}" -gt 0 ] || return 1
+
+  for selected_service in "${selected_services_list[@]}"; do
+    is_known_service "$selected_service" || return 1
+  done
+
+  for service in "${ALL_SERVICES[@]}"; do
+    local found=false
+    for selected_service in "${selected_services_list[@]}"; do
+      if [ "$selected_service" = "$service" ]; then
+        found=true
+        break
+      fi
+    done
+    [ "$found" = true ] || return 1
+  done
+
+  return 0
+}
+
 join_selected_services() {
   local first=true
   local service
@@ -102,10 +153,17 @@ if [ ! -s "$TOKEN_FILE" ]; then
   exit 1
 fi
 
+restore_xtrace=false
+case "$-" in
+  *x*)
+    restore_xtrace=true
+    set +x
+    ;;
+esac
+
 TOKEN="$(tr -d '\r\n' < "$TOKEN_FILE")"
 AUTH_URL="${REPO_URL/https:\/\//https:\/\/x-access-token:${TOKEN}@}"
 
-set +x
 if [ -d "$DEPLOY_DIR/.git" ]; then
   git -C "$DEPLOY_DIR" fetch --prune "$AUTH_URL" "$GIT_BRANCH"
   git -C "$DEPLOY_DIR" checkout -B "$GIT_BRANCH" FETCH_HEAD
@@ -113,7 +171,10 @@ else
   mkdir -p "$(dirname "$DEPLOY_DIR")"
   git clone --branch "$GIT_BRANCH" "$AUTH_URL" "$DEPLOY_DIR"
 fi
-set -x
+
+if [ "$restore_xtrace" = true ]; then
+  set -x
+fi
 
 cd "$DEPLOY_DIR"
 
@@ -134,6 +195,14 @@ fi
 
 kubectl get namespace "$NAMESPACE" >/dev/null 2>&1 || kubectl create namespace "$NAMESPACE"
 
+restore_xtrace=false
+case "$-" in
+  *x*)
+    restore_xtrace=true
+    set +x
+    ;;
+esac
+
 database_url="$(read_database_url)"
 
 kubectl create secret generic chirper-database \
@@ -142,16 +211,11 @@ kubectl create secret generic chirper-database \
   --dry-run=client \
   -o yaml | kubectl apply -f -
 
-ALL_SERVICES=(identity profile media realtime posts graph timeline notifications bff web)
-selected_services() {
-  if [ -z "${SERVICES// }" ]; then
-    printf '%s\n' "${ALL_SERVICES[@]}"
-    return
-  fi
-  tr ',' ' ' <<<"$SERVICES" | xargs -n1
-}
+if [ "$restore_xtrace" = true ]; then
+  set -x
+fi
 
-if [ -z "${SERVICES// }" ]; then
+if is_full_deployment; then
   kubectl --namespace "$NAMESPACE" apply -f infra/k8s/kafka.yaml
   kubectl --namespace "$NAMESPACE" rollout status deployment/kafka --timeout=300s
   kubectl --namespace "$NAMESPACE" rollout status deployment/kafka-ui --timeout=300s

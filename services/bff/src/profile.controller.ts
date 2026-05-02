@@ -1,5 +1,4 @@
 import { BadRequestException, Body, Controller, Headers, Inject, Post } from "@nestjs/common";
-import { MediaClientService } from "./clients/media.client";
 import { ProfileClientService } from "./clients/profile.client";
 import { getGrpcErrorMessage, isGrpcInvalidArgument } from "./grpc-status";
 import { sessionHeaderName } from "./session-header";
@@ -10,7 +9,6 @@ import { UserSummaryService } from "./user-summary.service";
 export class ProfileController {
   constructor(
     @Inject(ProfileClientService) private readonly profileClient: ProfileClientService,
-    @Inject(MediaClientService) private readonly mediaClient: MediaClientService,
     @Inject(SessionAuthService) private readonly sessionAuth: SessionAuthService,
     @Inject(UserSummaryService) private readonly userSummaryService: UserSummaryService,
   ) {}
@@ -51,32 +49,14 @@ export class ProfileController {
       bannerUrl = "";
     }
 
-    try {
-      if (avatarSourceUrl) {
-        const avatarAsset = await this.mediaClient.createAssetFromSource({
-          ownerUserId: session.userId,
-          sourceUrl: avatarSourceUrl,
-          purpose: "profile_avatar",
-        });
-        avatarAssetId = avatarAsset.assetId;
-        avatarUrl = "";
-      }
+    if (avatarSourceUrl) {
+      avatarAssetId = "";
+      avatarUrl = avatarSourceUrl;
+    }
 
-      if (bannerSourceUrl) {
-        const bannerAsset = await this.mediaClient.createAssetFromSource({
-          ownerUserId: session.userId,
-          sourceUrl: bannerSourceUrl,
-          purpose: "profile_banner",
-        });
-        bannerAssetId = bannerAsset.assetId;
-        bannerUrl = "";
-      }
-    } catch (error) {
-      if (isGrpcInvalidArgument(error)) {
-        throw new BadRequestException(getGrpcErrorMessage(error, "Asset registration failed."));
-      }
-
-      throw error;
+    if (bannerSourceUrl) {
+      bannerAssetId = "";
+      bannerUrl = bannerSourceUrl;
     }
 
     try {

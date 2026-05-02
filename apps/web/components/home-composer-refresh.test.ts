@@ -11,10 +11,11 @@ const homeComposerSource = fs.readFileSync(
 
 test("home composer refreshes the current route after creating a post", () => {
   assert.match(homeComposerSource, /from "next\/navigation"/);
-  assert.match(homeComposerSource, /from "react-dom"/);
+  assert.doesNotMatch(homeComposerSource, /from "react-dom"/);
   assert.match(homeComposerSource, /useRouter\(\)/);
   assert.match(homeComposerSource, /await action\(formData\)/);
-  assert.match(homeComposerSource, /flushSync\(\(\) => \{\s*setBody\(""\);\s*\}\);/);
+  assert.match(homeComposerSource, /setBody\(""\);/);
+  assert.match(homeComposerSource, /window\.requestAnimationFrame\(\(\) => \{\s*router\.refresh\(\);\s*\}\);/);
   assert.match(homeComposerSource, /router\.refresh\(\)/);
   assert.ok(
     homeComposerSource.indexOf('setBody("");') < homeComposerSource.indexOf("router.refresh();"),

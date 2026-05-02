@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { flushSync } from "react-dom";
 import type { UserSummary } from "../lib/bff";
 import { AvatarBadge } from "./avatar-badge";
 
@@ -19,10 +18,10 @@ export function HomeComposer({ action, viewer }: HomeComposerProps) {
 
   async function handleSubmit(formData: FormData) {
     await action(formData);
-    flushSync(() => {
-      setBody("");
+    setBody("");
+    window.requestAnimationFrame(() => {
+      router.refresh();
     });
-    router.refresh();
   }
 
   return (

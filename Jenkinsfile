@@ -17,7 +17,7 @@ pipeline {
   stages {
     stage('Deploy') {
       steps {
-        sh '''
+        sh '''#!/usr/bin/env bash
           set -euo pipefail
           export SERVICES="${SERVICES}"
           export SKIP_MIGRATIONS="${SKIP_MIGRATIONS}"

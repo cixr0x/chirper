@@ -8,9 +8,12 @@ TOKEN_FILE="${TOKEN_FILE:-/home/mcp13/git_token}"
 NAMESPACE="${NAMESPACE:-chirper}"
 SERVICES="${SERVICES:-}"
 SKIP_MIGRATIONS="${SKIP_MIGRATIONS:-true}"
+KUBECONFIG="${KUBECONFIG:-/var/lib/jenkins/.kube/config}"
 ALL_SERVICES=(identity profile media realtime posts graph timeline notifications bff web)
 GIT_ASKPASS_FILE=""
 SECRET_ENV_FILE=""
+
+export KUBECONFIG
 
 cleanup() {
   [ -n "$GIT_ASKPASS_FILE" ] && rm -f "$GIT_ASKPASS_FILE"

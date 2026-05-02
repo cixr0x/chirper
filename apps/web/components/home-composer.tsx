@@ -2,22 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { UserSummary } from "../lib/bff";
+import type { FeedItem, UserSummary } from "../lib/bff";
 import { AvatarBadge } from "./avatar-badge";
 
 type HomeComposerProps = {
-  action: (formData: FormData) => void | Promise<void>;
+  action: (formData: FormData) => Promise<FeedItem | null>;
+  onPostCreated?: (item: FeedItem) => void;
   viewer: Pick<UserSummary, "avatarUrl" | "displayName" | "handle">;
 };
 
 const postLimit = 280;
 
-export function HomeComposer({ action, viewer }: HomeComposerProps) {
+export function HomeComposer({ action, onPostCreated, viewer }: HomeComposerProps) {
   const router = useRouter();
   const [body, setBody] = useState("");
 
   async function handleSubmit(formData: FormData) {
-    await action(formData);
+    const createdItem = await action(formData);
+    if (createdItem) {
+      onPostCreated?.(createdItem);
+    }
     setBody("");
     window.requestAnimationFrame(() => {
       router.refresh();

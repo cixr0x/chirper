@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "../components/app-shell";
-import { FeedList } from "../components/feed-list";
-import { HomeComposer } from "../components/home-composer";
+import { HomeTimeline } from "../components/home-timeline";
 import { LiveNotificationEvents } from "../components/live-notification-events";
 import { NotificationList } from "../components/notification-list";
 import { PasswordField } from "../components/password-field";
@@ -353,23 +352,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       ) : null}
 
       <section className="panel timeline-surface" id="composer">
-        <div className="timeline-composer-block">
-          <HomeComposer action={createPostAction} viewer={viewer} />
-        </div>
-
-        <div className="timeline-feed-block">
-          <FeedList
-            emptyBody="Follow a few people or publish the first post to start shaping this home feed."
-            emptyTitle="Your timeline is empty"
-            infinitePath="/api/feed"
-            items={homeFeed.items}
-            nextCursor={homeFeed.nextCursor}
-            pageSize={10}
-            targetPath="/"
-            viewerHandle={viewer.handle}
-            viewerUserId={viewer.userId}
-          />
-        </div>
+        <HomeTimeline
+          action={createPostAction}
+          emptyBody="Follow a few people or publish the first post to start shaping this home feed."
+          emptyTitle="Your timeline is empty"
+          homeFeed={homeFeed}
+          viewer={viewer}
+        />
       </section>
     </AppShell>
   );

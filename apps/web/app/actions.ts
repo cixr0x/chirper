@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import type { FeedItem } from "../lib/bff";
 import { clearSession, getSessionToken, setSessionToken } from "../lib/session";
 
 const bffBaseUrl =
@@ -290,7 +291,7 @@ function collectMediaSourceUrls(formData: FormData) {
   ];
 }
 
-export async function createPostAction(formData: FormData) {
+export async function createPostAction(formData: FormData): Promise<FeedItem | null> {
   const body = String(formData.get("body") ?? "").trim();
   const targetProfileHandle = String(formData.get("targetProfileHandle") ?? "").trim();
   const mediaSourceUrls = collectMediaSourceUrls(formData);
@@ -300,7 +301,7 @@ export async function createPostAction(formData: FormData) {
     redirect("/");
   }
 
-  await fetch(`${bffBaseUrl}/api/posts`, {
+  const response = await fetch(`${bffBaseUrl}/api/posts`, {
     method: "POST",
     headers: sessionHeaders(sessionToken),
     body: JSON.stringify({
@@ -310,10 +311,18 @@ export async function createPostAction(formData: FormData) {
     cache: "no-store",
   });
 
+  if (!response.ok) {
+    return null;
+  }
+
+  const createdItem = (await response.json()) as FeedItem;
+
   revalidatePath("/");
   if (targetProfileHandle) {
     revalidatePath(`/u/${targetProfileHandle}`);
   }
+
+  return createdItem;
 }
 
 export async function createReplyAction(formData: FormData) {

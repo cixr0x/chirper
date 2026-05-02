@@ -13,7 +13,8 @@ test("home composer refreshes the current route after creating a post", () => {
   assert.match(homeComposerSource, /from "next\/navigation"/);
   assert.doesNotMatch(homeComposerSource, /from "react-dom"/);
   assert.match(homeComposerSource, /useRouter\(\)/);
-  assert.match(homeComposerSource, /await action\(formData\)/);
+  assert.match(homeComposerSource, /const createdItem = await action\(formData\)/);
+  assert.match(homeComposerSource, /if \(createdItem\) \{\s*onPostCreated\?\.\(createdItem\);\s*\}/);
   assert.match(homeComposerSource, /setBody\(""\);/);
   assert.match(homeComposerSource, /window\.requestAnimationFrame\(\(\) => \{\s*router\.refresh\(\);\s*\}\);/);
   assert.match(homeComposerSource, /router\.refresh\(\)/);

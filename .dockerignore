@@ -14,3 +14,6 @@ services/*/node_modules
 services/*/dist
 services/*/generated
 *.log
+**/.env
+**/.env.local
+**/.env.*.local

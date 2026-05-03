@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { searchUsers, type UserSummary } from "../lib/bff";
+import type { UserSummary } from "../lib/bff";
 import { AvatarBadge } from "./avatar-badge";
 
 export function UserSearchCard() {
@@ -23,7 +23,7 @@ export function UserSearchCard() {
 
     const timeoutId = window.setTimeout(async () => {
       try {
-        const nextResults = await searchUsers(trimmedQuery, 5);
+        const nextResults = await searchTimelineUsers(trimmedQuery, 5);
         if (!isActive) {
           return;
         }
@@ -85,4 +85,20 @@ export function UserSearchCard() {
       </div>
     </section>
   );
+}
+
+async function searchTimelineUsers(query: string, limit: number) {
+  const params = new URLSearchParams();
+  params.set("q", query);
+  params.set("limit", String(limit));
+
+  const response = await fetch(`/api/users/search?${params.toString()}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("User search request failed");
+  }
+
+  return (await response.json()) as UserSummary[];
 }

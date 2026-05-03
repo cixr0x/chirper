@@ -48,6 +48,12 @@
       "httpPort": 4006,
       "grpcPort": 50056
     },
+    "messages": {
+      "kind": "service",
+      "dbPrefix": "msg",
+      "httpPort": 4009,
+      "grpcPort": 50059
+    },
     "media": {
       "kind": "service",
       "dbPrefix": "media",

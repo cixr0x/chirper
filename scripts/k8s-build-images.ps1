@@ -23,6 +23,7 @@ $workspaces = @(
   @{ Name = "graph"; Package = "@chirper/graph"; Directory = "services/graph"; EnablePrisma = "true"; StartKind = "service" },
   @{ Name = "timeline"; Package = "@chirper/timeline"; Directory = "services/timeline"; EnablePrisma = "true"; StartKind = "service" },
   @{ Name = "notifications"; Package = "@chirper/notifications"; Directory = "services/notifications"; EnablePrisma = "true"; StartKind = "service" },
+  @{ Name = "messages"; Package = "@chirper/messages"; Directory = "services/messages"; EnablePrisma = "true"; StartKind = "service" },
   @{ Name = "media"; Package = "@chirper/media"; Directory = "services/media"; EnablePrisma = "true"; StartKind = "service" },
   @{ Name = "realtime"; Package = "@chirper/realtime"; Directory = "services/realtime"; EnablePrisma = "false"; StartKind = "service" },
   @{ Name = "bff"; Package = "@chirper/bff"; Directory = "services/bff"; EnablePrisma = "false"; StartKind = "service" },

@@ -31,6 +31,7 @@ $allReleases = @(
   "graph",
   "timeline",
   "notifications",
+  "messages",
   "bff",
   "web"
 )
@@ -42,6 +43,7 @@ $migrationScriptsByRelease = @{
   graph = "db:graph:migrate"
   timeline = "db:timeline:migrate"
   notifications = "db:notifications:migrate"
+  messages = "db:messages:migrate"
   media = "db:media:migrate"
 }
 $seedScriptsByRelease = @{

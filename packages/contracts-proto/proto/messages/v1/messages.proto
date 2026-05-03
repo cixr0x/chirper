@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package messages.v1;
+
+service MessagesService {
+  rpc ListConversations (ListConversationsRequest) returns (ListConversationsResponse);
+  rpc GetConversation (GetConversationRequest) returns (GetConversationResponse);
+  rpc StartConversation (StartConversationRequest) returns (ConversationRecord);
+  rpc SendMessage (SendMessageRequest) returns (MessageRecord);
+  rpc MarkConversationRead (MarkConversationReadRequest) returns (MarkConversationReadResponse);
+}
+
+message ListConversationsRequest {
+  string viewerUserId = 1;
+  int32 limit = 2;
+  string cursor = 3;
+}
+
+message GetConversationRequest {
+  string viewerUserId = 1;
+  string conversationId = 2;
+  int32 limit = 3;
+  string beforeCursor = 4;
+}
+
+message StartConversationRequest {
+  string viewerUserId = 1;
+  string recipientUserId = 2;
+}
+
+message SendMessageRequest {
+  string viewerUserId = 1;
+  string conversationId = 2;
+  string body = 3;
+}
+
+message MarkConversationReadRequest {
+  string viewerUserId = 1;
+  string conversationId = 2;
+}
+
+message ConversationRecord {
+  string conversationId = 1;
+  repeated string participantUserIds = 2;
+  string otherUserId = 3;
+  string lastMessageId = 4;
+  string lastMessagePreview = 5;
+  string lastMessageAuthorUserId = 6;
+  string lastMessageAt = 7;
+  int32 unreadCount = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+}
+
+message MessageRecord {
+  string messageId = 1;
+  string conversationId = 2;
+  string authorUserId = 3;
+  string body = 4;
+  string createdAt = 5;
+}
+
+message ListConversationsResponse {
+  repeated ConversationRecord conversations = 1;
+  string nextCursor = 2;
+}
+
+message GetConversationResponse {
+  ConversationRecord conversation = 1;
+  repeated MessageRecord messages = 2;
+  string nextCursor = 3;
+}
+
+message MarkConversationReadResponse {
+  bool updated = 1;
+}

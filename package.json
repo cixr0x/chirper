@@ -9,7 +9,7 @@
     "apps/*"
   ],
   "scripts": {
-    "prisma:generate": "npm run prisma:generate -w @chirper/identity && npm run prisma:generate -w @chirper/profile && npm run prisma:generate -w @chirper/posts && npm run prisma:generate -w @chirper/graph && npm run prisma:generate -w @chirper/timeline && npm run prisma:generate -w @chirper/notifications && npm run prisma:generate -w @chirper/media",
+    "prisma:generate": "npm run prisma:generate -w @chirper/identity && npm run prisma:generate -w @chirper/profile && npm run prisma:generate -w @chirper/posts && npm run prisma:generate -w @chirper/graph && npm run prisma:generate -w @chirper/timeline && npm run prisma:generate -w @chirper/notifications && npm run prisma:generate -w @chirper/messages && npm run prisma:generate -w @chirper/media",
     "build:packages": "npm run build -w @chirper/common && npm run build -w @chirper/contracts-events",
     "build": "npm run build:packages && npm run prisma:generate && npm run build --workspaces --if-present",
     "typecheck": "npm run build:packages && npm run prisma:generate && npm run typecheck --workspaces --if-present",
@@ -39,6 +39,9 @@
     "db:notifications:migrate": "node ./scripts/flyway-run.mjs --service notifications --command migrate",
     "db:notifications:validate": "node ./scripts/flyway-run.mjs --service notifications --command validate",
     "db:notifications:seed:demo": "node ./scripts/sql-file-run.mjs --service notifications --file db/seeds/demo.sql",
+    "db:messages:info": "node ./scripts/flyway-run.mjs --service messages --command info",
+    "db:messages:migrate": "node ./scripts/flyway-run.mjs --service messages --command migrate",
+    "db:messages:validate": "node ./scripts/flyway-run.mjs --service messages --command validate",
     "db:media:info": "node ./scripts/flyway-run.mjs --service media --command info",
     "db:media:migrate": "node ./scripts/flyway-run.mjs --service media --command migrate",
     "db:media:validate": "node ./scripts/flyway-run.mjs --service media --command validate",
@@ -60,6 +63,7 @@
     "dev:graph": "npm run dev -w @chirper/graph",
     "dev:timeline": "npm run dev -w @chirper/timeline",
     "dev:notifications": "npm run dev -w @chirper/notifications",
+    "dev:messages": "npm run dev -w @chirper/messages",
     "dev:media": "npm run dev -w @chirper/media",
     "dev:realtime": "npm run dev -w @chirper/realtime"
   },

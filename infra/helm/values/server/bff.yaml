@@ -34,11 +34,15 @@ env:
   - name: MEDIA_GRPC_URL
     value: media:50058
   - name: BFF_PUBLIC_URL
-    value: http://api.chirper.bobbycrimson.com
+    value: https://api.chirper.bobbycrimson.com
 
 ingress:
   enabled: true
   className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
   hosts:
     - host: api.chirper.bobbycrimson.com
       paths:

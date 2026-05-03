@@ -9,6 +9,7 @@ NAMESPACE="${NAMESPACE:-chirper}"
 SERVICES="${SERVICES:-}"
 SKIP_MIGRATIONS="${SKIP_MIGRATIONS:-true}"
 KUBECONFIG="${KUBECONFIG:-/var/lib/jenkins/.kube/config}"
+TRAEFIK_HTTPS_MANIFEST="${TRAEFIK_HTTPS_MANIFEST:-infra/k8s/server/traefik-https.yaml}"
 ALL_SERVICES=(identity profile media realtime posts graph timeline notifications bff web)
 GIT_ASKPASS_FILE=""
 SECRET_ENV_FILE=""
@@ -276,6 +277,11 @@ fi
 
 kubectl get namespace "$NAMESPACE" >/dev/null 2>&1 || kubectl create namespace "$NAMESPACE"
 
+if [ -f "$TRAEFIK_HTTPS_MANIFEST" ]; then
+  kubectl apply -f "$TRAEFIK_HTTPS_MANIFEST"
+  kubectl --namespace kube-system rollout status deployment/traefik --timeout=300s
+fi
+
 restore_xtrace=false
 case "$-" in
   *x*)
@@ -319,5 +325,5 @@ for service in $(selected_services); do
 done
 
 echo "Deployed services to namespace '$NAMESPACE': $(selected_services | join_selected_services)"
-echo "Web: http://chirper.bobbycrimson.com"
-echo "API: http://api.chirper.bobbycrimson.com"
+echo "Web: https://chirper.bobbycrimson.com"
+echo "API: https://api.chirper.bobbycrimson.com"

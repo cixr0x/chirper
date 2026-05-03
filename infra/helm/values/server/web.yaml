@@ -20,9 +20,9 @@ env:
   - name: BFF_INTERNAL_URL
     value: http://bff
   - name: NEXT_PUBLIC_BFF_URL
-    value: http://api.chirper.bobbycrimson.com
+    value: https://api.chirper.bobbycrimson.com
   - name: SESSION_COOKIE_SECURE
-    value: "false"
+    value: "true"
 
 probes:
   liveness:
@@ -45,6 +45,10 @@ probes:
 ingress:
   enabled: true
   className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
   hosts:
     - host: chirper.bobbycrimson.com
       paths:

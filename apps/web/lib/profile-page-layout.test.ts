@@ -65,6 +65,9 @@ test("profile redesign css keeps the banner compact and prevents cramped identit
   assert.match(globalCssSource, /\.profile-hero-shell\s*\{/);
   assert.match(globalCssSource, /\.banner-panel\s*\{[^}]*height: 156px;/s);
   assert.match(globalCssSource, /\.profile-summary-card\s*\{[^}]*grid-template-columns: auto minmax\(0, 1fr\);/s);
+  assert.match(globalCssSource, /\.profile-primary-row\s*\{[^}]*margin-top: -1\.4rem;/s);
+  assert.match(globalCssSource, /\.profile-title-group\s*\{[^}]*gap: 0\.18rem;/s);
+  assert.match(globalCssSource, /\.identity-row h2\s*\{[^}]*font-size: clamp\(1\.35rem, 2\.2vw, 1\.75rem\);/s);
   assert.match(globalCssSource, /\.profile-actions-card\s*\{[^}]*justify-items: end;/s);
   assert.match(globalCssSource, /\.profile-stat-strip\s*\{[^}]*border-radius: 16px;/s);
   assert.match(globalCssSource, /\.profile-editor-panel\s*\{[^}]*background:/s);

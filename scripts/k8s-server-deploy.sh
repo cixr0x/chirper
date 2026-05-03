@@ -10,7 +10,7 @@ SERVICES="${SERVICES:-}"
 SKIP_MIGRATIONS="${SKIP_MIGRATIONS:-true}"
 KUBECONFIG="${KUBECONFIG:-/var/lib/jenkins/.kube/config}"
 TRAEFIK_HTTPS_MANIFEST="${TRAEFIK_HTTPS_MANIFEST:-infra/k8s/server/traefik-https.yaml}"
-ALL_SERVICES=(identity profile media realtime posts graph timeline notifications bff web)
+ALL_SERVICES=(identity profile media realtime posts graph timeline notifications messages bff web)
 GIT_ASKPASS_FILE=""
 SECRET_ENV_FILE=""
 
@@ -173,6 +173,7 @@ migration_script_for_service() {
     graph) echo "db:graph:migrate" ;;
     timeline) echo "db:timeline:migrate" ;;
     notifications) echo "db:notifications:migrate" ;;
+    messages) echo "db:messages:migrate" ;;
     media) echo "db:media:migrate" ;;
     *) return 1 ;;
   esac

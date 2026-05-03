@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SERVICES="${SERVICES:-$*}"
 
-ALL_SERVICES=(identity profile posts graph timeline notifications media realtime bff web)
+ALL_SERVICES=(identity profile posts graph timeline notifications messages media realtime bff web)
 
 workspace_package() {
   case "$1" in
@@ -14,6 +14,7 @@ workspace_package() {
     graph) echo "@chirper/graph services/graph true service" ;;
     timeline) echo "@chirper/timeline services/timeline true service" ;;
     notifications) echo "@chirper/notifications services/notifications true service" ;;
+    messages) echo "@chirper/messages services/messages true service" ;;
     media) echo "@chirper/media services/media true service" ;;
     realtime) echo "@chirper/realtime services/realtime false service" ;;
     bff) echo "@chirper/bff services/bff false service" ;;

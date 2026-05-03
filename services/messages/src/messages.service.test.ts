@@ -1,7 +1,10 @@
 import "reflect-metadata";
 import assert from "node:assert/strict";
 import test from "node:test";
+import { status } from "@grpc/grpc-js";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import { throwError } from "rxjs";
+import { IdentityClientService } from "./clients/identity.client";
 import { MessagesService } from "./messages.service";
 
 type ConversationRow = {
@@ -37,6 +40,8 @@ class FakePrisma {
   conversations: ConversationRow[] = [];
   messages: MessageRow[] = [];
   reads: ReadRow[] = [];
+  failNextConversationCreateWithP2002 = false;
+  conversationToInsertBeforeP2002: ConversationRow | null = null;
   private tick = 0;
 
   conversation: any = {};
@@ -48,6 +53,14 @@ class FakePrisma {
       findFirst: async (query: any) => this.findConversation(query.where),
       findMany: async (query: any) => this.conversations.filter((row) => matches(row, query?.where)),
       create: async (query: any) => {
+        if (this.failNextConversationCreateWithP2002) {
+          this.failNextConversationCreateWithP2002 = false;
+          if (this.conversationToInsertBeforeP2002) {
+            this.conversations.push(this.conversationToInsertBeforeP2002);
+            this.conversationToInsertBeforeP2002 = null;
+          }
+          throw Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
+        }
         const now = this.nextDate();
         const row = {
           lastMessageId: null,
@@ -68,6 +81,13 @@ class FakePrisma {
         }
         Object.assign(row, query.data, { updatedAt: this.nextDate() });
         return row;
+      },
+      updateMany: async (query: any) => {
+        const rows = this.conversations.filter((row) => matches(row, query.where));
+        for (const row of rows) {
+          Object.assign(row, query.data, { updatedAt: this.nextDate() });
+        }
+        return { count: rows.length };
       },
     };
 
@@ -195,6 +215,29 @@ test("startConversation canonicalizes participants and duplicate starts return t
   assert.equal(prisma.conversations.length, 1);
 });
 
+test("startConversation returns existing conversation if duplicate create races with another starter", async () => {
+  const { service, prisma } = createService();
+  const now = prisma.nextDate();
+  const existing: ConversationRow = {
+    id: "msgc_existing",
+    participantLowUserId: "alice",
+    participantHighUserId: "bob",
+    lastMessageId: null,
+    lastMessagePreview: "",
+    lastMessageAuthorUserId: null,
+    lastMessageAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+  prisma.failNextConversationCreateWithP2002 = true;
+  prisma.conversationToInsertBeforeP2002 = existing;
+
+  const result = await service.startConversation({ viewerUserId: "bob", recipientUserId: "alice" });
+
+  assert.equal(result.id, existing.id);
+  assert.equal(prisma.conversations.length, 1);
+});
+
 test("startConversation rejects self conversation, disabled direct inbox, and blocked pair", async () => {
   const { service, profile, graph } = createService();
 
@@ -206,6 +249,27 @@ test("startConversation rejects self conversation, disabled direct inbox, and bl
   profile.allowDirectInbox.set("bob", true);
   graph.blockedPairs.add("alice:bob");
   await assert.rejects(() => service.startConversation({ viewerUserId: "alice", recipientUserId: "bob" }), ForbiddenException);
+});
+
+test("IdentityClientService.getUserById translates gRPC NOT_FOUND to null and preserves other errors", async () => {
+  const notFoundClient = new IdentityClientService({
+    getService: () => ({
+      getUserById: () => throwError(() => Object.assign(new Error("missing"), { code: status.NOT_FOUND })),
+    }),
+  } as never);
+  notFoundClient.onModuleInit();
+
+  await assert.equal(await notFoundClient.getUserById("missing"), null);
+
+  const unavailable = Object.assign(new Error("unavailable"), { code: status.UNAVAILABLE });
+  const failingClient = new IdentityClientService({
+    getService: () => ({
+      getUserById: () => throwError(() => unavailable),
+    }),
+  } as never);
+  failingClient.onModuleInit();
+
+  await assert.rejects(() => failingClient.getUserById("alice"), unavailable);
 });
 
 test("sendMessage rejects nonparticipants, blank body, and bodies over 2000 characters", async () => {
@@ -253,6 +317,51 @@ test("sendMessage creates a message and updates conversation last-message fields
   assert.equal(conversation.lastMessagePreview.length, 180);
 });
 
+test("sendMessage does not regress last-message fields when the created message is older than the current last message", async () => {
+  const { service, prisma } = createService();
+  const futureLastMessageAt = new Date("2026-01-02T00:00:00.000Z");
+  const conversation = prisma.seedConversation({
+    id: "msgc_existing",
+    participantLowUserId: "alice",
+    participantHighUserId: "bob",
+    lastMessageId: "msgm_newer",
+    lastMessagePreview: "newer",
+    lastMessageAuthorUserId: "bob",
+    lastMessageAt: futureLastMessageAt,
+  });
+
+  const message = await service.sendMessage({ viewerUserId: "alice", conversationId: conversation.id, body: "older" });
+
+  assert.match(message.id, /^msgm_/);
+  assert.equal(conversation.lastMessageId, "msgm_newer");
+  assert.equal(conversation.lastMessagePreview, "newer");
+  assert.equal(conversation.lastMessageAuthorUserId, "bob");
+  assert.equal(conversation.lastMessageAt?.toISOString(), futureLastMessageAt.toISOString());
+});
+
+test("blocked existing conversations reject read/write operations and are omitted from conversation list", async () => {
+  const { service, prisma, graph } = createService();
+  const conversation = prisma.seedConversation({ id: "blocked", participantLowUserId: "alice", participantHighUserId: "bob" });
+  const visible = prisma.seedConversation({ id: "visible", participantLowUserId: "alice", participantHighUserId: "carol" });
+  const blockedMessage = prisma.seedMessage({ conversationId: conversation.id, authorUserId: "bob", body: "blocked" });
+  conversation.lastMessageId = blockedMessage.id;
+  conversation.lastMessageAt = blockedMessage.createdAt;
+  const visibleMessage = prisma.seedMessage({ conversationId: visible.id, authorUserId: "carol", body: "visible" });
+  visible.lastMessageId = visibleMessage.id;
+  visible.lastMessageAt = visibleMessage.createdAt;
+  graph.blockedPairs.add("alice:bob");
+
+  await assert.rejects(() => service.sendMessage({ viewerUserId: "alice", conversationId: conversation.id, body: "nope" }), ForbiddenException);
+  await assert.rejects(() => service.getConversation({ viewerUserId: "alice", conversationId: conversation.id }), ForbiddenException);
+  await assert.rejects(() => service.markConversationRead({ viewerUserId: "alice", conversationId: conversation.id }), ForbiddenException);
+
+  const list = await service.listConversations({ viewerUserId: "alice" });
+  assert.deepEqual(
+    list.conversations.map((item) => item.id),
+    ["visible"],
+  );
+});
+
 test("listConversations returns only viewer conversations ordered by activity with unread counts excluding viewer-authored messages", async () => {
   const { service, prisma } = createService();
   const older = prisma.seedConversation({ id: "older", participantLowUserId: "alice", participantHighUserId: "bob" });
@@ -287,6 +396,77 @@ test("listConversations returns only viewer conversations ordered by activity wi
   assert.equal(result.conversations[0]?.lastMessageId, viewerMessage.id);
   assert.equal(result.conversations[1]?.unreadCount, 1);
   assert.ok(newestUnread.createdAt > oldMessage.createdAt);
+});
+
+test("listConversations uses encoded activity cursors and rejects invalid cursors", async () => {
+  const { service, prisma } = createService();
+  const oldest = prisma.seedConversation({ id: "oldest", participantLowUserId: "alice", participantHighUserId: "bob" });
+  const newest = prisma.seedConversation({ id: "newest", participantLowUserId: "alice", participantHighUserId: "carol" });
+  const oldestMessage = prisma.seedMessage({ conversationId: oldest.id, authorUserId: "bob", body: "oldest" });
+  oldest.lastMessageId = oldestMessage.id;
+  oldest.lastMessageAt = oldestMessage.createdAt;
+  const newestMessage = prisma.seedMessage({ conversationId: newest.id, authorUserId: "carol", body: "newest" });
+  newest.lastMessageId = newestMessage.id;
+  newest.lastMessageAt = newestMessage.createdAt;
+
+  const firstPage = await service.listConversations({ viewerUserId: "alice", limit: 1 });
+
+  assert.deepEqual(
+    firstPage.conversations.map((item) => item.id),
+    ["newest"],
+  );
+  assert.ok(firstPage.nextCursor);
+  assert.notEqual(firstPage.nextCursor, "newest");
+
+  const secondPage = await service.listConversations({ viewerUserId: "alice", limit: 1, cursor: firstPage.nextCursor ?? undefined });
+  assert.deepEqual(
+    secondPage.conversations.map((item) => item.id),
+    ["oldest"],
+  );
+  assert.equal(secondPage.nextCursor, null);
+
+  await assert.rejects(() => service.listConversations({ viewerUserId: "alice", cursor: "not-a-valid-cursor" }), BadRequestException);
+});
+
+test("listConversations unread count uses lastReadMessageId as tie-breaker for same-timestamp messages", async () => {
+  const { service, prisma } = createService();
+  const conversation = prisma.seedConversation({ id: "thread", participantLowUserId: "alice", participantHighUserId: "bob" });
+  const sharedCreatedAt = new Date("2026-01-01T10:00:00.000Z");
+  const readMessage = prisma.seedMessage({
+    id: "msgm_001",
+    conversationId: conversation.id,
+    authorUserId: "bob",
+    body: "read",
+    createdAt: sharedCreatedAt,
+  });
+  const unreadMessage = prisma.seedMessage({
+    id: "msgm_002",
+    conversationId: conversation.id,
+    authorUserId: "bob",
+    body: "unread",
+    createdAt: sharedCreatedAt,
+  });
+  prisma.seedMessage({
+    id: "msgm_003",
+    conversationId: conversation.id,
+    authorUserId: "alice",
+    body: "mine",
+    createdAt: sharedCreatedAt,
+  });
+  conversation.lastMessageId = unreadMessage.id;
+  conversation.lastMessageAt = unreadMessage.createdAt;
+  prisma.reads.push({
+    id: "read_1",
+    conversationId: conversation.id,
+    userId: "alice",
+    lastReadMessageId: readMessage.id,
+    lastReadAt: readMessage.createdAt,
+    updatedAt: prisma.nextDate(),
+  });
+
+  const result = await service.listConversations({ viewerUserId: "alice" });
+
+  assert.equal(result.conversations[0]?.unreadCount, 1);
 });
 
 test("getConversation rejects nonparticipants and returns display-ordered paginated messages", async () => {

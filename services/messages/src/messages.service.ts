@@ -47,6 +47,12 @@ type PrismaTransaction = Omit<
   "$connect" | "$disconnect" | "$on" | "$transaction" | "$extends" | "$use"
 >;
 
+type ConversationCursor = {
+  activityAt: string;
+  updatedAt: string;
+  id: string;
+};
+
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 const MESSAGE_PREVIEW_LENGTH = 180;
@@ -95,13 +101,7 @@ export class MessagesService {
       return mapConversation(existing);
     }
 
-    const conversation = await this.prisma.conversation.create({
-      data: {
-        id: createId("msgc"),
-        participantLowUserId,
-        participantHighUserId,
-      },
-    });
+    const conversation = await this.createConversationOrReadDuplicate(participantLowUserId, participantHighUserId);
 
     return mapConversation(conversation);
   }
@@ -122,7 +122,7 @@ export class MessagesService {
     }
 
     const conversation = await this.findConversationOrThrow(conversationId);
-    this.assertParticipant(conversation, viewerUserId);
+    await this.assertCanAccessConversation(conversation, viewerUserId);
 
     return this.prisma.$transaction(async (tx) => {
       const message = await tx.message.create({
@@ -134,8 +134,8 @@ export class MessagesService {
         },
       });
 
-      await tx.conversation.update({
-        where: { id: conversationId },
+      await tx.conversation.updateMany({
+        where: newestLastMessageWhere(conversationId, message),
         data: {
           lastMessageId: message.id,
           lastMessagePreview: makePreview(body),
@@ -159,11 +159,21 @@ export class MessagesService {
       where: participantWhere(viewerUserId),
     });
 
-    const ordered = conversations.sort(compareConversationActivity);
-    const cursorIndex = input.cursor ? ordered.findIndex((conversation) => conversation.id === input.cursor) : -1;
-    const startIndex = cursorIndex >= 0 ? cursorIndex + 1 : 0;
-    const page = ordered.slice(startIndex, startIndex + limit);
-    const hasMore = ordered.length > startIndex + limit;
+    const visibleConversations = [];
+    for (const conversation of conversations) {
+      if (!(await this.isBlockedConversation(conversation))) {
+        visibleConversations.push(conversation);
+      }
+    }
+
+    const ordered = visibleConversations.sort(compareConversationActivity);
+    const cursor = input.cursor ? decodeConversationCursor(input.cursor) : null;
+    if (cursor && !ordered.some((conversation) => conversationMatchesCursor(conversation, cursor))) {
+      throw new BadRequestException("cursor is invalid");
+    }
+    const afterCursor = cursor ? ordered.filter((conversation) => conversationSortsAfterCursor(conversation, cursor)) : ordered;
+    const page = afterCursor.slice(0, limit);
+    const hasMore = afterCursor.length > limit;
 
     const mapped = await Promise.all(
       page.map(async (conversation) => ({
@@ -174,7 +184,7 @@ export class MessagesService {
 
     return {
       conversations: mapped,
-      nextCursor: hasMore ? page.at(-1)?.id ?? null : null,
+      nextCursor: hasMore && page.at(-1) ? encodeConversationCursor(page.at(-1) as Conversation) : null,
     };
   }
 
@@ -191,7 +201,7 @@ export class MessagesService {
     }
 
     const conversation = await this.findConversationOrThrow(conversationId);
-    this.assertParticipant(conversation, viewerUserId);
+    await this.assertCanAccessConversation(conversation, viewerUserId);
 
     const limit = normalizeLimit(input.limit);
     const cursorMessage = input.beforeCursor
@@ -231,7 +241,7 @@ export class MessagesService {
     }
 
     const conversation = await this.findConversationOrThrow(conversationId);
-    this.assertParticipant(conversation, viewerUserId);
+    await this.assertCanAccessConversation(conversation, viewerUserId);
 
     const newestMessage = await this.prisma.message.findFirst({
       where: { conversationId },
@@ -276,6 +286,17 @@ export class MessagesService {
     }
   }
 
+  private async assertCanAccessConversation(conversation: Conversation, viewerUserId: string) {
+    this.assertParticipant(conversation, viewerUserId);
+    if (await this.isBlockedConversation(conversation)) {
+      throw new ForbiddenException("Direct messages are not allowed for this pair");
+    }
+  }
+
+  private async isBlockedConversation(conversation: Conversation) {
+    return this.graphClient.hasBlockBetween(conversation.participantLowUserId, conversation.participantHighUserId);
+  }
+
   private async countUnread(conversationId: string, viewerUserId: string) {
     const read = await this.prisma.conversationRead.findFirst({
       where: { conversationId, userId: viewerUserId },
@@ -284,9 +305,39 @@ export class MessagesService {
       where: {
         conversationId,
         authorUserId: { not: viewerUserId },
-        ...(read?.lastReadAt ? { createdAt: { gt: read.lastReadAt } } : {}),
+        ...(read?.lastReadAt
+          ? {
+              OR: [
+                { createdAt: { gt: read.lastReadAt } },
+                { createdAt: read.lastReadAt, id: { gt: read.lastReadMessageId ?? "" } },
+              ],
+            }
+          : {}),
       },
     });
+  }
+
+  private async createConversationOrReadDuplicate(participantLowUserId: string, participantHighUserId: string) {
+    try {
+      return await this.prisma.conversation.create({
+        data: {
+          id: createId("msgc"),
+          participantLowUserId,
+          participantHighUserId,
+        },
+      });
+    } catch (error) {
+      if (!isPrismaUniqueConstraintError(error)) {
+        throw error;
+      }
+      const existing = await this.prisma.conversation.findFirst({
+        where: { participantLowUserId, participantHighUserId },
+      });
+      if (!existing) {
+        throw error;
+      }
+      return existing;
+    }
   }
 }
 
@@ -326,6 +377,24 @@ function makePreview(body: string) {
   return body.slice(0, MESSAGE_PREVIEW_LENGTH);
 }
 
+function newestLastMessageWhere(conversationId: string, message: Message): Prisma.ConversationWhereInput {
+  return {
+    id: conversationId,
+    OR: [
+      { lastMessageAt: null },
+      { lastMessageAt: { lt: message.createdAt } },
+      {
+        AND: [
+          { lastMessageAt: message.createdAt },
+          {
+            OR: [{ lastMessageId: null }, { lastMessageId: { lt: message.id } }],
+          },
+        ],
+      },
+    ],
+  };
+}
+
 function mapConversation(conversation: Conversation): ConversationRecord {
   return {
     id: conversation.id,
@@ -352,12 +421,81 @@ function mapMessage(message: Message): MessageRecord {
 }
 
 function compareConversationActivity(left: Conversation, right: Conversation) {
-  const leftAt = (left.lastMessageAt ?? left.updatedAt).getTime();
-  const rightAt = (right.lastMessageAt ?? right.updatedAt).getTime();
+  const leftAt = conversationActivityAt(left).getTime();
+  const rightAt = conversationActivityAt(right).getTime();
   if (leftAt !== rightAt) {
     return rightAt - leftAt;
   }
+  const leftUpdatedAt = left.updatedAt.getTime();
+  const rightUpdatedAt = right.updatedAt.getTime();
+  if (leftUpdatedAt !== rightUpdatedAt) {
+    return rightUpdatedAt - leftUpdatedAt;
+  }
   return right.id.localeCompare(left.id);
+}
+
+function conversationActivityAt(conversation: Conversation) {
+  return conversation.lastMessageAt ?? conversation.updatedAt;
+}
+
+function encodeConversationCursor(conversation: Conversation) {
+  const cursor: ConversationCursor = {
+    activityAt: conversationActivityAt(conversation).toISOString(),
+    updatedAt: conversation.updatedAt.toISOString(),
+    id: conversation.id,
+  };
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function decodeConversationCursor(cursor: string): ConversationCursor {
+  try {
+    const decoded = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as Partial<ConversationCursor>;
+    if (
+      typeof decoded.activityAt !== "string" ||
+      Number.isNaN(Date.parse(decoded.activityAt)) ||
+      typeof decoded.updatedAt !== "string" ||
+      Number.isNaN(Date.parse(decoded.updatedAt)) ||
+      typeof decoded.id !== "string" ||
+      !decoded.id
+    ) {
+      throw new Error("invalid cursor shape");
+    }
+    return {
+      activityAt: decoded.activityAt,
+      updatedAt: decoded.updatedAt,
+      id: decoded.id,
+    };
+  } catch {
+    throw new BadRequestException("cursor is invalid");
+  }
+}
+
+function conversationMatchesCursor(conversation: Conversation, cursor: ConversationCursor) {
+  return (
+    conversation.id === cursor.id &&
+    conversationActivityAt(conversation).toISOString() === cursor.activityAt &&
+    conversation.updatedAt.toISOString() === cursor.updatedAt
+  );
+}
+
+function conversationSortsAfterCursor(conversation: Conversation, cursor: ConversationCursor) {
+  const cursorActivityAt = Date.parse(cursor.activityAt);
+  const activityAt = conversationActivityAt(conversation).getTime();
+  if (activityAt !== cursorActivityAt) {
+    return activityAt < cursorActivityAt;
+  }
+
+  const cursorUpdatedAt = Date.parse(cursor.updatedAt);
+  const updatedAt = conversation.updatedAt.getTime();
+  if (updatedAt !== cursorUpdatedAt) {
+    return updatedAt < cursorUpdatedAt;
+  }
+
+  return conversation.id < cursor.id;
+}
+
+function isPrismaUniqueConstraintError(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "P2002";
 }
 
 function olderThanMessageWhere(message: Message): Prisma.MessageWhereInput {

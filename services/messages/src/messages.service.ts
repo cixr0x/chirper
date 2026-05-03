@@ -12,6 +12,7 @@ export type ConversationRecord = {
   participantHighUserId: string;
   participantUserIds: string[];
   lastMessageId: string | null;
+  lastMessageSequence: bigint | null;
   lastMessagePreview: string;
   lastMessageAuthorUserId: string | null;
   lastMessageAt: Date | null;
@@ -138,6 +139,7 @@ export class MessagesService {
         where: newestLastMessageWhere(conversationId, message),
         data: {
           lastMessageId: message.id,
+          lastMessageSequence: message.sequence,
           lastMessagePreview: makePreview(body),
           lastMessageAuthorUserId: viewerUserId,
           lastMessageAt: message.createdAt,
@@ -220,7 +222,7 @@ export class MessagesService {
     };
     const rows = await this.prisma.message.findMany({
       where,
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy: [{ sequence: "desc" }],
       take: limit + 1,
     });
     const hasMore = rows.length > limit;
@@ -245,7 +247,7 @@ export class MessagesService {
 
     const newestMessage = await this.prisma.message.findFirst({
       where: { conversationId },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy: [{ sequence: "desc" }],
     });
     const lastReadAt = newestMessage?.createdAt ?? null;
 
@@ -261,10 +263,12 @@ export class MessagesService {
         conversationId,
         userId: viewerUserId,
         lastReadMessageId: newestMessage?.id ?? null,
+        lastReadMessageSequence: newestMessage?.sequence ?? null,
         lastReadAt,
       },
       update: {
         lastReadMessageId: newestMessage?.id ?? null,
+        lastReadMessageSequence: newestMessage?.sequence ?? null,
         lastReadAt,
       },
     });
@@ -305,12 +309,9 @@ export class MessagesService {
       where: {
         conversationId,
         authorUserId: { not: viewerUserId },
-        ...(read?.lastReadAt
+        ...(read?.lastReadMessageSequence !== null && read?.lastReadMessageSequence !== undefined
           ? {
-              OR: [
-                { createdAt: { gt: read.lastReadAt } },
-                { createdAt: read.lastReadAt, id: { gt: read.lastReadMessageId ?? "" } },
-              ],
+              sequence: { gt: read.lastReadMessageSequence },
             }
           : {}),
       },
@@ -380,18 +381,7 @@ function makePreview(body: string) {
 function newestLastMessageWhere(conversationId: string, message: Message): Prisma.ConversationWhereInput {
   return {
     id: conversationId,
-    OR: [
-      { lastMessageAt: null },
-      { lastMessageAt: { lt: message.createdAt } },
-      {
-        AND: [
-          { lastMessageAt: message.createdAt },
-          {
-            OR: [{ lastMessageId: null }, { lastMessageId: { lt: message.id } }],
-          },
-        ],
-      },
-    ],
+    OR: [{ lastMessageSequence: null }, { lastMessageSequence: { lt: message.sequence } }],
   };
 }
 
@@ -402,6 +392,7 @@ function mapConversation(conversation: Conversation): ConversationRecord {
     participantHighUserId: conversation.participantHighUserId,
     participantUserIds: [conversation.participantLowUserId, conversation.participantHighUserId],
     lastMessageId: conversation.lastMessageId,
+    lastMessageSequence: conversation.lastMessageSequence,
     lastMessagePreview: conversation.lastMessagePreview,
     lastMessageAuthorUserId: conversation.lastMessageAuthorUserId,
     lastMessageAt: conversation.lastMessageAt,
@@ -500,12 +491,6 @@ function isPrismaUniqueConstraintError(error: unknown) {
 
 function olderThanMessageWhere(message: Message): Prisma.MessageWhereInput {
   return {
-    OR: [
-      { createdAt: { lt: message.createdAt } },
-      {
-        createdAt: message.createdAt,
-        id: { lt: message.id },
-      },
-    ],
+    sequence: { lt: message.sequence },
   };
 }

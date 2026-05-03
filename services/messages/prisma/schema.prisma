@@ -13,6 +13,7 @@ model Conversation {
   participantLowUserId    String    @map("participant_low_user_id") @db.VarChar(64)
   participantHighUserId   String    @map("participant_high_user_id") @db.VarChar(64)
   lastMessageId           String?   @map("last_message_id") @db.VarChar(64)
+  lastMessageSequence     BigInt?   @map("last_message_sequence")
   lastMessagePreview      String    @default("") @map("last_message_preview") @db.VarChar(180)
   lastMessageAuthorUserId String?   @map("last_message_author_user_id") @db.VarChar(64)
   lastMessageAt           DateTime? @map("last_message_at")
@@ -26,11 +27,13 @@ model Conversation {
 
 model Message {
   id             String   @id @db.VarChar(64)
+  sequence       BigInt   @unique(map: "msg_messages_sequence_key") @default(autoincrement()) @map("sequence")
   conversationId String   @map("conversation_id") @db.VarChar(64)
   authorUserId   String   @map("author_user_id") @db.VarChar(64)
   body           String   @db.VarChar(2000)
   createdAt      DateTime @default(now()) @map("created_at")
 
+  @@index([conversationId, sequence], map: "msg_messages_conversation_sequence_idx")
   @@index([conversationId, createdAt, id], map: "msg_messages_conversation_created_idx")
   @@map("msg_messages")
 }
@@ -40,6 +43,7 @@ model ConversationRead {
   conversationId    String    @map("conversation_id") @db.VarChar(64)
   userId            String    @map("user_id") @db.VarChar(64)
   lastReadMessageId String?   @map("last_read_message_id") @db.VarChar(64)
+  lastReadMessageSequence BigInt? @map("last_read_message_sequence")
   lastReadAt        DateTime? @map("last_read_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 

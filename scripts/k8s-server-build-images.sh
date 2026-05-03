@@ -43,10 +43,12 @@ done
 
 for service in "${SELECTED_SERVICES[@]}"; do
   read -r package dir enable_prisma start_kind <<<"$(workspace_package "$service")"
+  target="${start_kind}-runtime"
   tag="chirper/${service}:dev"
   echo "Building ${tag}"
   docker build \
     --file "$ROOT/Dockerfile.workspace" \
+    --target "$target" \
     --tag "$tag" \
     --build-arg "WORKSPACE_PACKAGE=$package" \
     --build-arg "WORKSPACE_DIR=$dir" \
@@ -55,4 +57,5 @@ for service in "${SELECTED_SERVICES[@]}"; do
     "$ROOT"
   echo "Importing ${tag} into k3s"
   docker save "$tag" | sudo -n /usr/local/bin/k3s ctr --namespace k8s.io images import -
+  docker image prune -f >/dev/null
 done

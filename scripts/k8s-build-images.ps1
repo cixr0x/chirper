@@ -34,12 +34,15 @@ $selectedWorkspaces = @($workspaces | Where-Object { $_.Name -in $selectedServic
 
 foreach ($workspace in $selectedWorkspaces) {
   $tag = "chirper/$($workspace.Name):dev"
+  $target = "$($workspace.StartKind)-runtime"
   Write-Output "Building $tag"
 
   Invoke-CheckedNative "docker" @(
     "build",
     "--file",
     $dockerfile,
+    "--target",
+    $target,
     "--tag",
     $tag,
     "--build-arg",

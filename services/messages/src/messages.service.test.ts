@@ -522,6 +522,21 @@ test("markConversationRead upserts read state and clears unread count", async ()
   assert.equal(after.conversations[0]?.unreadCount, 0);
 });
 
+test("markConversationRead on an empty conversation does not hide the first future incoming message", async () => {
+  const { service, prisma } = createService();
+  const conversation = prisma.seedConversation({ id: "empty", participantLowUserId: "alice", participantHighUserId: "bob" });
+
+  const result = await service.markConversationRead({ viewerUserId: "alice", conversationId: conversation.id });
+  assert.deepEqual(result, { updated: true });
+  assert.equal(prisma.reads[0]?.lastReadMessageId, null);
+  assert.equal(prisma.reads[0]?.lastReadAt, null);
+
+  await service.sendMessage({ viewerUserId: "bob", conversationId: conversation.id, body: "first message" });
+
+  const after = await service.listConversations({ viewerUserId: "alice" });
+  assert.equal(after.conversations[0]?.unreadCount, 1);
+});
+
 function matches(row: Record<string, any>, where: any): boolean {
   if (!where) {
     return true;

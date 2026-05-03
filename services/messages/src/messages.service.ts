@@ -247,7 +247,7 @@ export class MessagesService {
       where: { conversationId },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     });
-    const lastReadAt = newestMessage?.createdAt ?? new Date();
+    const lastReadAt = newestMessage?.createdAt ?? null;
 
     await this.prisma.conversationRead.upsert({
       where: {

@@ -34,6 +34,10 @@ test("profile banner image is not hidden behind an opaque gradient", () => {
   assert.equal(profilePageSource.includes("linear-gradient(135deg, #0c5ed0"), false);
 });
 
+test("profile hero does not show a redundant edit profile jump button", () => {
+  assert.equal(profilePageSource.includes('href={`${profilePath}#edit-profile`}'), false);
+});
+
 test("profile page uses redesigned hero and editor layout without changing controls", () => {
   assert.match(profilePageSource, /showHeader=\{false\}/);
 

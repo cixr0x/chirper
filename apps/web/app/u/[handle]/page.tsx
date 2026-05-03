@@ -161,12 +161,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
                   Sign in to follow
                 </Link>
               ) : isViewer ? (
-                <>
-                  <Link className="secondary-button compact" href={`${profilePath}#edit-profile`}>
-                    Edit profile
-                  </Link>
-                  <span className="follow-chip viewer">Your account</span>
-                </>
+                <span className="follow-chip viewer">Your account</span>
               ) : (
                 <form action={isFollowing ? unfollowUserAction : followUserAction}>
                   <input name="followeeUserId" type="hidden" value={user.userId} />

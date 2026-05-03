@@ -23,12 +23,20 @@ type UnfollowRequest = {
 type UnfollowResponse = {
   removed: boolean;
 };
+type HasBlockBetweenRequest = {
+  userIdA: string;
+  userIdB: string;
+};
+type HasBlockBetweenResponse = {
+  blocked?: boolean;
+};
 
 type GraphGrpcService = {
   listFollowing(request: ListFollowingRequest): Observable<ListFollowingResponse>;
   listFollowers(request: ListFollowersRequest): Observable<ListFollowersResponse>;
   follow(request: FollowRequest): Observable<FollowRecord>;
   unfollow(request: UnfollowRequest): Observable<UnfollowResponse>;
+  hasBlockBetween(request: HasBlockBetweenRequest): Observable<HasBlockBetweenResponse>;
 };
 
 @Injectable()
@@ -87,5 +95,10 @@ export class GraphClientService implements OnModuleInit {
 
   unfollow(request: UnfollowRequest) {
     return lastValueFrom(this.service.unfollow(request));
+  }
+
+  async hasBlockBetween(userIdA: string, userIdB: string) {
+    const response = await lastValueFrom(this.service.hasBlockBetween({ userIdA, userIdB }));
+    return response.blocked ?? false;
   }
 }

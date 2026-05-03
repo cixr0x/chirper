@@ -49,6 +49,7 @@ export class UserSummaryService {
       bannerAssetId: profile.bannerAssetId,
       avatarUrl: profile.avatarAssetId ? buildManagedAssetUrl(profile.avatarAssetId) : profile.avatarUrl,
       bannerUrl: profile.bannerAssetId ? buildManagedAssetUrl(profile.bannerAssetId) : profile.bannerUrl,
+      allowDirectInbox: profile.allowDirectInbox,
       links: profile.links,
     };
   }

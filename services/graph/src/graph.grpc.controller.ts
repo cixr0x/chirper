@@ -25,4 +25,10 @@ export class GraphGrpcController {
   async unfollow(data: { followerUserId: string; followeeUserId: string }) {
     return this.graph.unfollow(data);
   }
+
+  @GrpcMethod("GraphService", "HasBlockBetween")
+  async hasBlockBetween(data: { userIdA: string; userIdB: string }) {
+    const blocked = await this.graph.hasBlockBetween(data.userIdA, data.userIdB);
+    return { blocked };
+  }
 }

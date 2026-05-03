@@ -26,6 +26,7 @@ test("searchUsers enriches identity search results with profile summaries", asyn
       bannerAssetId: "",
       avatarUrl: "https://cdn.example.com/alana.png",
       bannerUrl: "",
+      allowDirectInbox: true,
       links: [],
     }),
   };
@@ -46,6 +47,7 @@ test("searchUsers enriches identity search results with profile summaries", asyn
       bannerAssetId: "",
       avatarUrl: "https://cdn.example.com/alana.png",
       bannerUrl: "",
+      allowDirectInbox: true,
       links: [],
     },
   ]);

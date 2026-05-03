@@ -7,6 +7,7 @@ service GraphService {
   rpc ListFollowers (ListFollowersRequest) returns (ListFollowersResponse);
   rpc Follow (FollowRequest) returns (FollowRecord);
   rpc Unfollow (UnfollowRequest) returns (UnfollowResponse);
+  rpc HasBlockBetween (HasBlockBetweenRequest) returns (HasBlockBetweenResponse);
 }
 
 message ListFollowingRequest {
@@ -52,4 +53,13 @@ message UnfollowRequest {
 
 message UnfollowResponse {
   bool removed = 1;
+}
+
+message HasBlockBetweenRequest {
+  string userIdA = 1;
+  string userIdB = 2;
+}
+
+message HasBlockBetweenResponse {
+  bool blocked = 1;
 }

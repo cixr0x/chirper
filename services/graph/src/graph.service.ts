@@ -210,6 +210,25 @@ export class GraphService {
       removed: result.count > 0,
     };
   }
+
+  async hasBlockBetween(userIdA: string, userIdB: string) {
+    const normalizedUserIdA = userIdA.trim();
+    const normalizedUserIdB = userIdB.trim();
+    if (!normalizedUserIdA || !normalizedUserIdB) {
+      return false;
+    }
+
+    const block = await this.prisma.block.findFirst({
+      where: {
+        OR: [
+          { blockerId: normalizedUserIdA, blockedId: normalizedUserIdB },
+          { blockerId: normalizedUserIdB, blockedId: normalizedUserIdA },
+        ],
+      },
+    });
+
+    return Boolean(block);
+  }
 }
 
 function normalizePageLimit(limit: number) {

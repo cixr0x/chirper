@@ -26,6 +26,7 @@ message ProfileSummary {
   repeated ProfileLink links = 6;
   string avatarAssetId = 7;
   string bannerAssetId = 8;
+  bool allowDirectInbox = 9;
 }
 
 message CreateProfileRequest {

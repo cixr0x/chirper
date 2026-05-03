@@ -10,6 +10,7 @@ type UserProfile = {
   bannerAssetId: string;
   avatarUrl: string;
   bannerUrl: string;
+  allowDirectInbox: boolean;
   links: {
     label: string;
     url: string;
@@ -89,8 +90,11 @@ export class ProfileDirectoryService {
   }
 
   async getProfileByUserId(userId: string): Promise<UserProfile> {
-    const [profile, links] = await Promise.all([
+    const [profile, profileSetting, links] = await Promise.all([
       this.prisma.profile.findUnique({
+        where: { userId },
+      }),
+      this.prisma.profileSetting.findUnique({
         where: { userId },
       }),
       this.prisma.profileLink.findMany({
@@ -108,6 +112,7 @@ export class ProfileDirectoryService {
         bannerAssetId: "",
         avatarUrl: "",
         bannerUrl: "",
+        allowDirectInbox: profileSetting?.allowDirectInbox ?? true,
         links: [],
       };
     }
@@ -120,6 +125,7 @@ export class ProfileDirectoryService {
       bannerAssetId: profile.bannerAssetId ?? "",
       avatarUrl: profile.avatarUrl ?? "",
       bannerUrl: profile.bannerUrl ?? "",
+      allowDirectInbox: profileSetting?.allowDirectInbox ?? true,
       links: links.map((link) => ({
         label: link.label,
         url: link.url,

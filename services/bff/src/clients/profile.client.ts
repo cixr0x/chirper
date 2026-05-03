@@ -25,6 +25,7 @@ type GetProfileByUserIdResponse = {
   bannerAssetId: string;
   avatarUrl: string;
   bannerUrl: string;
+  allowDirectInbox?: boolean;
   links: {
     label: string;
     url: string;
@@ -67,6 +68,7 @@ function normalizeProfileResponse(response: GetProfileByUserIdResponse) {
     bannerAssetId: response.bannerAssetId ?? "",
     avatarUrl: response.avatarUrl ?? "",
     bannerUrl: response.bannerUrl ?? "",
+    allowDirectInbox: response.allowDirectInbox ?? true,
     links: response.links ?? [],
   };
 }

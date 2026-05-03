@@ -40,10 +40,10 @@ export class MessagesController {
   @Post("conversations")
   async startConversation(
     @Headers(sessionHeaderName) sessionToken: string | undefined,
-    @Body() body: { recipientUserId?: string },
+    @Body() body?: { recipientUserId?: string },
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
-    const conversation = await this.messagesClient.startConversation(session.userId, body.recipientUserId?.trim() ?? "");
+    const conversation = await this.messagesClient.startConversation(session.userId, body?.recipientUserId?.trim() ?? "");
     return this.enrichConversation(conversation);
   }
 
@@ -77,10 +77,10 @@ export class MessagesController {
   async sendMessage(
     @Param("conversationId") conversationId: string,
     @Headers(sessionHeaderName) sessionToken: string | undefined,
-    @Body() body: { body?: string },
+    @Body() body?: { body?: string },
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
-    const message = await this.messagesClient.sendMessage(session.userId, conversationId, body.body?.trim() ?? "");
+    const message = await this.messagesClient.sendMessage(session.userId, conversationId, body?.body?.trim() ?? "");
     const author = await this.userSummaryService.getUserSummaryById(message.authorUserId);
     return { ...message, author };
   }
@@ -121,7 +121,12 @@ export class MessagesController {
 }
 
 function clampLimit(value: string | undefined, fallback: number, minimum: number, maximum: number) {
-  const parsed = Number(value ?? fallback);
+  const normalized = value?.trim();
+  if (!normalized) {
+    return fallback;
+  }
+
+  const parsed = Number(normalized);
   if (!Number.isFinite(parsed)) {
     return fallback;
   }

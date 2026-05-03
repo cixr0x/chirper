@@ -137,6 +137,16 @@ test("listConversations requires a session, uses the session viewer, clamps limi
   assert.equal(result.conversations[0]?.otherUser?.userId, "user_other");
 });
 
+test("listConversations treats a blank limit query as missing and uses the default", async () => {
+  const { controller, messagesClient } = createController();
+
+  await controller.listConversations("   ", undefined, "session_1");
+
+  assert.deepEqual(messagesClient.calls, [
+    { method: "listConversations", viewerUserId: "user_viewer", limit: 20, cursor: undefined },
+  ]);
+});
+
 test("getConversation enriches the conversation other user and every message author summary", async () => {
   const { controller, messagesClient, userSummaryService } = createController();
 
@@ -157,6 +167,27 @@ test("getConversation enriches the conversation other user and every message aut
     result.messages.map((message) => message.author.userId),
     ["user_other", "user_viewer"],
   );
+});
+
+test("startConversation accepts a missing request body without crashing", async () => {
+  const { controller, messagesClient } = createController();
+
+  await controller.startConversation("session_1", undefined as never);
+
+  assert.deepEqual(messagesClient.calls, [
+    { method: "startConversation", viewerUserId: "user_viewer", recipientUserId: "" },
+  ]);
+});
+
+test("sendMessage accepts a missing request body without crashing", async () => {
+  const { controller, messagesClient } = createController();
+
+  const message = await controller.sendMessage("msgc_1", "session_1", undefined as never);
+
+  assert.equal(message.author.userId, "user_viewer");
+  assert.deepEqual(messagesClient.calls, [
+    { method: "sendMessage", viewerUserId: "user_viewer", conversationId: "msgc_1", body: "" },
+  ]);
 });
 
 test("start, send, and read use the session viewer id instead of any submitted viewer id", async () => {

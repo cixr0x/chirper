@@ -671,7 +671,7 @@ button:focus-visible {
 .landing-auth-panel {
   display: grid;
   gap: 0.9rem;
-  align-content: center;
+  align-content: start;
   padding: clamp(1.4rem, 3vw, 2rem);
   background: rgba(255, 255, 255, 0.96);
 }
@@ -729,6 +729,8 @@ button:focus-visible {
 
 .landing-auth-form {
   gap: 0.8rem;
+  min-height: 26rem;
+  align-content: start;
 }
 
 .landing-submit {
@@ -2724,6 +2726,7 @@ button:focus-visible {
 
   .landing-auth-form {
     gap: 0.75rem;
+    min-height: 0;
   }
 
   .landing-demo-note {

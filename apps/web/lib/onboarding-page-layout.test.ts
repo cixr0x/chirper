@@ -25,7 +25,6 @@ test("registration redirects new users to their profile instead of onboarding", 
 });
 
 test("profile entry points link to the profile page rather than onboarding", () => {
-  assert.match(homePageSource, /href=\{`\/u\/\$\{viewer\.handle\}`\}/);
   assert.equal(homePageSource.includes('href="/onboarding"'), false);
   assert.equal(homePageSource.includes("Finish onboarding"), false);
 

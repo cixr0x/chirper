@@ -233,13 +233,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   ]);
   const suggestedUsers = users.filter((user) => user.userId !== viewer.userId).slice(0, 5);
   const followingSet = new Set(followingUserIds);
-  const needsProfileSetup =
-    !viewer.bio &&
-    !viewer.location &&
-    !viewer.avatarAssetId &&
-    !viewer.bannerAssetId &&
-    !viewer.avatarUrl &&
-    !viewer.bannerUrl;
 
   return (
     <AppShell
@@ -340,18 +333,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <p className={`notice ${accountMessage.tone === "error" ? "notice-error" : "notice-success"}`} role="alert">
           {accountMessage.text}
         </p>
-      ) : null}
-
-      {needsProfileSetup ? (
-        <section className="inline-banner">
-          <div>
-            <p className="eyebrow">Profile setup</p>
-            <h2>Complete your public profile before you settle into the timeline.</h2>
-          </div>
-          <Link className="primary-link-button" href={`/u/${viewer.handle}`}>
-            Edit profile
-          </Link>
-        </section>
       ) : null}
 
       <section className="panel timeline-surface" id="composer">

@@ -20,8 +20,8 @@ export class MessagesController {
 
   @Get("conversations")
   async listConversations(
-    @Query("limit") limit?: string,
-    @Query("cursor") cursor?: string,
+    @Query("limit") limit?: unknown,
+    @Query("cursor") cursor?: unknown,
     @Headers(sessionHeaderName) sessionToken?: string,
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
@@ -40,18 +40,18 @@ export class MessagesController {
   @Post("conversations")
   async startConversation(
     @Headers(sessionHeaderName) sessionToken: string | undefined,
-    @Body() body?: { recipientUserId?: string },
+    @Body() body?: { recipientUserId?: unknown },
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
-    const conversation = await this.messagesClient.startConversation(session.userId, body?.recipientUserId?.trim() ?? "");
+    const conversation = await this.messagesClient.startConversation(session.userId, stringValue(body?.recipientUserId));
     return this.enrichConversation(conversation);
   }
 
   @Get("conversations/:conversationId")
   async getConversation(
     @Param("conversationId") conversationId: string,
-    @Query("limit") limit?: string,
-    @Query("beforeCursor") beforeCursor?: string,
+    @Query("limit") limit?: unknown,
+    @Query("beforeCursor") beforeCursor?: unknown,
     @Headers(sessionHeaderName) sessionToken?: string,
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
@@ -77,10 +77,10 @@ export class MessagesController {
   async sendMessage(
     @Param("conversationId") conversationId: string,
     @Headers(sessionHeaderName) sessionToken: string | undefined,
-    @Body() body?: { body?: string },
+    @Body() body?: { body?: unknown },
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
-    const message = await this.messagesClient.sendMessage(session.userId, conversationId, body?.body?.trim() ?? "");
+    const message = await this.messagesClient.sendMessage(session.userId, conversationId, stringValue(body?.body));
     const author = await this.userSummaryService.getUserSummaryById(message.authorUserId);
     return { ...message, author };
   }
@@ -120,8 +120,8 @@ export class MessagesController {
   }
 }
 
-function clampLimit(value: string | undefined, fallback: number, minimum: number, maximum: number) {
-  const normalized = value?.trim();
+function clampLimit(value: unknown, fallback: number, minimum: number, maximum: number) {
+  const normalized = stringValue(value);
   if (!normalized) {
     return fallback;
   }
@@ -134,6 +134,10 @@ function clampLimit(value: string | undefined, fallback: number, minimum: number
   return Math.min(Math.max(Math.trunc(parsed), minimum), maximum);
 }
 
-function normalizeOptional(value?: string) {
-  return value?.trim() || undefined;
+function normalizeOptional(value: unknown) {
+  return stringValue(value) || undefined;
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
 }

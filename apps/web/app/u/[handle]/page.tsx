@@ -70,6 +70,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
       description={isViewer ? "Manage your profile and track your public activity." : `See what @${user.handle} is posting and how their graph is evolving.`}
       eyebrow="Profile"
       profileHrefOverride={profilePath}
+      showHeader={false}
       title={isViewer ? "Your profile" : `@${user.handle}`}
       viewer={viewer}
       rightRail={
@@ -131,16 +132,21 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
         </>
       }
     >
-      <section className="panel profile-hero-card">
+      <section className="panel profile-hero-card profile-hero-shell">
         <div
           className={`banner-panel ${user.bannerUrl ? "banner-panel-image" : "banner-panel-default"}`}
           style={bannerStyle}
-        />
-        <div className="profile-summary">
-          <div className="profile-summary-head">
+        >
+          <div className="profile-banner-content">
+            <span>@{user.handle}</span>
+          </div>
+        </div>
+
+        <div className="profile-summary profile-summary-card">
+          <div className="profile-primary-row">
             <div className="profile-summary-copy">
               <AvatarBadge avatarUrl={user.avatarUrl} displayName={user.displayName} size="profile" />
-              <div className="profile-summary-identity">
+              <div className="profile-summary-identity profile-title-group">
                 <div className="identity-row">
                   <h2>{user.displayName}</h2>
                   <span className={`status-pill ${user.status}`}>{user.status}</span>
@@ -149,7 +155,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               </div>
             </div>
 
-            <div className="profile-cta-row">
+            <div className="profile-cta-row profile-actions-card">
               {!viewer ? (
                 <Link className="primary-link-button" href={`/?redirectTo=${encodeURIComponent(profileTargetPath)}`}>
                   Sign in to follow
@@ -174,7 +180,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
             </div>
           </div>
 
-          <p className="bio large">{user.bio || "This profile is ready for its next post."}</p>
+          <p className="bio large profile-bio">{user.bio || "This profile is ready for its next post."}</p>
           <div className="profile-stat-strip">
             <Link className="profile-stat" href={`${profilePath}/followers`}>
               <strong>{followers.totalCount}</strong>
@@ -204,13 +210,13 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
       ) : null}
 
       {isViewer ? (
-        <section className="panel editor-panel">
+        <section className="panel editor-panel profile-editor-panel">
           <div className="section-intro">
             <p className="eyebrow">Edit profile</p>
             <h2>Refine how this account appears across the app</h2>
           </div>
 
-          <form action={saveProfileAction} className="stack-form">
+          <form action={saveProfileAction} className="stack-form profile-editor-form">
             <input name="redirectTo" type="hidden" value={`/u/${user.handle}`} />
             <input name="successState" type="hidden" value="profile-saved" />
 

@@ -4,6 +4,7 @@ import { signOutAction } from "../app/actions";
 import { getNotifications, type UserSummary } from "../lib/bff";
 import { getSessionToken } from "../lib/session";
 import { AvatarBadge } from "./avatar-badge";
+import { MobileNavShell } from "./mobile-nav-shell";
 import { PrimaryNav, type PrimaryNavKey } from "./primary-nav";
 
 type AppShellProps = {
@@ -60,58 +61,60 @@ export async function AppShell({
   return (
     <main className="social-root">
       <div className={`social-shell ${rightRail ? "" : "social-shell-no-rail"}`.trim()}>
-        <aside className="social-sidebar">
-          <div className="social-sidebar-frame">
-            <Link className="brand-lockup" href="/">
-              <span className="brand-mark">C</span>
-              <span className="brand-copy">
-                <strong>Chirper</strong>
-                <span>microblogging lab</span>
-              </span>
-            </Link>
+        <MobileNavShell>
+          <aside className="social-sidebar">
+            <div className="social-sidebar-frame">
+              <Link className="brand-lockup" href="/">
+                <span className="brand-mark">C</span>
+                <span className="brand-copy">
+                  <strong>Chirper</strong>
+                  <span>microblogging lab</span>
+                </span>
+              </Link>
 
-            <PrimaryNav
-              active={active}
-              items={navItems}
-              notificationCount={shellNotificationCount}
-              profileHref={profileHref}
-            />
+              <PrimaryNav
+                active={active}
+                items={navItems}
+                notificationCount={shellNotificationCount}
+                profileHref={profileHref}
+              />
 
-            {viewer ? (
-              <div className="sidebar-account">
-                <Link className="sidebar-compose-link" href="/#composer">
-                  Post
-                </Link>
-                <div className="sidebar-account-card">
-                  <AvatarBadge avatarUrl={viewer.avatarUrl} displayName={viewer.displayName} size="small" />
-                  <div>
-                    <p className="sidebar-account-name">{viewer.displayName}</p>
-                    <p className="sidebar-account-handle">@{viewer.handle}</p>
+              {viewer ? (
+                <div className="sidebar-account">
+                  <Link className="sidebar-compose-link" href="/#composer">
+                    Post
+                  </Link>
+                  <div className="sidebar-account-card">
+                    <AvatarBadge avatarUrl={viewer.avatarUrl} displayName={viewer.displayName} size="small" />
+                    <div>
+                      <p className="sidebar-account-name">{viewer.displayName}</p>
+                      <p className="sidebar-account-handle">@{viewer.handle}</p>
+                    </div>
+                  </div>
+
+                  <div className="sidebar-account-actions">
+                    <Link className="inline-link" href={profileHref}>
+                      View profile
+                    </Link>
+                    <form action={signOutAction}>
+                      <input name="redirectTo" type="hidden" value="/" />
+                      <button className="sidebar-signout" type="submit">
+                        Sign out
+                      </button>
+                    </form>
                   </div>
                 </div>
-
-                <div className="sidebar-account-actions">
-                  <Link className="inline-link" href={profileHref}>
-                    View profile
+              ) : (
+                <div className="sidebar-callout">
+                  <p className="sidebar-callout-title">Signed out</p>
+                  <Link className="secondary-button compact sidebar-login-link" href="/">
+                    Sign in
                   </Link>
-                  <form action={signOutAction}>
-                    <input name="redirectTo" type="hidden" value="/" />
-                    <button className="sidebar-signout" type="submit">
-                      Sign out
-                    </button>
-                  </form>
                 </div>
-              </div>
-            ) : (
-              <div className="sidebar-callout">
-                <p className="sidebar-callout-title">Signed out</p>
-                <Link className="secondary-button compact sidebar-login-link" href="/">
-                  Sign in
-                </Link>
-              </div>
-            )}
-          </div>
-        </aside>
+              )}
+            </div>
+          </aside>
+        </MobileNavShell>
 
         <section className={`social-center ${wideCenter ? "social-center-wide" : ""}`.trim()}>
           {showHeader ? (

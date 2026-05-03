@@ -25,7 +25,7 @@
 
 - [ ] **Step 1: Create the manifest**
 
-Create `infra/k8s/server/traefik-https.yaml` with a `helm.cattle.io/v1` `HelmChartConfig` named `traefik` in `kube-system`. Its `valuesContent` must enable persistence at `/data`, add HTTP-to-HTTPS redirect arguments, and configure the `letsencrypt` ACME resolver with `robertorojas87@gmail.com`.
+Create `infra/k8s/server/traefik-https.yaml` with a `helm.cattle.io/v1` `HelmChartConfig` named `traefik` in `kube-system`. Its `valuesContent` must enable persistence at `/data`, add HTTP-to-HTTPS redirect arguments to explicit port `:443`, and configure the `letsencrypt` ACME TLS-ALPN resolver with `robertorojas87@gmail.com`.
 
 - [ ] **Step 2: Verify YAML text**
 

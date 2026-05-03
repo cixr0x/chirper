@@ -14,7 +14,7 @@ Enable trusted HTTPS for the Chirper Google Cloud VM deployment while keeping th
 
 ## Approach
 
-Configure HTTPS once at the shared k3s Traefik edge. Traefik will use Let's Encrypt HTTP-01 challenges with the ACME account email `robertorojas87@gmail.com`, store ACME state in a persistent volume, and redirect HTTP traffic to HTTPS.
+Configure HTTPS once at the shared k3s Traefik edge. Traefik will use Let's Encrypt TLS-ALPN-01 challenges with the ACME account email `robertorojas87@gmail.com`, store ACME state in a persistent volume, and redirect HTTP traffic to HTTPS.
 
 Chirper will keep using normal Kubernetes `Ingress` resources, but its server values will request the Traefik certificate resolver and TLS routing for the web and BFF hosts. Future applications on the same VM can use their own namespaces and host-based ingresses with the same Traefik resolver.
 

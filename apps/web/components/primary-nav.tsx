@@ -85,10 +85,6 @@ function getActiveFromPathname(pathname: string | null, profileHref: string): Pr
     return "profile";
   }
 
-  if (pathname === "/onboarding") {
-    return "profile";
-  }
-
   return undefined;
 }
 

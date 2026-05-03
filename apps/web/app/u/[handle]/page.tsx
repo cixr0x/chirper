@@ -162,8 +162,8 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
                 </Link>
               ) : isViewer ? (
                 <>
-                  <Link className="secondary-button compact" href="/onboarding">
-                    Edit onboarding
+                  <Link className="secondary-button compact" href={`${profilePath}#edit-profile`}>
+                    Edit profile
                   </Link>
                   <span className="follow-chip viewer">Your account</span>
                 </>
@@ -210,7 +210,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
       ) : null}
 
       {isViewer ? (
-        <section className="panel editor-panel profile-editor-panel">
+        <section className="panel editor-panel profile-editor-panel" id="edit-profile">
           <div className="section-intro">
             <p className="eyebrow">Edit profile</p>
             <h2>Refine how this account appears across the app</h2>
@@ -277,8 +277,8 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
               <button className="primary-button" type="submit">
                 Save profile
               </button>
-              <Link className="inline-link" href="/onboarding">
-                Open onboarding
+              <Link className="inline-link" href={profilePath}>
+                Back to profile
               </Link>
             </div>
           </form>

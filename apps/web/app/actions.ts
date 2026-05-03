@@ -95,7 +95,7 @@ export async function registerAction(formData: FormData) {
     expiresAt: string;
   };
   await setSessionToken(payload.sessionToken, payload.expiresAt);
-  redirect(withSearchParams("/onboarding", { account: "registered" }));
+  redirect(withSearchParams(`/u/${handle}`, { account: "registered" }));
 }
 
 export async function signOutAction(formData: FormData) {
@@ -251,7 +251,6 @@ export async function saveProfileAction(formData: FormData) {
   }
 
   revalidatePath("/");
-  revalidatePath("/onboarding");
   revalidatePath(redirectPath);
 
   redirect(withSearchParams(redirectTo, { account: successState, auth: undefined }));

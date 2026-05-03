@@ -1,11 +1,13 @@
 import "reflect-metadata";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { UnauthorizedException } from "@nestjs/common";
+import { status } from "@grpc/grpc-js";
+import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { MessagesController } from "./messages.controller";
 
 class FakeMessagesClient {
   calls: unknown[] = [];
+  startConversationError?: unknown;
 
   async listConversations(viewerUserId: string, limit: number, cursor?: string) {
     this.calls.push({ method: "listConversations", viewerUserId, limit, cursor });
@@ -59,6 +61,10 @@ class FakeMessagesClient {
 
   async startConversation(viewerUserId: string, recipientUserId: string) {
     this.calls.push({ method: "startConversation", viewerUserId, recipientUserId });
+    if (this.startConversationError) {
+      throw this.startConversationError;
+    }
+
     return {
       conversationId: "msgc_new",
       participantUserIds: [viewerUserId, recipientUserId],
@@ -213,6 +219,19 @@ test("startConversation treats a non-string recipientUserId as empty without thr
   assert.deepEqual(messagesClient.calls, [
     { method: "startConversation", viewerUserId: "user_viewer", recipientUserId: "" },
   ]);
+});
+
+test("startConversation maps gRPC invalid argument errors to stable HTTP bad requests", async () => {
+  const { controller, messagesClient } = createController();
+  messagesClient.startConversationError = Object.assign(new Error("Cannot start a conversation with yourself"), {
+    code: status.INVALID_ARGUMENT,
+    details: "Cannot start a conversation with yourself",
+  });
+
+  await assert.rejects(
+    () => controller.startConversation("session_1", { recipientUserId: "user_viewer" }),
+    BadRequestException,
+  );
 });
 
 test("sendMessage accepts a missing request body without crashing", async () => {

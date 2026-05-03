@@ -1,6 +1,8 @@
 import "reflect-metadata";
 import assert from "node:assert/strict";
 import test from "node:test";
+import { status } from "@grpc/grpc-js";
+import { BadRequestException } from "@nestjs/common";
 import { MessagesGrpcController } from "./messages.grpc.controller";
 
 test("listConversations preserves last-message metadata in the gRPC DTO", async () => {
@@ -32,4 +34,24 @@ test("listConversations preserves last-message metadata in the gRPC DTO", async 
 
   assert.equal(result.conversations[0]?.lastMessageId, "msgm_1");
   assert.equal(result.conversations[0]?.lastMessageAuthorUserId, "user_other");
+});
+
+test("startConversation maps expected policy validation errors to gRPC INVALID_ARGUMENT", async () => {
+  const service = {
+    startConversation: async () => {
+      throw new BadRequestException("Cannot start a conversation with yourself");
+    },
+  };
+  const controller = new MessagesGrpcController(service as never);
+
+  await assert.rejects(
+    () => controller.startConversation({ viewerUserId: "user_1", recipientUserId: "user_1" }),
+    (error) => {
+      const rpcError = (error as { getError?: () => unknown }).getError?.();
+      assert.equal(typeof rpcError, "object");
+      assert.equal((rpcError as { code?: number }).code, status.INVALID_ARGUMENT);
+      assert.equal((rpcError as { message?: string }).message, "Cannot start a conversation with yourself");
+      return true;
+    },
+  );
 });

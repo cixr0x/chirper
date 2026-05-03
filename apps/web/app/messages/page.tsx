@@ -2,6 +2,7 @@ import Link from "next/link";
 import { sendMessageAction } from "../actions";
 import { AppShell } from "../../components/app-shell";
 import { AvatarBadge } from "../../components/avatar-badge";
+import { MessageReadMarker } from "../../components/message-read-marker";
 import { MessageStartCard } from "../../components/message-start-card";
 import { SignedOutGate } from "../../components/signed-out-gate";
 import { getMessageConversation, getMessageConversations, type MessageConversation } from "../../lib/bff";
@@ -102,6 +103,7 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
           </section>
         ) : activeConversation ? (
           <section className="panel message-thread-panel" aria-label={`Thread with ${activeConversation.otherUser.displayName}`}>
+            <MessageReadMarker conversationId={activeConversation.conversationId} />
             <div className="message-thread-head">
               <div className="feed-head">
                 <AvatarBadge

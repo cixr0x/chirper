@@ -1,5 +1,6 @@
-import { Controller, Inject } from "@nestjs/common";
-import { GrpcMethod } from "@nestjs/microservices";
+import { status } from "@grpc/grpc-js";
+import { BadRequestException, Controller, ForbiddenException, Inject, NotFoundException } from "@nestjs/common";
+import { GrpcMethod, RpcException } from "@nestjs/microservices";
 import {
   type ConversationListItem,
   type ConversationRecord,
@@ -42,64 +43,101 @@ export class MessagesGrpcController {
 
   @GrpcMethod("MessagesService", "ListConversations")
   async listConversations(request: ListConversationsRequest) {
-    const result = await this.messages.listConversations({
-      viewerUserId: request.viewerUserId,
-      limit: request.limit || 20,
-      ...(request.cursor ? { cursor: request.cursor } : {}),
-    });
+    return mapExpectedMessageError(async () => {
+      const result = await this.messages.listConversations({
+        viewerUserId: request.viewerUserId,
+        limit: request.limit || 20,
+        ...(request.cursor ? { cursor: request.cursor } : {}),
+      });
 
-    return {
-      conversations: result.conversations.map((conversation) =>
-        mapConversation(conversation, request.viewerUserId),
-      ),
-      nextCursor: result.nextCursor ?? "",
-    };
+      return {
+        conversations: result.conversations.map((conversation) =>
+          mapConversation(conversation, request.viewerUserId),
+        ),
+        nextCursor: result.nextCursor ?? "",
+      };
+    });
   }
 
   @GrpcMethod("MessagesService", "GetConversation")
   async getConversation(request: GetConversationRequest) {
-    const result = await this.messages.getConversation({
-      viewerUserId: request.viewerUserId,
-      conversationId: request.conversationId,
-      limit: request.limit || 30,
-      ...(request.beforeCursor ? { beforeCursor: request.beforeCursor } : {}),
-    });
+    return mapExpectedMessageError(async () => {
+      const result = await this.messages.getConversation({
+        viewerUserId: request.viewerUserId,
+        conversationId: request.conversationId,
+        limit: request.limit || 30,
+        ...(request.beforeCursor ? { beforeCursor: request.beforeCursor } : {}),
+      });
 
-    return {
-      conversation: mapConversation(result.conversation, request.viewerUserId),
-      messages: result.messages.map(mapMessage),
-      nextCursor: result.nextCursor ?? "",
-    };
+      return {
+        conversation: mapConversation(result.conversation, request.viewerUserId),
+        messages: result.messages.map(mapMessage),
+        nextCursor: result.nextCursor ?? "",
+      };
+    });
   }
 
   @GrpcMethod("MessagesService", "StartConversation")
   async startConversation(request: StartConversationRequest) {
-    const conversation = await this.messages.startConversation({
-      viewerUserId: request.viewerUserId,
-      recipientUserId: request.recipientUserId,
-    });
+    return mapExpectedMessageError(async () => {
+      const conversation = await this.messages.startConversation({
+        viewerUserId: request.viewerUserId,
+        recipientUserId: request.recipientUserId,
+      });
 
-    return mapConversation(conversation, request.viewerUserId, request.recipientUserId);
+      return mapConversation(conversation, request.viewerUserId, request.recipientUserId);
+    });
   }
 
   @GrpcMethod("MessagesService", "SendMessage")
   async sendMessage(request: SendMessageRequest) {
-    const message = await this.messages.sendMessage({
-      viewerUserId: request.viewerUserId,
-      conversationId: request.conversationId,
-      body: request.body,
-    });
+    return mapExpectedMessageError(async () => {
+      const message = await this.messages.sendMessage({
+        viewerUserId: request.viewerUserId,
+        conversationId: request.conversationId,
+        body: request.body,
+      });
 
-    return mapMessage(message);
+      return mapMessage(message);
+    });
   }
 
   @GrpcMethod("MessagesService", "MarkConversationRead")
-  markConversationRead(request: MarkConversationReadRequest) {
-    return this.messages.markConversationRead({
-      viewerUserId: request.viewerUserId,
-      conversationId: request.conversationId,
+  async markConversationRead(request: MarkConversationReadRequest) {
+    return mapExpectedMessageError(() => {
+      return this.messages.markConversationRead({
+        viewerUserId: request.viewerUserId,
+        conversationId: request.conversationId,
+      });
     });
   }
+}
+
+async function mapExpectedMessageError<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (error instanceof BadRequestException) {
+      throw toRpcException(error, status.INVALID_ARGUMENT);
+    }
+
+    if (error instanceof ForbiddenException) {
+      throw toRpcException(error, status.PERMISSION_DENIED);
+    }
+
+    if (error instanceof NotFoundException) {
+      throw toRpcException(error, status.NOT_FOUND);
+    }
+
+    throw error;
+  }
+}
+
+function toRpcException(error: Error, code: status) {
+  return new RpcException({
+    code,
+    message: error.message,
+  });
 }
 
 function mapConversation(

@@ -1,4 +1,17 @@
-import { Body, Controller, Get, Headers, Inject, Param, Post, Query } from "@nestjs/common";
+import { status } from "@grpc/grpc-js";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Headers,
+  Inject,
+  NotFoundException,
+  Param,
+  Post,
+  Query,
+} from "@nestjs/common";
 import {
   type ConversationRecord,
   type MessageRecord,
@@ -7,6 +20,7 @@ import {
 import { sessionHeaderName } from "./session-header";
 import { SessionAuthService } from "./session-auth.service";
 import { UserSummaryService } from "./user-summary.service";
+import { getGrpcErrorMessage, hasGrpcStatus } from "./grpc-status";
 
 type UserSummary = Awaited<ReturnType<UserSummaryService["getUserSummaryById"]>>;
 
@@ -25,10 +39,12 @@ export class MessagesController {
     @Headers(sessionHeaderName) sessionToken?: string,
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
-    const result = await this.messagesClient.listConversations(
-      session.userId,
-      clampLimit(limit, 20, 1, 50),
-      normalizeOptional(cursor),
+    const result = await mapMessagesGrpcError(() =>
+      this.messagesClient.listConversations(
+        session.userId,
+        clampLimit(limit, 20, 1, 50),
+        normalizeOptional(cursor),
+      ),
     );
 
     return {
@@ -43,7 +59,9 @@ export class MessagesController {
     @Body() body?: { recipientUserId?: unknown },
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
-    const conversation = await this.messagesClient.startConversation(session.userId, stringValue(body?.recipientUserId));
+    const conversation = await mapMessagesGrpcError(() =>
+      this.messagesClient.startConversation(session.userId, stringValue(body?.recipientUserId)),
+    );
     return this.enrichConversation(conversation);
   }
 
@@ -55,11 +73,13 @@ export class MessagesController {
     @Headers(sessionHeaderName) sessionToken?: string,
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
-    const result = await this.messagesClient.getConversation(
-      session.userId,
-      conversationId,
-      clampLimit(limit, 30, 1, 100),
-      normalizeOptional(beforeCursor),
+    const result = await mapMessagesGrpcError(() =>
+      this.messagesClient.getConversation(
+        session.userId,
+        conversationId,
+        clampLimit(limit, 30, 1, 100),
+        normalizeOptional(beforeCursor),
+      ),
     );
     const [conversation, authorMap] = await Promise.all([
       this.enrichConversation(result.conversation),
@@ -80,7 +100,9 @@ export class MessagesController {
     @Body() body?: { body?: unknown },
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
-    const message = await this.messagesClient.sendMessage(session.userId, conversationId, stringValue(body?.body));
+    const message = await mapMessagesGrpcError(() =>
+      this.messagesClient.sendMessage(session.userId, conversationId, stringValue(body?.body)),
+    );
     const author = await this.userSummaryService.getUserSummaryById(message.authorUserId);
     return { ...message, author };
   }
@@ -91,7 +113,7 @@ export class MessagesController {
     @Headers(sessionHeaderName) sessionToken?: string,
   ) {
     const session = await this.sessionAuth.requireSession(sessionToken);
-    return this.messagesClient.markConversationRead(session.userId, conversationId);
+    return mapMessagesGrpcError(() => this.messagesClient.markConversationRead(session.userId, conversationId));
   }
 
   private async enrichConversation(conversation: ConversationRecord) {
@@ -140,4 +162,26 @@ function normalizeOptional(value: unknown) {
 
 function stringValue(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+async function mapMessagesGrpcError<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    const message = getGrpcErrorMessage(error, "Messages operation failed.");
+
+    if (hasGrpcStatus(error, status.INVALID_ARGUMENT)) {
+      throw new BadRequestException(message);
+    }
+
+    if (hasGrpcStatus(error, status.PERMISSION_DENIED)) {
+      throw new ForbiddenException(message);
+    }
+
+    if (hasGrpcStatus(error, status.NOT_FOUND)) {
+      throw new NotFoundException(message);
+    }
+
+    throw error;
+  }
 }

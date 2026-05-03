@@ -29,6 +29,12 @@ test("messages page loads conversations and selected thread through BFF helpers"
   assert.doesNotMatch(messagesPageSource, /type="button"\s*>\s*Send/);
 });
 
+test("messages page wires read-on-open through the read marker component", () => {
+  assert.match(messagesPageSource, /MessageReadMarker/);
+  assert.match(messagesPageSource, /components\/message-read-marker/);
+  assert.match(messagesPageSource, /<MessageReadMarker\s+conversationId=\{activeConversation\.conversationId\}/);
+});
+
 test("message server actions call BFF message conversation helpers", () => {
   assert.match(actionsSource, /export async function startConversationAction/);
   assert.match(actionsSource, /export async function sendMessageAction/);

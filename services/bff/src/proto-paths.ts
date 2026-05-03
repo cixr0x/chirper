@@ -35,6 +35,11 @@ export const mediaProtoPath = path.resolve(
   "../../packages/contracts-proto/proto/media/v1/media.proto",
 );
 
+export const messagesProtoPath = path.resolve(
+  process.cwd(),
+  "../../packages/contracts-proto/proto/messages/v1/messages.proto",
+);
+
 export const realtimeProtoPath = path.resolve(
   process.cwd(),
   "../../packages/contracts-proto/proto/realtime/v1/realtime.proto",

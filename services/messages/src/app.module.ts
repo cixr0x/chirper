@@ -6,6 +6,7 @@ import { IdentityClientService } from "./clients/identity.client";
 import { ProfileClientService } from "./clients/profile.client";
 import { HealthController } from "./health.controller";
 import { loadServiceEnv } from "./load-env";
+import { MessagesGrpcController } from "./messages.grpc.controller";
 import { MessagesService } from "./messages.service";
 import { PrismaService } from "./prisma.service";
 
@@ -43,7 +44,7 @@ loadServiceEnv();
       },
     ]),
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, MessagesGrpcController],
   providers: [PrismaService, IdentityClientService, ProfileClientService, GraphClientService, MessagesService],
 })
 export class AppModule {}

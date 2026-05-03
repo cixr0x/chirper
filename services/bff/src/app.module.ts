@@ -6,12 +6,14 @@ import { GraphClientService } from "./clients/graph.client";
 import { FeedController } from "./feed.controller";
 import { HealthController } from "./health.controller";
 import { MediaController } from "./media.controller";
+import { MessagesController } from "./messages.controller";
 import { NotificationsController } from "./notifications.controller";
 import { SessionController } from "./session.controller";
 import { SessionAuthService } from "./session-auth.service";
 import { UsersController } from "./users.controller";
 import { IdentityClientService } from "./clients/identity.client";
 import { MediaClientService } from "./clients/media.client";
+import { MessagesClientService } from "./clients/messages.client";
 import { NotificationsClientService } from "./clients/notifications.client";
 import { PostsClientService } from "./clients/posts.client";
 import { ProfileClientService } from "./clients/profile.client";
@@ -23,6 +25,7 @@ import {
   graphProtoPath,
   identityProtoPath,
   mediaProtoPath,
+  messagesProtoPath,
   notificationsProtoPath,
   postsProtoPath,
   profileProtoPath,
@@ -97,6 +100,15 @@ import {
         },
       },
       {
+        name: "MESSAGES_PACKAGE",
+        transport: Transport.GRPC,
+        options: {
+          package: "messages.v1",
+          protoPath: messagesProtoPath,
+          url: process.env.MESSAGES_GRPC_URL ?? "127.0.0.1:50059",
+        },
+      },
+      {
         name: "REALTIME_PACKAGE",
         transport: Transport.GRPC,
         options: {
@@ -117,6 +129,7 @@ import {
     GraphController,
     NotificationsController,
     MediaController,
+    MessagesController,
   ],
   providers: [
     IdentityClientService,
@@ -126,6 +139,7 @@ import {
     TimelineClientService,
     NotificationsClientService,
     MediaClientService,
+    MessagesClientService,
     RealtimeClientService,
     SessionAuthService,
     UserSummaryService,

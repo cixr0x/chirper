@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 type MessagesPageProps = {
   searchParams?: Promise<{
+    compose?: string;
     conversation?: string;
   }>;
 };
@@ -42,16 +43,21 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
   }
 
   const params = await searchParams;
+  const composeRequested = params?.compose === "1";
   const requestedConversationId = params?.conversation?.trim() ?? "";
   const conversationEnvelope = await getMessageConversations(sessionToken, 20);
   const conversations = conversationEnvelope.conversations;
-  const selectedConversation =
-    conversations.find((conversation) => conversation.conversationId === requestedConversationId) ?? conversations[0];
-  const thread = selectedConversation
-    ? await getMessageConversation(sessionToken, selectedConversation.conversationId, 30)
+  const requestedThread = requestedConversationId
+    ? await getMessageConversation(sessionToken, requestedConversationId, 30)
     : null;
-  const activeConversation = thread?.conversation ?? selectedConversation;
+  const defaultConversation = !requestedConversationId && !composeRequested ? conversations[0] : undefined;
+  const defaultThread = defaultConversation
+    ? await getMessageConversation(sessionToken, defaultConversation.conversationId, 30)
+    : null;
+  const thread = requestedThread ?? defaultThread;
+  const activeConversation = thread?.conversation ?? defaultConversation;
   const threadMessages = thread?.messages ?? [];
+  const showCompose = composeRequested || (!activeConversation && !requestedConversationId);
 
   return (
     <AppShell
@@ -68,7 +74,12 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
               <p className="eyebrow">Inbox</p>
               <h2>Direct conversations</h2>
             </div>
-            <span className="follow-chip viewer">{conversations.length}</span>
+            <div className="message-head-actions">
+              <Link className="secondary-button compact" href="/messages?compose=1">
+                New message
+              </Link>
+              <span className="follow-chip viewer">{conversations.length}</span>
+            </div>
           </div>
           <div className="conversation-list">
             {conversations.length > 0 ? (
@@ -85,7 +96,11 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
           </div>
         </aside>
 
-        {activeConversation ? (
+        {showCompose ? (
+          <section className="panel message-thread-panel" aria-label="Start a conversation">
+            <MessageStartCard viewerUserId={session.viewer.userId} />
+          </section>
+        ) : activeConversation ? (
           <section className="panel message-thread-panel" aria-label={`Thread with ${activeConversation.otherUser.displayName}`}>
             <div className="message-thread-head">
               <div className="feed-head">
@@ -149,8 +164,14 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
             </form>
           </section>
         ) : (
-          <section className="panel message-thread-panel" aria-label="Start a conversation">
-            <MessageStartCard viewerUserId={session.viewer.userId} />
+          <section className="panel message-thread-panel" aria-label="Conversation unavailable">
+            <div className="empty-state message-unavailable-state">
+              <h3>Conversation unavailable</h3>
+              <p className="muted-copy">This conversation could not be loaded.</p>
+              <Link className="secondary-button compact" href="/messages?compose=1">
+                New message
+              </Link>
+            </div>
           </section>
         )}
       </section>

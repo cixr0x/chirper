@@ -16,6 +16,13 @@ test("messages page loads conversations and selected thread through BFF helpers"
   assert.match(messagesPageSource, /getMessageConversations/);
   assert.match(messagesPageSource, /getMessageConversation/);
   assert.match(messagesPageSource, /searchParams/);
+  assert.match(messagesPageSource, /compose/);
+  assert.match(messagesPageSource, /\/messages\?compose=1/);
+  assert.match(messagesPageSource, /getMessageConversation\(sessionToken,\s*requestedConversationId,\s*30\)/);
+  assert.doesNotMatch(
+    messagesPageSource,
+    /conversations\.find\([^;]*requestedConversationId[^;]*\)\s*\?\?\s*conversations\[0\]/,
+  );
   assert.doesNotMatch(messagesPageSource, /Product design/);
   assert.doesNotMatch(messagesPageSource, /Alana Pierce/);
   assert.doesNotMatch(messagesPageSource, /Private reply preview/);

@@ -60,7 +60,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
   const accountMessage = getProfileMessage(filters?.account);
   const bannerStyle = user.bannerUrl
     ? {
-        backgroundImage: `radial-gradient(circle at 100% 0, rgba(255, 255, 255, 0.28), transparent 24%), linear-gradient(135deg, #0c5ed0 0%, #2d7dff 44%, #10b981 100%), url(${JSON.stringify(user.bannerUrl)})`,
+        backgroundImage: `radial-gradient(circle at 100% 0, rgba(255, 255, 255, 0.28), transparent 24%), linear-gradient(135deg, rgba(12, 94, 208, 0.34) 0%, rgba(45, 125, 255, 0.2) 44%, rgba(16, 185, 129, 0.28) 100%), url(${JSON.stringify(user.bannerUrl)})`,
       }
     : undefined;
 

@@ -28,6 +28,12 @@ test("profile editor prefills existing avatar and banner URLs", () => {
   );
 });
 
+test("profile banner image is not hidden behind an opaque gradient", () => {
+  assert.match(profilePageSource, /backgroundImage: `[^`]*url\(\$\{JSON\.stringify\(user\.bannerUrl\)\}\)[^`]*`/s);
+  assert.match(profilePageSource, /linear-gradient\(135deg, rgba\(/);
+  assert.equal(profilePageSource.includes("linear-gradient(135deg, #0c5ed0"), false);
+});
+
 test("profile page uses redesigned hero and editor layout without changing controls", () => {
   assert.match(profilePageSource, /showHeader=\{false\}/);
 

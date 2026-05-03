@@ -2,7 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import type { FeedItem } from "../lib/bff";
+import {
+  markMessageConversationRead,
+  sendMessage,
+  startMessageConversation,
+  type FeedItem,
+} from "../lib/bff";
 import { clearSession, getSessionToken, setSessionToken } from "../lib/session";
 
 const bffBaseUrl =
@@ -480,6 +485,56 @@ export async function markNotificationsReadAction(formData: FormData) {
   if (targetPath !== "/") {
     revalidatePath(targetPath);
   }
+}
+
+export async function startConversationAction(formData: FormData) {
+  const recipientUserId = String(formData.get("recipientUserId") ?? "").trim();
+  const sessionToken = await getSessionToken();
+
+  if (!sessionToken || !recipientUserId) {
+    redirect("/messages");
+  }
+
+  const conversation = await startMessageConversation(sessionToken, recipientUserId);
+
+  revalidatePath("/messages");
+
+  if (conversation?.conversationId) {
+    redirect(`/messages?conversation=${encodeURIComponent(conversation.conversationId)}`);
+  }
+
+  redirect("/messages");
+}
+
+export async function sendMessageAction(formData: FormData) {
+  const conversationId = String(formData.get("conversationId") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  const targetPath =
+    String(formData.get("targetPath") ?? "").trim() ||
+    (conversationId ? `/messages?conversation=${encodeURIComponent(conversationId)}` : "/messages");
+  const sessionToken = await getSessionToken();
+
+  if (!sessionToken || !conversationId || !body) {
+    redirect(targetPath);
+  }
+
+  await sendMessage(sessionToken, conversationId, body);
+
+  revalidatePath("/messages");
+  redirect(targetPath);
+}
+
+export async function markConversationReadAction(formData: FormData) {
+  const conversationId = String(formData.get("conversationId") ?? "").trim();
+  const sessionToken = await getSessionToken();
+
+  if (!sessionToken || !conversationId) {
+    return;
+  }
+
+  await markMessageConversationRead(sessionToken, conversationId);
+
+  revalidatePath("/messages");
 }
 
 export async function followUserAction(formData: FormData) {

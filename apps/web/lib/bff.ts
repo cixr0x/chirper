@@ -13,6 +13,7 @@ export type UserSummary = {
     label: string;
     url: string;
   }[];
+  allowDirectInbox?: boolean;
 };
 
 export type FeedItem = {
@@ -78,6 +79,40 @@ export type NotificationItem = {
 export type NotificationEnvelope = {
   unreadCount: number;
   notifications: NotificationItem[];
+  nextCursor: string;
+};
+
+export type MessageConversation = {
+  conversationId: string;
+  participantUserIds: string[];
+  otherUserId: string;
+  otherUser: UserSummary;
+  lastMessageId: string;
+  lastMessagePreview: string;
+  lastMessageAuthorUserId: string;
+  lastMessageAt: string;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DirectMessage = {
+  messageId: string;
+  conversationId: string;
+  authorUserId: string;
+  author?: UserSummary;
+  body: string;
+  createdAt: string;
+};
+
+export type MessageConversationEnvelope = {
+  conversations: MessageConversation[];
+  nextCursor: string;
+};
+
+export type MessageThreadEnvelope = {
+  conversation: MessageConversation;
+  messages: DirectMessage[];
   nextCursor: string;
 };
 
@@ -463,6 +498,142 @@ export async function getNotifications(sessionToken: string, limit = 8, cursor?:
       notifications: [],
       nextCursor: "",
     };
+  }
+}
+
+export async function getMessageConversations(
+  sessionToken: string,
+  limit = 20,
+  cursor?: string,
+): Promise<MessageConversationEnvelope> {
+  try {
+    const response = await fetch(`${bffBaseUrl}${withPagination("/api/messages/conversations", limit, cursor)}`, {
+      cache: "no-store",
+      headers: sessionHeaders(sessionToken),
+    });
+
+    if (!response.ok) {
+      return {
+        conversations: [],
+        nextCursor: "",
+      };
+    }
+
+    return (await response.json()) as MessageConversationEnvelope;
+  } catch {
+    return {
+      conversations: [],
+      nextCursor: "",
+    };
+  }
+}
+
+export async function getMessageConversation(
+  sessionToken: string,
+  conversationId: string,
+  limit = 30,
+  beforeCursor?: string,
+): Promise<MessageThreadEnvelope | null> {
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  if (beforeCursor) {
+    params.set("beforeCursor", beforeCursor);
+  }
+
+  try {
+    const response = await fetch(
+      `${bffBaseUrl}/api/messages/conversations/${encodeURIComponent(conversationId)}?${params.toString()}`,
+      {
+        cache: "no-store",
+        headers: sessionHeaders(sessionToken),
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as MessageThreadEnvelope;
+  } catch {
+    return null;
+  }
+}
+
+export async function startMessageConversation(
+  sessionToken: string,
+  recipientUserId: string,
+): Promise<MessageConversation | null> {
+  try {
+    const response = await fetch(`${bffBaseUrl}/api/messages/conversations`, {
+      method: "POST",
+      headers: {
+        ...sessionHeaders(sessionToken),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ recipientUserId }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as MessageConversation;
+  } catch {
+    return null;
+  }
+}
+
+export async function sendMessage(
+  sessionToken: string,
+  conversationId: string,
+  body: string,
+): Promise<DirectMessage | null> {
+  try {
+    const response = await fetch(
+      `${bffBaseUrl}/api/messages/conversations/${encodeURIComponent(conversationId)}/messages`,
+      {
+        method: "POST",
+        headers: {
+          ...sessionHeaders(sessionToken),
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ body }),
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as DirectMessage;
+  } catch {
+    return null;
+  }
+}
+
+export async function markMessageConversationRead(
+  sessionToken: string,
+  conversationId: string,
+): Promise<{ updated: boolean } | null> {
+  try {
+    const response = await fetch(
+      `${bffBaseUrl}/api/messages/conversations/${encodeURIComponent(conversationId)}/read`,
+      {
+        method: "POST",
+        headers: sessionHeaders(sessionToken),
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as { updated: boolean };
+  } catch {
+    return null;
   }
 }
 

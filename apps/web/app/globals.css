@@ -2334,10 +2334,12 @@ button:focus-visible {
 }
 
 .conversation-card {
+  display: block;
   width: 100%;
   color: inherit;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -2386,6 +2388,15 @@ button:focus-visible {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 1.1rem;
+}
+
+.message-start-card {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.message-list-empty {
+  padding: 1rem 0;
 }
 
 .message-thread-head {

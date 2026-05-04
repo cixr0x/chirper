@@ -1868,6 +1868,10 @@ button:focus-visible {
   box-shadow: var(--focus-ring);
 }
 
+.message-start-error {
+  color: #b42318;
+}
+
 .user-search-results {
   display: grid;
   gap: 0;
@@ -1890,6 +1894,50 @@ button:focus-visible {
 
 .user-search-result-copy {
   min-width: 0;
+}
+
+.user-search-result-copy > span {
+  display: block;
+}
+
+.user-search-result-form {
+  margin: 0;
+}
+
+.user-search-result-form + .user-search-result-form {
+  border-top: 1px solid rgba(188, 203, 216, 0.72);
+}
+
+.user-search-result-form .user-search-result {
+  width: 100%;
+  border-top: none;
+}
+
+.user-search-result-form .user-search-result:first-of-type {
+  padding-top: 0.85rem;
+}
+
+.user-search-result-form:first-of-type .user-search-result {
+  padding-top: 0;
+}
+
+.message-person-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.message-person-button:hover,
+.message-person-button:focus-visible {
+  background: rgba(16, 27, 43, 0.035);
+}
+
+.message-person-button:focus-visible {
+  outline: none;
+  box-shadow: inset var(--focus-ring);
 }
 
 .notification-card,

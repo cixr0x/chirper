@@ -6,10 +6,11 @@ import type { UserSummary } from "../lib/bff";
 import { AvatarBadge } from "./avatar-badge";
 
 type MessageStartCardProps = {
+  startError?: string | undefined;
   viewerUserId?: string;
 };
 
-export function MessageStartCard({ viewerUserId }: MessageStartCardProps) {
+export function MessageStartCard({ startError, viewerUserId }: MessageStartCardProps) {
   const inputId = useId();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<UserSummary[]>([]);
@@ -72,6 +73,7 @@ export function MessageStartCard({ viewerUserId }: MessageStartCardProps) {
           value={query}
         />
       </form>
+      {startError ? <p className="muted-copy message-start-error">{startError}</p> : null}
 
       <div className="user-search-results" aria-live="polite">
         {status === "idle" ? <p className="muted-copy">Find someone to message.</p> : null}
@@ -80,19 +82,19 @@ export function MessageStartCard({ viewerUserId }: MessageStartCardProps) {
         {status === "ready" && results.length === 0 ? <p className="muted-copy">No matching people.</p> : null}
         {status === "ready" && results.length > 0
           ? results.map((user) => (
-              <article className="user-search-result" key={user.userId}>
-                <AvatarBadge avatarUrl={user.avatarUrl} displayName={user.displayName} size="small" />
-                <div className="user-search-result-copy">
-                  <p className="mini-profile-name">{user.displayName}</p>
-                  <p className="mini-profile-handle">@{user.handle}</p>
-                </div>
-                <form action={startConversationAction}>
-                  <input name="recipientUserId" type="hidden" value={user.userId} />
-                  <button className="secondary-button compact" type="submit">
+              <form action={startConversationAction} className="user-search-result-form" key={user.userId}>
+                <input name="recipientUserId" type="hidden" value={user.userId} />
+                <button className="user-search-result message-person-button" type="submit">
+                  <AvatarBadge avatarUrl={user.avatarUrl} displayName={user.displayName} size="small" />
+                  <span className="user-search-result-copy">
+                    <span className="mini-profile-name">{user.displayName}</span>
+                    <span className="mini-profile-handle">@{user.handle}</span>
+                  </span>
+                  <span className="secondary-button compact" aria-hidden="true">
                     Message
-                  </button>
-                </form>
-              </article>
+                  </span>
+                </button>
+              </form>
             ))
           : null}
       </div>

@@ -492,7 +492,7 @@ export async function startConversationAction(formData: FormData) {
   const sessionToken = await getSessionToken();
 
   if (!sessionToken || !recipientUserId) {
-    redirect("/messages");
+    redirect("/messages?compose=1&error=start#message-compose");
   }
 
   const conversation = await startMessageConversation(sessionToken, recipientUserId);
@@ -503,7 +503,7 @@ export async function startConversationAction(formData: FormData) {
     redirect(`/messages?conversation=${encodeURIComponent(conversation.conversationId)}`);
   }
 
-  redirect("/messages");
+  redirect("/messages?compose=1&error=start#message-compose");
 }
 
 export async function sendMessageAction(formData: FormData) {

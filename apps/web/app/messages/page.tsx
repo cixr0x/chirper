@@ -14,6 +14,7 @@ type MessagesPageProps = {
   searchParams?: Promise<{
     compose?: string;
     conversation?: string;
+    error?: string;
   }>;
 };
 
@@ -45,6 +46,7 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
 
   const params = await searchParams;
   const composeRequested = params?.compose === "1";
+  const startErrorMessage = params?.error === "start" ? "We could not start that conversation. Try again." : undefined;
   const requestedConversationId = params?.conversation?.trim() ?? "";
   const conversationEnvelope = await getMessageConversations(sessionToken, 20);
   const conversations = conversationEnvelope.conversations;
@@ -76,7 +78,7 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
               <h2>Direct conversations</h2>
             </div>
             <div className="message-head-actions">
-              <Link className="secondary-button compact" href="/messages?compose=1">
+              <Link className="secondary-button compact" href="/messages?compose=1#message-compose">
                 New message
               </Link>
               <span className="follow-chip viewer">{conversations.length}</span>
@@ -98,8 +100,8 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
         </aside>
 
         {showCompose ? (
-          <section className="panel message-thread-panel" aria-label="Start a conversation">
-            <MessageStartCard viewerUserId={session.viewer.userId} />
+          <section className="panel message-thread-panel" id="message-compose" aria-label="Start a conversation">
+            <MessageStartCard startError={startErrorMessage} viewerUserId={session.viewer.userId} />
           </section>
         ) : activeConversation ? (
           <section className="panel message-thread-panel" aria-label={`Thread with ${activeConversation.otherUser.displayName}`}>
@@ -170,7 +172,7 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
             <div className="empty-state message-unavailable-state">
               <h3>Conversation unavailable</h3>
               <p className="muted-copy">This conversation could not be loaded.</p>
-              <Link className="secondary-button compact" href="/messages?compose=1">
+              <Link className="secondary-button compact" href="/messages?compose=1#message-compose">
                 New message
               </Link>
             </div>
